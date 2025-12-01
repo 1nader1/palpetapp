@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'core/constants/app_colors.dart';
 import 'screens/main_shell.dart';
 
+
 void main() {
   runApp(const PalPetApp());
 }

@@ -11,4 +11,8 @@ class AppColors {
   static const Color serviceHotelBg = Color(0xFFFFF7ED);   
   static const Color serviceLostBg = Color(0xFFECFCCB);   
   static const Color serviceVetBg = Color(0xFFFEF3C7);  
+
+
+static const Color adoptionHeader = Color(0xFF9DC346);
+static const Color inputBorder = Color(0xFFE5E7EB);
 }

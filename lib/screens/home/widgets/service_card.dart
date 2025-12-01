@@ -35,7 +35,7 @@ class ServiceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // الأيقونة الدائرية
+
             Container(
               padding: const EdgeInsets.all(12),
               decoration: const BoxDecoration(
@@ -45,7 +45,7 @@ class ServiceCard extends StatelessWidget {
               child: Icon(icon, color: AppColors.primary, size: 28),
             ),
             
-            // النصوص
+
             Column(
               children: [
                 const SizedBox(height: 12),
@@ -72,7 +72,7 @@ class ServiceCard extends StatelessWidget {
               ],
             ),
 
-            // الزر البرتقالي
+
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,

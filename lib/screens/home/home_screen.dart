@@ -69,7 +69,7 @@ class HomeScreen extends StatelessWidget {
             ServiceCard(
               title: "Pet Hotels",
               subtitle: "Safe and comfortable accommodations",
-              icon: Icons.house, // أو Icons.home_work
+              icon: Icons.house, 
               backgroundColor: AppColors.serviceHotelBg,
             ),
           ],
