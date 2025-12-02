@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import 'home/home_screen.dart';
-import 'adoption/adoption_screen.dart'; // 1. استيراد الصفحة
+import 'adoption/adoption_screen.dart';
+import 'lost_found/lost_found_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -13,12 +14,12 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
-  // 2. تحديث القائمة لإضافة صفحة التبني كعنصر رابع (Index 3)
   final List<Widget> _screens = [
-    const HomeScreen(),           // Index 0
-    const Center(child: Text("Add Post Screen")), // Index 1 (كما طلبت لم نعدل عليه)
-    const Center(child: Text("Profile Screen")),  // Index 2
-    const AdoptionScreen(),       // Index 3 (Adoption)
+    const HomeScreen(),
+    const Center(child: Text("Add Post Screen")),
+    const Center(child: Text("Profile Screen")),
+    const AdoptionScreen(),
+    const LostFoundScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -37,7 +38,8 @@ class _MainShellState extends State<MainShell> {
         ),
         actions: [
           IconButton(icon: const Icon(Icons.language), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
+          IconButton(
+              icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
           Builder(
             builder: (context) => IconButton(
               icon: const Icon(Icons.menu, size: 28),
@@ -55,34 +57,45 @@ class _MainShellState extends State<MainShell> {
               decoration: BoxDecoration(color: AppColors.primary),
               child: Align(
                 alignment: Alignment.bottomLeft,
-                child: Text('PalPet Menu', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                child: Text('PalPet Menu',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold)),
               ),
             ),
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Home'),
               onTap: () {
-                Navigator.pop(context); // إغلاق القائمة
-                _onItemTapped(0); // الذهاب للرئيسية
+                Navigator.pop(context);
+                _onItemTapped(0);
               },
             ),
             ListTile(
               leading: const Icon(Icons.pets),
               title: const Text('Adoption'),
               onTap: () {
-                Navigator.pop(context); // إغلاق القائمة
-                // 3. هنا نقوم بتغيير الصفحة إلى التبني (Index 3)
+                Navigator.pop(context);
                 setState(() {
                   _selectedIndex = 3;
+                });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.search),
+              title: const Text('Lost & Found'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  _selectedIndex = 4;
                 });
               },
             ),
           ],
         ),
       ),
-      
-      body: _screens[_selectedIndex], // يعرض الصفحة المختارة
-
+      body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: AppColors.navBarBackground,
@@ -104,17 +117,10 @@ class _MainShellState extends State<MainShell> {
               label: '',
             ),
           ],
-          // 4. خدعة برمجية:
-          // بما أن لدينا 3 أزرار فقط، ولكن قد يكون الـ Index المختار هو 3 (Adoption)
-          // يجب أن نخبر النافيجيشن بار أن يحدد العنصر الأول (أو أي عنصر) شكلياً فقط
-          // أو يمكننا عدم تحديد أي شيء بجعل النوع fixed
-          currentIndex: _selectedIndex > 2 ? 0 : _selectedIndex, 
-          
-          // هنا نغير اللون لنجعل الأيقونات تبدو غير مختارة إذا كنا في صفحة التبني
-          selectedItemColor: _selectedIndex > 2 
-              ? AppColors.textDark.withOpacity(0.6) // لون باهت إذا كنا في التبني
+          currentIndex: _selectedIndex > 2 ? 0 : _selectedIndex,
+          selectedItemColor: _selectedIndex > 2
+              ? AppColors.textDark.withOpacity(0.6)
               : AppColors.textDark,
-              
           unselectedItemColor: AppColors.textDark.withOpacity(0.6),
           backgroundColor: Colors.transparent,
           elevation: 0,
