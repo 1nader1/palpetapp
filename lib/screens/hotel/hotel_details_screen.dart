@@ -11,7 +11,7 @@ class HotelDetailsScreen extends StatefulWidget {
 }
 
 class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
-  // للتحكم في التبويبات (0: Details, 1: Amenities)
+
   int _selectedTab = 0; 
 
   @override
@@ -35,7 +35,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. صورة الغلاف ---
+
             SizedBox(
               height: 320,
               width: double.infinity,
@@ -46,7 +46,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
               ),
             ),
 
-            // --- 2. المحتوى ---
             Container(
               transform: Matrix4.translationValues(0.0, -30.0, 0.0),
               decoration: const BoxDecoration(
@@ -65,7 +64,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // العنوان والموقع (مشترك ويظهر دائماً)
+
                   Text(
                     widget.data['name'],
                     style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.textDark),
@@ -81,7 +80,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
                   const SizedBox(height: 24),
 
-                  // --- 3. أزرار التبديل (Tabs) ---
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
@@ -97,12 +95,9 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                   ),
 
                   const SizedBox(height: 24),
-
-                  // --- 4. المحتوى المتغير حسب التبويب ---
-                  // هنا يتم التبديل بين قسم التفاصيل (الذي يحتوي على About/Price/Contact) وقسم المرافق
                   AnimatedCrossFade(
-                    firstChild: _buildDetailsContent(),   // محتوى التبويب الأول
-                    secondChild: _buildAmenitiesContent(), // محتوى التبويب الثاني
+                    firstChild: _buildDetailsContent(),  
+                    secondChild: _buildAmenitiesContent(), 
                     crossFadeState: _selectedTab == 0 ? CrossFadeState.showFirst : CrossFadeState.showSecond,
                     duration: const Duration(milliseconds: 300),
                   ),
@@ -115,7 +110,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
     );
   }
 
-  // محتوى التبويب الأول (Details): يحتوي على الترتيب الذي طلبته
+
   Widget _buildDetailsContent() {
     final List<String> supportedPets = widget.data['supportedPets'] as List<String>;
 
@@ -132,7 +127,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
         const SizedBox(height: 24),
 
-        // ب. Price & Accepts Container
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -143,7 +137,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Accepts (Left)
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,7 +170,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
               
               Container(width: 1, height: 50, color: Colors.grey[300], margin: const EdgeInsets.symmetric(horizontal: 16)),
 
-              // Price (Right)
+
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -195,7 +189,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
         const SizedBox(height: 24),
 
-        // ج. Contact Info
         const Text("Contact Info", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
         const SizedBox(height: 12),
         Container(
