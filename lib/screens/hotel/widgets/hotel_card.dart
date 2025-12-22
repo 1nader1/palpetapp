@@ -27,8 +27,7 @@ class HotelCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(20), // الحفاظ على شكل الكارد الخارجي
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
@@ -40,27 +39,24 @@ class HotelCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. الصورة وشارة التقييم (لم تتغير)
+          // 1. الصورة وشارة التقييم
           Stack(
             children: [
               ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 child: Image.network(
                   imageUrl,
                   height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) =>
-                      Container(height: 180, color: Colors.grey[200]),
+                  errorBuilder: (c, e, s) => Container(height: 180, color: Colors.grey[200]),
                 ),
               ),
               Positioned(
                 top: 12,
                 right: 12,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.95),
                     borderRadius: BorderRadius.circular(12),
@@ -68,13 +64,11 @@ class HotelCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star_rounded,
-                          color: Colors.amber, size: 16),
+                      const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         rating.toString(),
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 12),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                       ),
                     ],
                   ),
@@ -83,10 +77,9 @@ class HotelCard extends StatelessWidget {
             ],
           ),
 
-          // 2. المحتوى الداخلي (تم إعادة ترتيبه)
+          // 2. المحتوى الداخلي
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-                16, 16, 16, 20), // زيادة الـ padding السفلي قليلاً
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -101,11 +94,10 @@ class HotelCard extends StatelessWidget {
 
                 const SizedBox(height: 4),
 
-                // ب. العنوان (تم نقله هنا مباشرة تحت الاسم)
+                // ب. العنوان
                 Row(
                   children: [
-                    Icon(Icons.location_on_outlined,
-                        size: 16, color: Colors.grey[500]),
+                    Icon(Icons.location_on_outlined, size: 16, color: Colors.grey[500]),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
@@ -130,7 +122,7 @@ class HotelCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // د. أنواع الحيوانات المدعومة (Tags)
+                // د. أنواع الحيوانات المدعومة
                 Row(
                   children: [
                     const Text("Accepts: ",
@@ -148,19 +140,15 @@ class HotelCard extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(
-                                        0.08), // لون خلفية أهدأ قليلاً
+                                    color: AppColors.primary.withOpacity(0.08),
                                     borderRadius: BorderRadius.circular(20),
-                                    // border: Border.all(color: AppColors.primary.withOpacity(0.2)), // إزالة الإطار لتقليل الضجيج البصري
                                   ),
                                   child: Text(
                                     pet,
                                     style: const TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors
-                                            .primary // جعل النص بلون الـ primary
-                                        ),
+                                        color: AppColors.primary),
                                   ),
                                 ))
                             .toList(),
@@ -171,26 +159,35 @@ class HotelCard extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // هـ. زر التفاصيل (بالأخير وعلى طول الكارد)
+                // هـ. زر التفاصيل
                 SizedBox(
-                  width: double.infinity, // تمديد الزر على كامل العرض
+                  width: double.infinity,
                   child: ElevatedButton(
                     onPressed: onTap,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14), // زيادة الارتفاع قليلاً ليكون متناسقاً
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                            14), // زوايا متناسقة مع الكارد
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
-                      "View Details",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    // --- هنا التعديل: تم تغيير ترتيب العناصر ---
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.pets, // الأيقونة أولاً (على اليسار)
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        SizedBox(width: 8), // مسافة
+                        Text(
+                          "View Details", // النص ثانياً (على اليمين)
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ],
                     ),
                   ),
                 ),

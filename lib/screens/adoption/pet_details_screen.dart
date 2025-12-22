@@ -121,34 +121,59 @@ class PetDetailsScreen extends StatelessWidget {
                               fontWeight: FontWeight.w500)),
                     ],
                   ),
+                  
+                  // -------------------------------------------------------
+                  // قسم Contact Info (مطابق لتصميم الفندق)
+                  // -------------------------------------------------------
                   const SizedBox(height: 24),
-                  const Text("Contact",
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textDark)),
+                  const Text("Contact Info", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
                   const SizedBox(height: 12),
-                  _buildContactRow(Icons.phone_outlined, pet.contactPhone),
-                  const SizedBox(height: 8),
-                  _buildContactRow(Icons.email_outlined, pet.contactEmail),
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text("Adopt Me",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey[200]!),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
+                          child: const Icon(Icons.phone, color: AppColors.primary, size: 24),
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Phone Number", style: TextStyle(fontSize: 13, color: Colors.grey)),
+                            const SizedBox(height: 4),
+                            Text(
+                              pet.contactPhone,
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        ElevatedButton(
+                          onPressed: () {
+                             // كود الاتصال
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          ),
+                          child: const Text("Call", style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ],
                     ),
                   ),
+                  // -------------------------------------------------------
+                  // تم حذف زر Adopt Me من هنا
+                  // -------------------------------------------------------
                 ],
               ),
             ),
@@ -169,17 +194,6 @@ class PetDetailsScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Text(value,
-            style: const TextStyle(fontSize: 14, color: AppColors.textGrey)),
-      ],
-    );
-  }
-
-  Widget _buildContactRow(IconData icon, String info) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: AppColors.textGrey),
-        const SizedBox(width: 12),
-        Text(info,
             style: const TextStyle(fontSize: 14, color: AppColors.textGrey)),
       ],
     );
