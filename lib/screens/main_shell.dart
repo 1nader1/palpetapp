@@ -10,6 +10,7 @@ import 'add_post/add_post_screen.dart';
 import 'clinics/clinics_screen.dart'; 
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/profile/profile_screen.dart';
+
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -29,8 +30,8 @@ class _MainShellState extends State<MainShell> {
     const PetHotelsScreen(),
     const ClinicsScreen(),
     const HomeScreen(), 
-    const Center(child: Text("Add Post")), 
-    const ProfileScreen () , 
+    const AddPostScreen(), 
+    const ProfileScreen(), 
     const AdoptionScreen(), 
     const LostFoundScreen(), 
     const PetHotelsScreen(), 
