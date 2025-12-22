@@ -13,7 +13,6 @@ class AdoptionScreen extends StatefulWidget {
 
 class _AdoptionScreenState extends State<AdoptionScreen> {
 
-  // نفس البيانات الأصلية تماماً للحفاظ على المحتوى
   final List<Pet> _allPets = [
     Pet(
       name: "Luna",
@@ -76,10 +75,8 @@ class _AdoptionScreenState extends State<AdoptionScreen> {
         final matchesSearch = pet.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
             pet.breed.toLowerCase().contains(_searchQuery.toLowerCase());
         
-        // تعديل: قبول القيمة إذا كانت null أو All أو مطابقة للنوع
         final matchesType = _selectedType == null || _selectedType == "All" || pet.type == _selectedType;
         
-        // تعديل: قبول القيمة إذا كانت null أو All أو مطابقة للجنس
         final matchesGender = _selectedGender == null || _selectedGender == "All" || pet.gender == _selectedGender;
 
         return matchesSearch && matchesType && matchesGender;
@@ -93,7 +90,6 @@ class _AdoptionScreenState extends State<AdoptionScreen> {
       padding: EdgeInsets.zero,
       children: [
 
-        // الهيدر (التصميم الأصلي)
         Container(
           width: double.infinity,
           padding: const EdgeInsets.only(top: 20, bottom: 40, left: 24, right: 24),
@@ -131,11 +127,10 @@ class _AdoptionScreenState extends State<AdoptionScreen> {
           child: Column(
             children: [
 
-              // 1. Pet Type Dropdown (مع خيار All)
               _buildDropdown(
                 hint: "Pet Type",
                 value: _selectedType,
-                items: ["All", "Dog", "Cat"], // تمت إضافة All
+                items: ["All", "Dog", "Cat"], 
                 onChanged: (val) {
                   _selectedType = val;
                   _filterPets();
@@ -143,11 +138,10 @@ class _AdoptionScreenState extends State<AdoptionScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 2. Gender Dropdown (مع خيار All)
               _buildDropdown(
                 hint: "Gender",
                 value: _selectedGender,
-                items: ["All", "Male", "Female"], // تمت إضافة All
+                items: ["All", "Male", "Female"], 
                 onChanged: (val) {
                   _selectedGender = val;
                   _filterPets();
@@ -155,7 +149,6 @@ class _AdoptionScreenState extends State<AdoptionScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 3. Search Field (التصميم الأصلي)
               TextFormField(
                 onChanged: (val) {
                   _searchQuery = val;
@@ -199,7 +192,7 @@ class _AdoptionScreenState extends State<AdoptionScreen> {
                   description: pet.description,
                   imageUrl: pet.imageUrl,
                   tags: pet.healthTags,
-                  // هنا التغيير: نمرر الدالة للزر بدلاً من تغليف الكارد بـ GestureDetector
+
                   onViewDetails: () {
                     Navigator.push(
                       context,

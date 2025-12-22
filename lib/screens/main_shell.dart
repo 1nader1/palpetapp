@@ -4,9 +4,7 @@ import 'home/home_screen.dart';
 import 'adoption/adoption_screen.dart';
 import 'lost_found/lost_found_screen.dart';
 import 'hotel/pet_hotels_screen.dart';
-import 'clinics/clinics_screen.dart'; 
-// 1. إضافة استيراد صفحة الإشعارات
-import 'notifications/notifications_screen.dart';
+import 'clinics/clinics_screen.dart'; // 1. إضافة استيراد صفحة العيادات
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -20,12 +18,12 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _screens = [
     const HomeScreen(), // 0
-    const Center(child: Text("Add Post")), // 1
+    const Center(child: Text("Add Post")), // 1 (Placeholder for now)
     const Center(child: Text("Profile")), // 2
     const AdoptionScreen(), // 3
     const LostFoundScreen(), // 4
     const PetHotelsScreen(), // 5
-    const ClinicsScreen(), // 6
+    const ClinicsScreen(), // 6 -> صفحة العيادات الجديدة (تمت إضافتها هنا)
   ];
 
   void _onItemTapped(int index) {
@@ -68,7 +66,6 @@ class _MainShellState extends State<MainShell> {
         ],
       ),
 
-      // --- القائمة الجانبية (Drawer) ---
       endDrawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -85,7 +82,6 @@ class _MainShellState extends State<MainShell> {
               ),
             ),
 
-            // 1. Home
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Home'),
@@ -95,7 +91,6 @@ class _MainShellState extends State<MainShell> {
               },
             ),
 
-            // 2. Adoption
             ListTile(
               leading: const Icon(Icons.pets),
               title: const Text('Adoption'),
@@ -105,7 +100,6 @@ class _MainShellState extends State<MainShell> {
               },
             ),
 
-            // 3. Lost & Found
             ListTile(
               leading: const Icon(Icons.search),
               title: const Text('Lost & Found'),
@@ -115,7 +109,6 @@ class _MainShellState extends State<MainShell> {
               },
             ),
 
-            // 4. Pet Hotels
             ListTile(
               leading: const Icon(Icons.apartment),
               title: const Text('Pet Hotels'),
@@ -127,7 +120,7 @@ class _MainShellState extends State<MainShell> {
               },
             ),
 
-            // 5. Vet Clinics
+            // 5. Vet Clinics (الإضافة الجديدة في المنيو)
             ListTile(
               leading: const Icon(Icons.medical_services),
               title: const Text('Vet Clinics'),

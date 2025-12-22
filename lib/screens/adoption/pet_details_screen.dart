@@ -122,9 +122,6 @@ class PetDetailsScreen extends StatelessWidget {
                     ],
                   ),
                   
-                  // -------------------------------------------------------
-                  // قسم Contact Info (مطابق لتصميم الفندق)
-                  // -------------------------------------------------------
                   const SizedBox(height: 24),
                   const Text("Contact Info", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
                   const SizedBox(height: 12),
@@ -158,7 +155,6 @@ class PetDetailsScreen extends StatelessWidget {
                         const Spacer(),
                         ElevatedButton(
                           onPressed: () {
-                             // كود الاتصال
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
@@ -171,9 +167,7 @@ class PetDetailsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // -------------------------------------------------------
-                  // تم حذف زر Adopt Me من هنا
-                  // -------------------------------------------------------
+
                 ],
               ),
             ),

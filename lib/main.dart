@@ -15,14 +15,13 @@ class PalPetApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'PalPet',
-      // إعداد الثيم العام هنا ليطبق على كل الصفحات
+
       theme: ThemeData(
         scaffoldBackgroundColor: AppColors.background,
         primaryColor: AppColors.primary,
         useMaterial3: true,
-        fontFamily: 'Segoe UI', // أو أي خط تفضله
+        fontFamily: 'Segoe UI',
         
-        // إعدادات النصوص العامة
         textTheme: const TextTheme(
           headlineMedium: TextStyle(
             fontSize: 22, 
@@ -35,14 +34,13 @@ class PalPetApp extends StatelessWidget {
           ),
         ),
 
-        // إعدادات الـ AppBar الافتراضية
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
           iconTheme: IconThemeData(color: AppColors.textDark),
         ),
       ),
-      home: const MainShell(), // نقطة البداية هي الإطار العام
+      home: const MainShell(),
     );
   }
 }

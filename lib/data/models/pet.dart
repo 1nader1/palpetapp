@@ -1,12 +1,12 @@
 class Pet {
   final String name;
-  final String type; // Dog, Cat, etc.
+  final String type;
   final String gender;
   final String breed;
   final String age;
   final String description;
   final String imageUrl;
-  final List<String> healthTags; // Vaccinated, etc.
+  final List<String> healthTags;
   final String location;
   final String contactPhone;
   final String contactEmail;

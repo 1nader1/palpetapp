@@ -43,7 +43,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
       "phone": "+962 79 333 4444"
     },
     {
-      
       "name": "Happy Pet Hotel",
       "address": "Irbid City Center",
       "price": "15 JD",
@@ -101,6 +100,7 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                     Color(0xFFFFA726),
                     Color(0xFFEF6C00)
                   ], // Gradient البرتقالي
+
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -184,6 +184,40 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                   ),
                 ],
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _filteredHotels.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.only(top: 40),
+                      child: Text("No hotels found matching your search.",
+                          style: TextStyle(color: Colors.grey)),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _filteredHotels.length,
+                      itemBuilder: (context, index) {
+                        final hotel = _filteredHotels[index];
+
+                        return HotelCard(
+                          name: hotel['name'],
+                          address: hotel['address'],
+                          rating: hotel['rating'],
+                          imageUrl: hotel['image'],
+                          description: hotel['description'],
+                          supportedPets: hotel['supportedPets'],
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      HotelDetailsScreen(data: hotel)),
+                            );
+                          },
+                        );
+                      },
+                    ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
