@@ -7,9 +7,7 @@ import 'hotel/pet_hotels_screen.dart';
 import 'clinics/clinics_screen.dart';
 import 'profile/profile_screen.dart';
 import 'add_post/add_post_screen.dart';
-import 'clinics/clinics_screen.dart'; 
 import '../screens/notifications/notifications_screen.dart';
-import '../screens/profile/profile_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -21,22 +19,29 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const AddPostScreen(),
-    const ProfileScreen(),
-    const AdoptionScreen(),
-    const LostFoundScreen(),
-    const PetHotelsScreen(),
-    const ClinicsScreen(),
-    const HomeScreen(), 
-    const AddPostScreen(), 
-    const ProfileScreen(), 
-    const AdoptionScreen(), 
-    const LostFoundScreen(), 
-    const PetHotelsScreen(), 
-    const ClinicsScreen(), 
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _screens = [
+      HomeScreen(onNavigate: _onItemTapped),
+      const AddPostScreen(),
+      const ProfileScreen(),
+      const AdoptionScreen(),
+      const LostFoundScreen(),
+      const PetHotelsScreen(),
+      const ClinicsScreen(),
+      HomeScreen(onNavigate: _onItemTapped),
+      const AddPostScreen(),
+      const ProfileScreen(),
+      const AdoptionScreen(),
+      const LostFoundScreen(),
+      const PetHotelsScreen(),
+      const ClinicsScreen(),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -54,7 +59,6 @@ class _MainShellState extends State<MainShell> {
         ),
         actions: [
           IconButton(icon: const Icon(Icons.language), onPressed: () {}),
-          
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
@@ -66,7 +70,6 @@ class _MainShellState extends State<MainShell> {
               );
             },
           ),
-          
           Builder(
             builder: (context) => IconButton(
               icon: const Icon(Icons.menu, size: 28),

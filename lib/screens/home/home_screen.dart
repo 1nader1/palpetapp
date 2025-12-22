@@ -5,17 +5,17 @@ import '../home/widgets/home_banner.dart';
 import '../home/widgets/service_card.dart';  
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  // دالة لاستقبال أمر التنقل
+  final Function(int) onNavigate;
+
+  const HomeScreen({super.key, required this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       children: [
-        
         const HomeBanner(),
-
-
         const Center(
           child: Text(
             "Our Services",
@@ -47,30 +47,34 @@ class HomeScreen extends StatelessWidget {
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           childAspectRatio: 0.75, 
-          children: const [
+          children: [
             ServiceCard(
               title: "Adoption",
               subtitle: "Browse pets looking for a forever home",
               icon: Icons.pets,
               backgroundColor: AppColors.serviceAdoptionBg,
+              onTap: () => onNavigate(3), // الذهاب لصفحة التبني (Index 3)
             ),
             ServiceCard(
               title: "Lost & Found",
               subtitle: "Report lost pets or help reunite found animals",
               icon: Icons.search,
               backgroundColor: AppColors.serviceLostBg,
+              onTap: () => onNavigate(4), // الذهاب لصفحة المفقودات (Index 4)
             ),
             ServiceCard(
               title: "Vet Clinics",
               subtitle: "Find veterinary clinics near you",
               icon: Icons.local_hospital,
               backgroundColor: AppColors.serviceVetBg,
+              onTap: () => onNavigate(6), // الذهاب لصفحة العيادات (Index 6)
             ),
             ServiceCard(
               title: "Pet Hotels",
               subtitle: "Safe and comfortable accommodations",
               icon: Icons.house, 
               backgroundColor: AppColors.serviceHotelBg,
+              onTap: () => onNavigate(5), // الذهاب لصفحة الفنادق (Index 5)
             ),
           ],
         ),
