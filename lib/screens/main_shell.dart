@@ -4,7 +4,9 @@ import 'home/home_screen.dart';
 import 'adoption/adoption_screen.dart';
 import 'lost_found/lost_found_screen.dart';
 import 'hotel/pet_hotels_screen.dart';
-import 'clinics/clinics_screen.dart'; // 1. إضافة استيراد صفحة العيادات
+import 'clinics/clinics_screen.dart'; 
+// 1. إضافة استيراد صفحة الإشعارات
+import 'notifications/notifications_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -18,12 +20,12 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _screens = [
     const HomeScreen(), // 0
-    const Center(child: Text("Add Post")), // 1 (Placeholder for now)
+    const Center(child: Text("Add Post")), // 1
     const Center(child: Text("Profile")), // 2
     const AdoptionScreen(), // 3
     const LostFoundScreen(), // 4
     const PetHotelsScreen(), // 5
-    const ClinicsScreen(), // 6 -> صفحة العيادات الجديدة (تمت إضافتها هنا)
+    const ClinicsScreen(), // 6
   ];
 
   void _onItemTapped(int index) {
@@ -42,8 +44,20 @@ class _MainShellState extends State<MainShell> {
         ),
         actions: [
           IconButton(icon: const Icon(Icons.language), onPressed: () {}),
+          
+          // 2. تفعيل زر الإشعارات هنا
           IconButton(
-              icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsScreen(),
+                ),
+              );
+            },
+          ),
+          
           Builder(
             builder: (context) => IconButton(
               icon: const Icon(Icons.menu, size: 28),
@@ -113,14 +127,14 @@ class _MainShellState extends State<MainShell> {
               },
             ),
 
-            // 5. Vet Clinics (الإضافة الجديدة في المنيو)
+            // 5. Vet Clinics
             ListTile(
-              leading: const Icon(Icons.medical_services), // أيقونة طبية
+              leading: const Icon(Icons.medical_services),
               title: const Text('Vet Clinics'),
               onTap: () {
-                Navigator.pop(context); // إغلاق القائمة
+                Navigator.pop(context);
                 setState(() {
-                  _selectedIndex = 6; // الانتقال لصفحة العيادات
+                  _selectedIndex = 6;
                 });
               },
             ),

@@ -33,7 +33,6 @@ class LostFoundDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. صورة الحيوان
             SizedBox(
               height: 350,
               width: double.infinity,
@@ -67,7 +66,6 @@ class LostFoundDetailsScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -154,12 +152,12 @@ class LostFoundDetailsScreen extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 15, color: AppColors.textGrey, height: 1.6),
                   ),
-                  
-                  // -------------------------------------------------------
-                  // قسم Contact Info الجديد (بنفس تصميم الفندق)
-                  // -------------------------------------------------------
                   const SizedBox(height: 24),
-                  const Text("Contact Info", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  const Text("Contact Info",
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark)),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -167,45 +165,57 @@ class LostFoundDetailsScreen extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.grey[200]!),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4))
+                      ],
                     ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-                          child: const Icon(Icons.phone, color: AppColors.primary, size: 24),
+                          decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.1),
+                              shape: BoxShape.circle),
+                          child: const Icon(Icons.phone,
+                              color: AppColors.primary, size: 24),
                         ),
                         const SizedBox(width: 16),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Phone Number", style: TextStyle(fontSize: 13, color: Colors.grey)),
+                            const Text("Phone Number",
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.grey)),
                             const SizedBox(height: 4),
-                            // استخدام رقم الهاتف من البيانات
                             Text(
                               data['contactPhone'] ?? "N/A",
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textDark),
                             ),
                           ],
                         ),
                         const Spacer(),
                         ElevatedButton(
-                          onPressed: () {
-                             // كود الاتصال هنا
-                          },
+                          onPressed: () {},
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
                           ),
-                          child: const Text("Call", style: TextStyle(fontWeight: FontWeight.bold)),
+                          child: const Text("Call",
+                              style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
                   ),
-                 
                 ],
               ),
             ),
