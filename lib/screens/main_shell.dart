@@ -4,8 +4,9 @@ import 'home/home_screen.dart';
 import 'adoption/adoption_screen.dart';
 import 'lost_found/lost_found_screen.dart';
 import 'hotel/pet_hotels_screen.dart';
-import 'clinics/clinics_screen.dart'; 
+import 'clinics/clinics_screen.dart';
 import 'profile/profile_screen.dart';
+import 'add_post/add_post_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -19,12 +20,12 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const Center(child: Text("Add Post")),
-    const ProfileScreen(), 
+    const AddPostScreen(),
+    const ProfileScreen(),
     const AdoptionScreen(),
-    const LostFoundScreen(), 
+    const LostFoundScreen(),
     const PetHotelsScreen(),
-    const ClinicsScreen(), 
+    const ClinicsScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -54,7 +55,6 @@ class _MainShellState extends State<MainShell> {
           const SizedBox(width: 8),
         ],
       ),
-
       endDrawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -70,7 +70,6 @@ class _MainShellState extends State<MainShell> {
                         fontWeight: FontWeight.bold)),
               ),
             ),
-
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Home'),
@@ -79,7 +78,6 @@ class _MainShellState extends State<MainShell> {
                 _onItemTapped(0);
               },
             ),
-
             ListTile(
               leading: const Icon(Icons.pets),
               title: const Text('Adoption'),
@@ -88,7 +86,6 @@ class _MainShellState extends State<MainShell> {
                 setState(() => _selectedIndex = 3);
               },
             ),
-
             ListTile(
               leading: const Icon(Icons.search),
               title: const Text('Lost & Found'),
@@ -97,7 +94,6 @@ class _MainShellState extends State<MainShell> {
                 setState(() => _selectedIndex = 4);
               },
             ),
-
             ListTile(
               leading: const Icon(Icons.apartment),
               title: const Text('Pet Hotels'),
@@ -108,7 +104,6 @@ class _MainShellState extends State<MainShell> {
                 });
               },
             ),
-
             ListTile(
               leading: const Icon(Icons.medical_services),
               title: const Text('Vet Clinics'),
@@ -122,9 +117,7 @@ class _MainShellState extends State<MainShell> {
           ],
         ),
       ),
-
       body: _screens[_selectedIndex],
-
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: AppColors.navBarBackground,
@@ -146,7 +139,6 @@ class _MainShellState extends State<MainShell> {
               label: '',
             ),
           ],
-
           currentIndex: _selectedIndex > 2 ? 0 : _selectedIndex,
           selectedItemColor: _selectedIndex > 2
               ? AppColors.textDark.withOpacity(0.6)
