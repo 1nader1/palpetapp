@@ -10,7 +10,6 @@ class PetDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -22,16 +21,19 @@ class PetDetailsScreen extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textDark, size: 20),
+            icon: const Icon(Icons.arrow_back,
+                color: AppColors.textDark, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
         ),
         actions: [
           Container(
             margin: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+                color: Colors.white, shape: BoxShape.circle),
             child: IconButton(
-              icon: const Icon(Icons.favorite_border, color: Colors.red, size: 20),
+              icon: const Icon(Icons.favorite_border,
+                  color: Colors.red, size: 20),
               onPressed: () {},
             ),
           ),
@@ -42,7 +44,6 @@ class PetDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             SizedBox(
               height: 350,
               width: double.infinity,
@@ -52,23 +53,23 @@ class PetDetailsScreen extends StatelessWidget {
                 errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
               ),
             ),
-
-
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-                  const Text("About", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  const Text("About",
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark)),
                   const SizedBox(height: 8),
                   Text(
                     pet.description,
-                    style: const TextStyle(fontSize: 14, color: AppColors.textGrey, height: 1.5),
+                    style: const TextStyle(
+                        fontSize: 14, color: AppColors.textGrey, height: 1.5),
                   ),
                   const SizedBox(height: 24),
-
-
                   Row(
                     children: [
                       Expanded(child: _buildInfoItem("Breed", pet.breed)),
@@ -76,46 +77,61 @@ class PetDetailsScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-
-
-                  const Text("Health", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  const Text("Health",
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark)),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 12,
-                    children: pet.healthTags.map((tag) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: Text(tag, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textGrey)),
-                    )).toList(),
+                    children: pet.healthTags
+                        .map((tag) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.grey[300]!),
+                              ),
+                              child: Text(tag,
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textGrey)),
+                            ))
+                        .toList(),
                   ),
                   const SizedBox(height: 24),
-
-
-                  const Text("Location", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  const Text("Location",
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 20),
+                      const Icon(Icons.location_on_outlined,
+                          color: AppColors.primary, size: 20),
                       const SizedBox(width: 8),
-                      Text(pet.location, style: const TextStyle(fontSize: 14, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
+                      Text(pet.location,
+                          style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textGrey,
+                              fontWeight: FontWeight.w500)),
                     ],
                   ),
                   const SizedBox(height: 24),
-
-
-                  const Text("Contact", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  const Text("Contact",
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark)),
                   const SizedBox(height: 12),
                   _buildContactRow(Icons.phone_outlined, pet.contactPhone),
                   const SizedBox(height: 8),
                   _buildContactRow(Icons.email_outlined, pet.contactEmail),
-                  
                   const SizedBox(height: 32),
-                  
-
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -125,9 +141,12 @@ class PetDetailsScreen extends StatelessWidget {
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text("Adopt Me", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Text("Adopt Me",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -143,9 +162,14 @@ class PetDetailsScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 14, color: AppColors.textDark, fontWeight: FontWeight.bold)),
+        Text(title,
+            style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textDark,
+                fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 14, color: AppColors.textGrey)),
+        Text(value,
+            style: const TextStyle(fontSize: 14, color: AppColors.textGrey)),
       ],
     );
   }
@@ -155,7 +179,8 @@ class PetDetailsScreen extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: AppColors.textGrey),
         const SizedBox(width: 12),
-        Text(info, style: const TextStyle(fontSize: 14, color: AppColors.textGrey)),
+        Text(info,
+            style: const TextStyle(fontSize: 14, color: AppColors.textGrey)),
       ],
     );
   }
