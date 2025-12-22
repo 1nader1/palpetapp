@@ -11,12 +11,11 @@ class PetHotelsScreen extends StatefulWidget {
 }
 
 class _PetHotelsScreenState extends State<PetHotelsScreen> {
-  // متغيرات الحالة
+
   String? _selectedPetType;
-  String _searchQuery = ""; // 1. متغير لحفظ نص البحث
+  String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
 
-  // بيانات الفنادق
   final List<Map<String, dynamic>> _hotels = [
     {
       "name": "Paws Luxury Resort",
@@ -59,10 +58,9 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
     },
   ];
 
-  // 2. منطق الفلترة (النوع + البحث بالاسم)
   List<Map<String, dynamic>> get _filteredHotels {
     return _hotels.where((hotel) {
-      // أ. فلترة النوع (Dropdown)
+
       final List<String> supported = hotel['supportedPets'];
       if (_selectedPetType != null && _selectedPetType != "All Types") {
         if (!supported.contains(_selectedPetType)) {
@@ -70,11 +68,10 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
         }
       }
 
-      // ب. فلترة البحث (Search Bar) - يعمل مع الأحرف الكبيرة والصغيرة
       if (_searchQuery.isNotEmpty) {
         final name = hotel['name'].toString().toLowerCase();
         final query = _searchQuery.toLowerCase();
-        // إذا الاسم لا يحتوي على نص البحث، استبعد العنصر
+
         if (!name.contains(query)) {
           return false;
         }
@@ -97,7 +94,7 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- 1. Header Banner ---
+
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -106,7 +103,7 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                   colors: [
                     Color(0xFFFFA726),
                     Color(0xFFEF6C00)
-                  ], // Gradient البرتقالي
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -131,12 +128,11 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
               ),
             ),
 
-            // --- 2. Filters & Search ---
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  // Dropdown Filter
+
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
@@ -163,11 +159,10 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Search Field (تم التعديل هنا ليعمل)
                   TextField(
                     controller: _searchController,
                     onChanged: (val) {
-                      // 3. تحديث الحالة عند الكتابة
+
                       setState(() {
                         _searchQuery = val;
                       });
@@ -198,7 +193,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
               ),
             ),
 
-            // --- 3. Hotel List ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _filteredHotels.isEmpty

@@ -146,7 +146,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                             color: Colors.grey,
                             fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    // --- هنا التعديل: حذف الأيقونات والإبقاء على النص فقط ---
+
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -167,7 +167,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                               ))
                           .toList(),
                     ),
-                    // -------------------------------------------------------
+
                   ],
                 ),
               ),
@@ -228,7 +228,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
         const SizedBox(height: 24),
 
-        // --- Contact Info ---
         const Text("Contact Info",
             style: TextStyle(
                 fontSize: 18,
@@ -295,7 +294,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
     );
   }
 
-  // محتوى التبويب الثاني (Amenities)
   Widget _buildAmenitiesContent() {
     final List<String> amenities = widget.data['amenities'] as List<String>;
     return Column(
