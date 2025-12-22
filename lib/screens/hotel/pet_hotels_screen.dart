@@ -11,7 +11,6 @@ class PetHotelsScreen extends StatefulWidget {
 }
 
 class _PetHotelsScreenState extends State<PetHotelsScreen> {
-
   String? _selectedPetType;
   String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
@@ -23,8 +22,10 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
       "price": "25 JD",
       "rating": 4.8,
       "supportedPets": ["Dog"],
-      "description": "The finest luxury hotel for dogs in Amman. Huge play areas, swimming pools, and professional trainers available 24/7.",
-      "image": "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=800&q=80",
+      "description":
+          "The finest luxury hotel for dogs in Amman. Huge play areas, swimming pools, and professional trainers available 24/7.",
+      "image":
+          "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=800&q=80",
       "amenities": ["Grooming", "Pool", "Webcam", "AC Rooms", "Training"],
       "phone": "+962 79 111 2222"
     },
@@ -34,8 +35,10 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
       "price": "18 JD",
       "rating": 4.5,
       "supportedPets": ["Cat"],
-      "description": "A quiet and peaceful sanctuary for your feline friends. Soundproof rooms and plenty of climbing structures.",
-      "image": "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80",
+      "description":
+          "A quiet and peaceful sanctuary for your feline friends. Soundproof rooms and plenty of climbing structures.",
+      "image":
+          "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80",
       "amenities": ["Daily Walks", "Organic Food", "Vet on Call", "Toy Room"],
       "phone": "+962 79 333 4444"
     },
@@ -45,8 +48,10 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
       "price": "15 JD",
       "rating": 4.2,
       "supportedPets": ["Dog", "Cat"],
-      "description": "Affordable and friendly care for all pets. Separate wings for dogs and cats to ensure comfort for everyone.",
-      "image": "https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=800&q=80",
+      "description":
+          "Affordable and friendly care for all pets. Separate wings for dogs and cats to ensure comfort for everyone.",
+      "image":
+          "https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=800&q=80",
       "amenities": ["Large Play Area", "Group Play", "Basic Grooming"],
       "phone": "+962 79 555 6666"
     },
@@ -54,7 +59,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
 
   List<Map<String, dynamic>> get _filteredHotels {
     return _hotels.where((hotel) {
-
       final List<String> supported = hotel['supportedPets'];
       if (_selectedPetType != null && _selectedPetType != "All Types") {
         if (!supported.contains(_selectedPetType)) {
@@ -92,7 +96,11 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
               padding: const EdgeInsets.all(24),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFFFFA726), Color(0xFFEF6C00)], 
+                  colors: [
+                    Color(0xFFFFA726),
+                    Color(0xFFEF6C00)
+                  ], // Gradient البرتقالي
+
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -101,23 +109,25 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                 children: [
                   const Text(
                     "Pet Hotels",
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     "Find the perfect stay for your furry friend",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9)),
+                    style: TextStyle(
+                        fontSize: 14, color: Colors.white.withOpacity(0.9)),
                   ),
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
@@ -130,9 +140,12 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                         isExpanded: true,
                         value: _selectedPetType,
                         hint: const Text("Filter by Pet Type"),
-                        icon: const Icon(Icons.filter_list, color: AppColors.primary),
+                        icon: const Icon(Icons.filter_list,
+                            color: AppColors.primary),
                         items: ["All Types", "Dog", "Cat", "Bird"]
-                            .map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                            .map((e) =>
+                                DropdownMenuItem(value: e, child: Text(e)))
+                            .toList(),
                         onChanged: (val) {
                           setState(() => _selectedPetType = val);
                         },
@@ -140,7 +153,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
                   TextField(
                     controller: _searchController,
                     onChanged: (val) {
@@ -150,7 +162,8 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                     },
                     decoration: InputDecoration(
                       hintText: "Search hotels by name...",
-                      hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                      hintStyle:
+                          const TextStyle(color: Colors.grey, fontSize: 14),
                       prefixIcon: const Icon(Icons.search, color: Colors.grey),
                       filled: true,
                       fillColor: Colors.white,
@@ -172,37 +185,73 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _filteredHotels.isEmpty 
-              ? const Padding(
-                  padding: EdgeInsets.only(top: 40),
-                  child: Text("No hotels found matching your search.", style: TextStyle(color: Colors.grey)),
-                )
-              : ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _filteredHotels.length, 
-                itemBuilder: (context, index) {
-                  final hotel = _filteredHotels[index];
-                  
-                  return HotelCard(
-                    name: hotel['name'],
-                    address: hotel['address'],
-                    rating: hotel['rating'],
-                    imageUrl: hotel['image'],
-                    description: hotel['description'],
-                    supportedPets: hotel['supportedPets'],
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => HotelDetailsScreen(data: hotel)),
-                      );
-                    },
-                  );
-                },
-              ),
+              child: _filteredHotels.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.only(top: 40),
+                      child: Text("No hotels found matching your search.",
+                          style: TextStyle(color: Colors.grey)),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _filteredHotels.length,
+                      itemBuilder: (context, index) {
+                        final hotel = _filteredHotels[index];
+
+                        return HotelCard(
+                          name: hotel['name'],
+                          address: hotel['address'],
+                          rating: hotel['rating'],
+                          imageUrl: hotel['image'],
+                          description: hotel['description'],
+                          supportedPets: hotel['supportedPets'],
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      HotelDetailsScreen(data: hotel)),
+                            );
+                          },
+                        );
+                      },
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _filteredHotels.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.only(top: 40),
+                      child: Text("No hotels found matching your search.",
+                          style: TextStyle(color: Colors.grey)),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _filteredHotels.length,
+                      itemBuilder: (context, index) {
+                        final hotel = _filteredHotels[index];
+
+                        return HotelCard(
+                          name: hotel['name'],
+                          address: hotel['address'],
+                          rating: hotel['rating'],
+                          imageUrl: hotel['image'],
+                          description: hotel['description'],
+                          supportedPets: hotel['supportedPets'],
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      HotelDetailsScreen(data: hotel)),
+                            );
+                          },
+                        );
+                      },
+                    ),
             ),
             const SizedBox(height: 20),
           ],
