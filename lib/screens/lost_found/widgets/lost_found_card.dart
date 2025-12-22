@@ -7,6 +7,7 @@ class LostFoundCard extends StatelessWidget {
   final String location;
   final String imageUrl;
   final bool isLost;
+  final VoidCallback onViewDetails; // 1. أضفنا هذا المتغير لاستقبال أمر الضغط
 
   const LostFoundCard({
     super.key,
@@ -15,6 +16,7 @@ class LostFoundCard extends StatelessWidget {
     required this.location,
     required this.imageUrl,
     required this.isLost,
+    required this.onViewDetails, // مطلوب في الـ Constructor
   });
 
   @override
@@ -35,26 +37,24 @@ class LostFoundCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. Image with Badge
           Stack(
             children: [
               ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 child: Image.network(
                   imageUrl,
                   height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) =>
-                      Container(height: 180, color: Colors.grey[200]),
+                  errorBuilder: (c, e, s) => Container(height: 180, color: Colors.grey[200]),
                 ),
               ),
               Positioned(
                 top: 12,
                 right: 12,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: isLost ? AppColors.lostRed : AppColors.foundGreen,
                     borderRadius: BorderRadius.circular(20),
@@ -71,6 +71,8 @@ class LostFoundCard extends StatelessWidget {
               ),
             ],
           ),
+
+          // 2. Info Section & Button
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -92,40 +94,69 @@ class LostFoundCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today_outlined,
-                        size: 16, color: AppColors.textGrey),
+                    const Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.textGrey),
                     const SizedBox(width: 6),
-                    Text(date,
-                        style: const TextStyle(
-                            fontSize: 13, color: AppColors.textGrey)),
+                    Text(date, style: const TextStyle(fontSize: 13, color: AppColors.textGrey)),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined,
-                        size: 16, color: AppColors.textGrey),
+                    const Icon(Icons.location_on_outlined, size: 16, color: AppColors.textGrey),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         location,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 13, color: AppColors.textGrey),
+                        style: const TextStyle(fontSize: 13, color: AppColors.textGrey),
                       ),
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 16), // مسافة قبل الزر
+
+                // 3. زر View Details الجديد (نفس ستايل Adoption)
+                SizedBox(
+                  width: double.infinity,
+                  height: 45,
+                  child: ElevatedButton(
+                    onPressed: onViewDetails, // تنفيذ الأكشن عند الضغط
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.pets, size: 20), // أيقونة إيد الكلب
+                        SizedBox(width: 8),
+                        Text(
+                          "View Details",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
+          
+          // Bottom Stripe
           Container(
             height: 4,
             decoration: BoxDecoration(
               color: isLost ? AppColors.lostRed : AppColors.foundGreen,
-              borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
             ),
           ),
         ],

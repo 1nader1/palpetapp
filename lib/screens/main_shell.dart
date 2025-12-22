@@ -3,6 +3,7 @@ import '../core/constants/app_colors.dart';
 import 'home/home_screen.dart';
 import 'adoption/adoption_screen.dart';
 import 'lost_found/lost_found_screen.dart';
+import 'hotel/pet_hotels_screen.dart'; // 1. استيراد الصفحة الجديدة
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -15,11 +16,12 @@ class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    const HomeScreen(),
-    const Center(child: Text("Add Post Screen")),
-    const Center(child: Text("Profile Screen")),
-    const AdoptionScreen(),
-    const LostFoundScreen(),
+    const HomeScreen(), // 0
+    const Center(child: Text("Add Post")), // 1 (Placeholder for now)
+    const Center(child: Text("Profile")), // 2
+    const AdoptionScreen(), // 3
+    const LostFoundScreen(), // 4
+    const PetHotelsScreen(), // 5 -> صفحة الفنادق الجديدة
   ];
 
   void _onItemTapped(int index) {
@@ -49,6 +51,8 @@ class _MainShellState extends State<MainShell> {
           const SizedBox(width: 8),
         ],
       ),
+
+      // --- القائمة الجانبية (Drawer) ---
       endDrawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -64,6 +68,8 @@ class _MainShellState extends State<MainShell> {
                         fontWeight: FontWeight.bold)),
               ),
             ),
+
+            // 1. Home
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Home'),
@@ -72,30 +78,44 @@ class _MainShellState extends State<MainShell> {
                 _onItemTapped(0);
               },
             ),
+
+            // 2. Adoption
             ListTile(
               leading: const Icon(Icons.pets),
               title: const Text('Adoption'),
               onTap: () {
                 Navigator.pop(context);
-                setState(() {
-                  _selectedIndex = 3;
-                });
+                setState(() => _selectedIndex = 3);
               },
             ),
+
+            // 3. Lost & Found
             ListTile(
               leading: const Icon(Icons.search),
               title: const Text('Lost & Found'),
               onTap: () {
                 Navigator.pop(context);
+                setState(() => _selectedIndex = 4);
+              },
+            ),
+
+            // 4. Pet Hotels (الإضافة الجديدة)
+            ListTile(
+              leading: const Icon(Icons.apartment), // أيقونة مناسبة للفنادق
+              title: const Text('Pet Hotels'),
+              onTap: () {
+                Navigator.pop(context); // إغلاق القائمة
                 setState(() {
-                  _selectedIndex = 4;
+                  _selectedIndex = 5; // الانتقال لصفحة الفنادق
                 });
               },
             ),
           ],
         ),
       ),
+
       body: _screens[_selectedIndex],
+
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: AppColors.navBarBackground,

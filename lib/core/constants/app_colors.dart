@@ -19,4 +19,6 @@ class AppColors {
   static const Color foundGreen = Color(0xFF10B981);
   static const Color bannerGradientStart = Color(0xFFFFD700);
   static const Color bannerGradientEnd = Color(0xFF84CC16);
+  static const Color hotelHeaderStart = Color(0xFFFFD700);
+  static const Color hotelHeaderEnd = Color(0xFF84CC16);
 }
