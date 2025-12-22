@@ -3,7 +3,8 @@ import '../core/constants/app_colors.dart';
 import 'home/home_screen.dart';
 import 'adoption/adoption_screen.dart';
 import 'lost_found/lost_found_screen.dart';
-import 'hotel/pet_hotels_screen.dart'; // 1. استيراد الصفحة الجديدة
+import 'hotel/pet_hotels_screen.dart';
+import 'clinics/clinics_screen.dart'; // 1. إضافة استيراد صفحة العيادات
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -21,7 +22,8 @@ class _MainShellState extends State<MainShell> {
     const Center(child: Text("Profile")), // 2
     const AdoptionScreen(), // 3
     const LostFoundScreen(), // 4
-    const PetHotelsScreen(), // 5 -> صفحة الفنادق الجديدة
+    const PetHotelsScreen(), // 5
+    const ClinicsScreen(), // 6 -> صفحة العيادات الجديدة (تمت إضافتها هنا)
   ];
 
   void _onItemTapped(int index) {
@@ -99,14 +101,26 @@ class _MainShellState extends State<MainShell> {
               },
             ),
 
-            // 4. Pet Hotels (الإضافة الجديدة)
+            // 4. Pet Hotels
             ListTile(
-              leading: const Icon(Icons.apartment), // أيقونة مناسبة للفنادق
+              leading: const Icon(Icons.apartment),
               title: const Text('Pet Hotels'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  _selectedIndex = 5;
+                });
+              },
+            ),
+
+            // 5. Vet Clinics (الإضافة الجديدة في المنيو)
+            ListTile(
+              leading: const Icon(Icons.medical_services), // أيقونة طبية
+              title: const Text('Vet Clinics'),
               onTap: () {
                 Navigator.pop(context); // إغلاق القائمة
                 setState(() {
-                  _selectedIndex = 5; // الانتقال لصفحة الفنادق
+                  _selectedIndex = 6; // الانتقال لصفحة العيادات
                 });
               },
             ),
@@ -137,6 +151,7 @@ class _MainShellState extends State<MainShell> {
               label: '',
             ),
           ],
+
           currentIndex: _selectedIndex > 2 ? 0 : _selectedIndex,
           selectedItemColor: _selectedIndex > 2
               ? AppColors.textDark.withOpacity(0.6)
