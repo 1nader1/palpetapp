@@ -4,16 +4,12 @@ import 'home/home_screen.dart';
 import 'adoption/adoption_screen.dart';
 import 'lost_found/lost_found_screen.dart';
 import 'hotel/pet_hotels_screen.dart';
-<<<<<<< HEAD
 import 'clinics/clinics_screen.dart';
 import 'profile/profile_screen.dart';
 import 'add_post/add_post_screen.dart';
-
-=======
 import 'clinics/clinics_screen.dart'; 
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/profile/profile_screen.dart';
->>>>>>> 0f777b44c11b2f7b5c5d81a72d1e75feb7c65558
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -25,7 +21,6 @@ class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-<<<<<<< HEAD
     const HomeScreen(),
     const AddPostScreen(),
     const ProfileScreen(),
@@ -33,7 +28,6 @@ class _MainShellState extends State<MainShell> {
     const LostFoundScreen(),
     const PetHotelsScreen(),
     const ClinicsScreen(),
-=======
     const HomeScreen(), 
     const Center(child: Text("Add Post")), 
     const ProfileScreen () , 
@@ -41,7 +35,6 @@ class _MainShellState extends State<MainShell> {
     const LostFoundScreen(), 
     const PetHotelsScreen(), 
     const ClinicsScreen(), 
->>>>>>> 0f777b44c11b2f7b5c5d81a72d1e75feb7c65558
   ];
 
   void _onItemTapped(int index) {
