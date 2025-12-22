@@ -4,8 +4,9 @@ import 'home/home_screen.dart';
 import 'adoption/adoption_screen.dart';
 import 'lost_found/lost_found_screen.dart';
 import 'hotel/pet_hotels_screen.dart';
-import 'clinics/clinics_screen.dart'; // 1. إضافة استيراد صفحة العيادات
-
+import 'clinics/clinics_screen.dart'; 
+import '../screens/notifications/notifications_screen.dart';
+import '../screens/profile/profile_screen.dart';
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -17,13 +18,13 @@ class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    const HomeScreen(), // 0
-    const Center(child: Text("Add Post")), // 1 (Placeholder for now)
-    const Center(child: Text("Profile")), // 2
-    const AdoptionScreen(), // 3
-    const LostFoundScreen(), // 4
-    const PetHotelsScreen(), // 5
-    const ClinicsScreen(), // 6 -> صفحة العيادات الجديدة (تمت إضافتها هنا)
+    const HomeScreen(), 
+    const Center(child: Text("Add Post")), 
+    const ProfileScreen () , 
+    const AdoptionScreen(), 
+    const LostFoundScreen(), 
+    const PetHotelsScreen(), 
+    const ClinicsScreen(), 
   ];
 
   void _onItemTapped(int index) {
@@ -36,14 +37,13 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16.0),
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 16.0),
           child: Icon(Icons.pets, color: AppColors.primary, size: 32),
         ),
         actions: [
           IconButton(icon: const Icon(Icons.language), onPressed: () {}),
           
-          // 2. تفعيل زر الإشعارات هنا
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
@@ -120,7 +120,6 @@ class _MainShellState extends State<MainShell> {
               },
             ),
 
-            // 5. Vet Clinics (الإضافة الجديدة في المنيو)
             ListTile(
               leading: const Icon(Icons.medical_services),
               title: const Text('Vet Clinics'),
