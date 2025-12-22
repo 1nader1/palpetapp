@@ -9,6 +9,7 @@ class AdoptionPetCard extends StatelessWidget {
   final String description;
   final String imageUrl;
   final List<String> tags;
+  final VoidCallback? onViewDetails;
 
   const AdoptionPetCard({
     super.key,
@@ -19,6 +20,7 @@ class AdoptionPetCard extends StatelessWidget {
     required this.description,
     required this.imageUrl,
     required this.tags,
+    this.onViewDetails,
   });
 
   @override
@@ -30,7 +32,7 @@ class AdoptionPetCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -39,29 +41,26 @@ class AdoptionPetCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                child: Image.network(
-                  imageUrl,
-                  height: 250,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => Container(height: 250, color: Colors.grey[200]),
-                ),
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            child: Image.network(
+              imageUrl,
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (ctx, _, __) => Container(
+                height: 200,
+                color: Colors.grey[200],
+                child: const Icon(Icons.pets, size: 50, color: Colors.grey),
               ),
-
-            ],
+            ),
           ),
 
           Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -73,31 +72,39 @@ class AdoptionPetCard extends StatelessWidget {
                         color: AppColors.textDark,
                       ),
                     ),
-                    Text(
-                      age,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textGrey,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: gender == "Male" 
+                            ? Colors.blue.withOpacity(0.1) 
+                            : Colors.pink.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        gender,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: gender == "Male" ? Colors.blue : Colors.pink,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-
-
+                const SizedBox(height: 4),
                 Text(
-                  "$breed • $gender",
+                  "$breed • $age",
                   style: const TextStyle(
                     fontSize: 14,
-                    color: AppColors.textGrey,
-                    fontWeight: FontWeight.w500,
+                    color: Colors.grey,
                   ),
                 ),
                 const SizedBox(height: 12),
 
-
                 Text(
                   description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.textGrey,
@@ -106,52 +113,52 @@ class AdoptionPetCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: tags.map((tag) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[300]!),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.2)),
                     ),
                     child: Text(
                       tag,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textDark, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   )).toList(),
                 ),
+
                 const SizedBox(height: 20),
 
-
+                // --- التعديل هنا: استخدام ElevatedButton.icon ---
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {},
+                  child: ElevatedButton.icon(
+                    onPressed: onViewDetails,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      elevation: 0,
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.pets, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          "View Details",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                    // إضافة الأيقونة هنا
+                    icon: const Icon(Icons.pets, size: 20), 
+                    // النص يصبح label
+                    label: const Text(
+                      "View Details",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),

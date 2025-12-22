@@ -11,8 +11,7 @@ class HotelDetailsScreen extends StatefulWidget {
 }
 
 class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
-
-  int _selectedTab = 0; 
+  int _selectedTab = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +22,11 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
         elevation: 0,
         leading: Container(
           margin: const EdgeInsets.all(8),
-          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+          decoration:
+              const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textDark, size: 20),
+            icon: const Icon(Icons.arrow_back,
+                color: AppColors.textDark, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -35,7 +36,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             SizedBox(
               height: 320,
               width: double.infinity,
@@ -45,7 +45,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                 errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
               ),
             ),
-
             Container(
               transform: Matrix4.translationValues(0.0, -30.0, 0.0),
               decoration: const BoxDecoration(
@@ -58,28 +57,22 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                 children: [
                   Center(
                     child: Container(
-                      width: 40, height: 4,
-                      decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
                   const SizedBox(height: 20),
-
-
                   Text(
                     widget.data['name'],
-                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                    style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, color: AppColors.primary, size: 18),
-                      const SizedBox(width: 4),
-                      Text(widget.data['address'], style: const TextStyle(color: AppColors.textGrey, fontSize: 15)),
-                    ],
-                  ),
-
                   const SizedBox(height: 24),
-
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
@@ -93,12 +86,13 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 24),
                   AnimatedCrossFade(
-                    firstChild: _buildDetailsContent(),  
-                    secondChild: _buildAmenitiesContent(), 
-                    crossFadeState: _selectedTab == 0 ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                    firstChild: _buildDetailsContent(),
+                    secondChild: _buildAmenitiesContent(),
+                    crossFadeState: _selectedTab == 0
+                        ? CrossFadeState.showFirst
+                        : CrossFadeState.showSecond,
                     duration: const Duration(milliseconds: 300),
                   ),
                 ],
@@ -110,19 +104,24 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
     );
   }
 
-
   Widget _buildDetailsContent() {
-    final List<String> supportedPets = widget.data['supportedPets'] as List<String>;
+    final List<String> supportedPets =
+        widget.data['supportedPets'] as List<String>;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // أ. About
-        const Text("About Hotel", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+        const Text("About Hotel",
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark)),
         const SizedBox(height: 10),
         Text(
           widget.data['description'] ?? "No description available.",
-          style: const TextStyle(color: AppColors.textGrey, height: 1.6, fontSize: 15),
+          style: const TextStyle(
+              color: AppColors.textGrey, height: 1.6, fontSize: 15),
         ),
 
         const SizedBox(height: 24),
@@ -137,50 +136,64 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Accepts", style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.bold)),
+                    const Text("Accepts",
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
+                    // --- هنا التعديل: حذف الأيقونات والإبقاء على النص فقط ---
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: supportedPets.map((pet) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey[300]!),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(_getPetIcon(pet), size: 14, color: AppColors.textDark),
-                            const SizedBox(width: 6),
-                            Text(pet, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                          ],
-                        ),
-                      )).toList(),
+                      children: supportedPets
+                          .map((pet) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey[300]!),
+                                ),
+                                child: Text(pet,
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textDark)),
+                              ))
+                          .toList(),
                     ),
+                    // -------------------------------------------------------
                   ],
                 ),
               ),
-              
-              Container(width: 1, height: 50, color: Colors.grey[300], margin: const EdgeInsets.symmetric(horizontal: 16)),
-
-
+              Container(
+                  width: 1,
+                  height: 50,
+                  color: Colors.grey[300],
+                  margin: const EdgeInsets.symmetric(horizontal: 16)),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text("Price", style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.bold)),
+                  const Text("Price",
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Text(
                     widget.data['price'],
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primary),
+                    style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary),
                   ),
-                  const Text("/ Night", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  const Text("/ Night",
+                      style: TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
               ),
             ],
@@ -189,7 +202,38 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
         const SizedBox(height: 24),
 
-        const Text("Contact Info", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+        // --- Location ---
+        const Text("Location",
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            const Icon(Icons.location_on_outlined,
+                color: AppColors.primary, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                widget.data['address'],
+                style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textGrey,
+                    fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // --- Contact Info ---
+        const Text("Contact Info",
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark)),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
@@ -197,24 +241,36 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.grey[200]!),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4))
+            ],
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-                child: const Icon(Icons.phone, color: AppColors.primary, size: 24),
+                decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    shape: BoxShape.circle),
+                child:
+                    const Icon(Icons.phone, color: AppColors.primary, size: 24),
               ),
               const SizedBox(width: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Phone Number", style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  const Text("Phone Number",
+                      style: TextStyle(fontSize: 13, color: Colors.grey)),
                   const SizedBox(height: 4),
                   Text(
                     widget.data['phone'] ?? "+962 79 000 0000",
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark),
                   ),
                 ],
               ),
@@ -224,10 +280,13 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
-                child: const Text("Call", style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text("Call",
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -236,13 +295,14 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
     );
   }
 
-  // محتوى التبويب الثاني (Amenities): منفصل تماماً
+  // محتوى التبويب الثاني (Amenities)
   Widget _buildAmenitiesContent() {
     final List<String> amenities = widget.data['amenities'] as List<String>;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Facilities & Services", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text("Facilities & Services",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         GridView.builder(
           shrinkWrap: true,
@@ -264,12 +324,14 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle_outline, color: AppColors.primary, size: 20),
+                  const Icon(Icons.check_circle_outline,
+                      color: AppColors.primary, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       amenities[index],
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 13),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -293,7 +355,12 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
           decoration: BoxDecoration(
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)] : [],
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.05), blurRadius: 4)
+                  ]
+                : [],
           ),
           child: Text(
             label,
@@ -306,14 +373,5 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
         ),
       ),
     );
-  }
-
-  IconData _getPetIcon(String type) {
-    switch (type) {
-      case 'Dog': return Icons.pets;
-      case 'Cat': return Icons.cruelty_free;
-      case 'Bird': return Icons.emoji_nature;
-      default: return Icons.pets;
-    }
   }
 }

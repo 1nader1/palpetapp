@@ -154,66 +154,64 @@ class LostFoundDetailsScreen extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 15, color: AppColors.textGrey, height: 1.6),
                   ),
+                  
+                  // -------------------------------------------------------
+                  // قسم Contact Info الجديد (بنفس تصميم الفندق)
+                  // -------------------------------------------------------
                   const SizedBox(height: 24),
-                  const Text("Contact Info",
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textDark)),
+                  const Text("Contact Info", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
                   const SizedBox(height: 12),
-                  _buildContactRow(Icons.phone, data['contactPhone'] ?? "N/A"),
-                  const SizedBox(height: 40),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.call),
-                          SizedBox(width: 10),
-                          Text("Contact Owner",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey[200]!),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
+                          child: const Icon(Icons.phone, color: AppColors.primary, size: 24),
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Phone Number", style: TextStyle(fontSize: 13, color: Colors.grey)),
+                            const SizedBox(height: 4),
+                            // استخدام رقم الهاتف من البيانات
+                            Text(
+                              data['contactPhone'] ?? "N/A",
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        ElevatedButton(
+                          onPressed: () {
+                             // كود الاتصال هنا
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          ),
+                          child: const Text("Call", style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ],
                     ),
                   ),
+                 
                 ],
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildContactRow(IconData icon, String info) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 20, color: AppColors.primary),
-        ),
-        const SizedBox(width: 16),
-        Text(info,
-            style: const TextStyle(
-                fontSize: 16,
-                color: AppColors.textDark,
-                fontWeight: FontWeight.w500)),
-      ],
     );
   }
 }
