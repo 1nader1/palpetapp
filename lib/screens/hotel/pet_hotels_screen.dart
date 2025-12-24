@@ -99,7 +99,7 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                   colors: [
                     Color(0xFFFFA726),
                     Color(0xFFEF6C00)
-                  ], // Gradient البرتقالي
+                  ], 
 
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
