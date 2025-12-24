@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
-import '../home/widgets/pet_card.dart'; 
-import '../home/widgets/home_banner.dart'; 
-import '../home/widgets/service_card.dart';  
+import 'package:palpet/core/constants/app_colors.dart';
+import 'package:palpet/data/models/pet.dart'; //
+import 'package:palpet/services/database_service.dart'; //
+import 'package:palpet/screens/home/widgets/pet_card.dart'; 
+import 'package:palpet/screens/home/widgets/home_banner.dart'; 
+import 'package:palpet/screens/home/widgets/service_card.dart';  
 
 class HomeScreen extends StatelessWidget {
-  // دالة لاستقبال أمر التنقل
   final Function(int) onNavigate;
 
   const HomeScreen({super.key, required this.onNavigate});
@@ -53,28 +54,28 @@ class HomeScreen extends StatelessWidget {
               subtitle: "Browse pets looking for a forever home",
               icon: Icons.pets,
               backgroundColor: AppColors.serviceAdoptionBg,
-              onTap: () => onNavigate(3), // الذهاب لصفحة التبني (Index 3)
+              onTap: () => onNavigate(3),
             ),
             ServiceCard(
               title: "Lost & Found",
               subtitle: "Report lost pets or help reunite found animals",
               icon: Icons.search,
               backgroundColor: AppColors.serviceLostBg,
-              onTap: () => onNavigate(4), // الذهاب لصفحة المفقودات (Index 4)
+              onTap: () => onNavigate(4),
             ),
             ServiceCard(
               title: "Vet Clinics",
               subtitle: "Find veterinary clinics near you",
               icon: Icons.local_hospital,
               backgroundColor: AppColors.serviceVetBg,
-              onTap: () => onNavigate(6), // الذهاب لصفحة العيادات (Index 6)
+              onTap: () => onNavigate(6),
             ),
             ServiceCard(
               title: "Pet Hotels",
               subtitle: "Safe and comfortable accommodations",
               icon: Icons.house, 
               backgroundColor: AppColors.serviceHotelBg,
-              onTap: () => onNavigate(5), // الذهاب لصفحة الفنادق (Index 5)
+              onTap: () => onNavigate(5),
             ),
           ],
         ),
@@ -107,21 +108,41 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 24),
 
-        const PetCard(
-          name: "Max",
-          breed: "Golden Retriever",
-          age: "2 years old",
-          description: "Friendly and energetic dog looking for an active family.",
-          imageUrl: "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=800&q=80",
+        // --- DYNAMIC FIREBASE SECTION START ---
+        StreamBuilder<List<Pet>>(
+          stream: DatabaseService().getPets(), // Listens to your Firestore collection
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text("Error: ${snapshot.error}"));
+            }
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 20),
+                  child: Text("No pets available for adoption yet."),
+                ),
+              );
+            }
+
+            final pets = snapshot.data!;
+            
+            // Displays all pets found in your Firestore collection
+            return Column(
+              children: pets.map((pet) => PetCard(
+                name: pet.name,
+                breed: pet.breed,
+                age: pet.age,
+                description: pet.description,
+                imageUrl: pet.imageUrl,
+              )).toList(),
+            );
+          },
         ),
-        const PetCard(
-          name: "Luna",
-          breed: "Orange Tabby",
-          age: "1 year old",
-          description: "Gentle and affectionate cat who loves to cuddle.",
-          imageUrl: "https://images.unsplash.com/photo-1574158622682-e40e69881006?auto=format&fit=crop&w=800&q=80",
-        ),
-        
+        // --- DYNAMIC FIREBASE SECTION END ---
+
         const SizedBox(height: 20),
       ],
     );
