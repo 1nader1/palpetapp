@@ -45,20 +45,25 @@ class Pet {
   }
 
   // تحويل البيانات من فايربيس إلى التطبيق (قراءة)
-  factory Pet.fromMap(Map<String, dynamic> map, String documentId) {
-    return Pet(
-      id: documentId,
-      name: map['name'] ?? '',
-      type: map['type'] ?? '',
-      gender: map['gender'] ?? '',
-      breed: map['breed'] ?? '',
-      age: map['age'] ?? '',
-      description: map['description'] ?? '',
-      imageUrl: map['imageUrl'] ?? '',
-      healthTags: List<String>.from(map['healthTags'] ?? []),
-      location: map['location'] ?? '',
-      contactPhone: map['contactPhone'] ?? '',
-      contactEmail: map['contactEmail'] ?? '',
-    );
-  }
+ // ... existing Pet class fields and constructor
+
+factory Pet.fromMap(Map<String, dynamic> map, String documentId) {
+  return Pet(
+    id: documentId,
+    name: map['name'] ?? '',
+    type: map['type'] ?? '',
+    gender: map['gender'] ?? '',
+    breed: map['breed'] ?? '',
+    age: map['age'] ?? '',
+    description: map['description'] ?? '',
+    imageUrl: map['imageUrl'] ?? '',
+    // Safety check for List type
+    healthTags: (map['healthTags'] is List) 
+        ? List<String>.from(map['healthTags']) 
+        : [],
+    location: map['location'] ?? '',
+    contactPhone: map['contactPhone'] ?? '',
+    contactEmail: map['contactEmail'] ?? '',
+  );
+}
 }

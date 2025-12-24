@@ -2,30 +2,24 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthService {
-  // نأخذ نسخة من الفايربيس
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // 1. معرفة المستخدم الحالي (هل هو مسجل دخول أم لا؟)
   User? get currentUser => _auth.currentUser;
 
-  // Stream لمراقبة حالة المستخدم (مفيد لتوجيه المستخدم للصفحة الرئيسية أو صفحة الدخول تلقائياً)
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // 2. إنشاء حساب جديد (Sign Up)
   Future<UserCredential> signUp({
     required String email,
     required String password,
-    required String name, // سنحفظ الاسم في الداتابيس
+    required String name, 
   }) async {
     try {
-      // إنشاء الحساب في Authentication
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // (اختياري لكن مهم) حفظ بيانات المستخدم الإضافية في Firestore
       await _firestore.collection('users').doc(userCredential.user!.uid).set({
         'uid': userCredential.user!.uid,
         'email': email,
@@ -39,7 +33,6 @@ class AuthService {
     }
   }
 
-  // 3. تسجيل الدخول (Sign In)
   Future<UserCredential> signIn({
     required String email,
     required String password,
@@ -54,12 +47,10 @@ class AuthService {
     }
   }
 
-  // 4. تسجيل الخروج (Sign Out)
   Future<void> signOut() async {
     await _auth.signOut();
   }
 
-  // دالة مساعدة لترجمة أخطاء فايربيس للعربية (عشان تعرضها للمستخدم)
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'email-already-in-use':
