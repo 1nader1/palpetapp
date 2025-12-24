@@ -10,8 +10,10 @@ plugins {
 
 android {
     namespace = "com.example.palpet"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 34 
+    
+    // حل مشكلة الـ NDK
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -23,21 +25,17 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.palpet"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // حل مشكلة cloud_firestore (يجب أن يكون 23 أو أعلى)
+        minSdk = 23  
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
-        
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // استخدام مفاتيح الديباج للتشغيل المؤقت بصيغة ريليس
             signingConfig = signingConfigs.getByName("debug")
         }
     }
