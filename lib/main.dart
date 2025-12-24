@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // إضافة مكتبة المصادقة
+import 'firebase_options.dart';
 import 'core/constants/app_colors.dart';
 import 'screens/main_shell.dart';
-import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'screens/auth/login_screen.dart'; // إضافة استيراد صفحة الدخول
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +47,29 @@ class PalPetApp extends StatelessWidget {
           iconTheme: IconThemeData(color: AppColors.textDark),
         ),
       ),
-      home: const MainShell(),
+      
+      // هنا التغيير الأساسي: فحص حالة المستخدم
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          // 1. في حالة الانتظار (تحميل)
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              ),
+            );
+          }
+          
+          // 2. إذا كان المستخدم مسجل دخول (يوجد بيانات) -> نذهب للرئيسية
+          if (snapshot.hasData) {
+            return const MainShell();
+          }
+          
+          // 3. إذا لم يكن مسجل دخول -> نذهب لصفحة الدخول
+          return const LoginScreen();
+        },
+      ),
     );
   }
 }
