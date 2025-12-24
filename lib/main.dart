@@ -3,10 +3,10 @@ import 'core/constants/app_colors.dart';
 import 'screens/main_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // هذا الملف الجديد الذي تم إنشاؤه
+import 'firebase_options.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // خطوة ضرورية جداً
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
