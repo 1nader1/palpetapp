@@ -28,10 +28,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.textDark),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
