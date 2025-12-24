@@ -70,7 +70,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
       if (_searchQuery.isNotEmpty) {
         final name = hotel['name'].toString().toLowerCase();
         final query = _searchQuery.toLowerCase();
-
         if (!name.contains(query)) {
           return false;
         }
@@ -93,7 +92,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- 1. Header Banner ---
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -126,12 +124,10 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
@@ -157,7 +153,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   TextField(
                     controller: _searchController,
                     onChanged: (val) {
@@ -190,7 +185,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _filteredHotels.isEmpty

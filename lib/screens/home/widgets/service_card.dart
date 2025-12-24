@@ -6,6 +6,7 @@ class ServiceCard extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final Color backgroundColor;
+  final VoidCallback onTap;
 
   const ServiceCard({
     super.key,
@@ -13,6 +14,7 @@ class ServiceCard extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     required this.backgroundColor,
+    required this.onTap,
   });
 
   @override
@@ -35,7 +37,6 @@ class ServiceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-
             Container(
               padding: const EdgeInsets.all(12),
               decoration: const BoxDecoration(
@@ -44,8 +45,6 @@ class ServiceCard extends StatelessWidget {
               ),
               child: Icon(icon, color: AppColors.primary, size: 28),
             ),
-            
-
             Column(
               children: [
                 const SizedBox(height: 12),
@@ -71,14 +70,12 @@ class ServiceCard extends StatelessWidget {
                 ),
               ],
             ),
-
-
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               height: 40,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: onTap,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -91,7 +88,9 @@ class ServiceCard extends StatelessWidget {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("View More", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text("View More",
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold)),
                     SizedBox(width: 4),
                     Icon(Icons.arrow_forward, size: 14),
                   ],
