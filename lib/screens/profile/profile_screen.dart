@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
-import '../auth/login_screen.dart'; // تأكد أن المسار صحيح لصفحة اللوج ان
+import '../auth/login_screen.dart'; 
 import 'widgets/profile_menu_item.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,10 +14,10 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // متغيرات لحفظ بيانات المستخدم
-  String _name = "جاري التحميل...";
+
+  String _name = "loading...";
   String _email = "";
-  String _photoUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=2080&auto=format&fit=crop"; // صورة افتراضية
+  String _photoUrl = "https://cdn-icons-png.flaticon.com/128/1077/1077114.png";
 
   @override
   void initState() {
@@ -25,7 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _fetchUserData();
   }
 
-  // دالة لجلب البيانات من فايربيس
+
   Future<void> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (userDoc.exists && mounted) {
           setState(() {
             _name = userDoc['name'] ?? "مستخدم PalPet";
-
+            _name = userDoc['name'] ?? "palpet user";
           });
         }
       } catch (e) {
@@ -65,7 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("فشل تسجيل الخروج: $e")),
+        SnackBar(content: Text("logout failure: $e")),
       );
     }
   }
@@ -113,7 +113,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 60),
             
-            // عرض الاسم الحقيقي
+
             Text(
               _name,
               style: const TextStyle(
@@ -123,7 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            // عرض الإيميل الحقيقي
+
             Text(
               _email,
               style: const TextStyle(
