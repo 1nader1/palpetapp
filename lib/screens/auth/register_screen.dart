@@ -15,18 +15,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  
   bool _isLoading = false;
+  String? _selectedLocation; // متغير لحفظ المنطقة المختارة
+
+  // نفس قائمة المناطق الموحدة في التطبيق
+  final List<String> _jordanAreas = [
+    'Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Salt', 'Madaba', 
+    'Jerash', 'Ajloun', 'Mafraq', 'Karak', 'Tafilah', 'Ma\'an',
+    'Abdoun', 'Dabouq', 'Khalda', 'Sweifieh', 'Jubaiha', 'Tla\' Al-Ali'
+  ];
 
   void _register() async {
     if (_formKey.currentState!.validate()) {
+      // التحقق من اختيار المنطقة
+      if (_selectedLocation == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select your location'), backgroundColor: Colors.red),
+        );
+        return;
+      }
+
       setState(() => _isLoading = true);
       try {
         await AuthService().signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
           name: _nameController.text.trim(),
+          location: _selectedLocation!, // نرسل المنطقة للباك إند
         );
-        // to main shell and remove all previous routes
+        
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -80,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // full name field
+                // Name
                 TextFormField(
                   controller: _nameController,
                   decoration: _inputDecoration('Full Name', Icons.person_outline),
@@ -89,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // email field
+                // Email
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -98,8 +116,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       value!.isEmpty ? 'Please enter your email' : null,
                 ),
                 const SizedBox(height: 16),
+                
+                // --- Location Dropdown (الجديد) ---
+                DropdownButtonFormField<String>(
+                  value: _selectedLocation,
+                  decoration: _inputDecoration('Select City / Area', Icons.location_on_outlined),
+                  items: _jordanAreas.map((area) {
+                    return DropdownMenuItem(value: area, child: Text(area));
+                  }).toList(),
+                  onChanged: (val) => setState(() => _selectedLocation = val),
+                  validator: (val) => val == null ? 'Please select your area' : null,
+                ),
+                const SizedBox(height: 16),
+                // ----------------------------------
 
-                // password field
+                // Password
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
@@ -109,7 +140,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                //register button
+                // Register Button
                 _isLoading
                     ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                     : ElevatedButton(
