@@ -47,249 +47,259 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: StreamBuilder<List<Pet>>(
-        stream: _petsStream,
-        builder: (context, snapshot) {
-          // 1. حالة التحميل
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          stream: _petsStream,
+          builder: (context, snapshot) {
+            // 1. حالة التحميل
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          // 2. تصفية البيانات (Logic)
-          List<Pet> displayList = [];
-          if (snapshot.hasData) {
-            final allPets = snapshot.data!;
-            
-            displayList = allPets.where((pet) {
-              // أ. قبول فقط أنواع Lost و Found (تجاهل التبني والفنادق)
-              if (pet.postType != 'Lost' && pet.postType != 'Found' && 
-                  pet.postType != 'lost' && pet.postType != 'found') {
-                return false;
-              }
+            // 2. تصفية البيانات (Logic)
+            List<Pet> displayList = [];
+            if (snapshot.hasData) {
+              final allPets = snapshot.data!;
 
-              // ب. فلترة التبويب (Tabs: All vs Lost vs Found)
-              if (_selectedFilterIndex == 1 && pet.postType.toLowerCase() != 'lost') return false;
-              if (_selectedFilterIndex == 2 && pet.postType.toLowerCase() != 'found') return false;
-
-              // ج. فلترة نوع الحيوان (Dropdown)
-              if (_selectedPetType != null &&
-                  _selectedPetType != "All Pet Types" &&
-                  pet.type != _selectedPetType) return false;
-
-              // د. فلترة البحث (Search)
-              if (_searchQuery.isNotEmpty) {
-                final query = _searchQuery.toLowerCase();
-                final name = pet.name.toLowerCase();
-                final location = pet.location.toLowerCase();
-                if (!name.contains(query) && !location.contains(query)) {
+              displayList = allPets.where((pet) {
+                // أ. قبول فقط أنواع Lost و Found (تجاهل التبني والفنادق)
+                if (pet.postType != 'Lost' &&
+                    pet.postType != 'Found' &&
+                    pet.postType != 'lost' &&
+                    pet.postType != 'found') {
                   return false;
                 }
-              }
 
-              return true;
-            }).toList();
-          }
+                // ب. فلترة التبويب (Tabs: All vs Lost vs Found)
+                if (_selectedFilterIndex == 1 &&
+                    pet.postType.toLowerCase() != 'lost') return false;
+                if (_selectedFilterIndex == 2 &&
+                    pet.postType.toLowerCase() != 'found') return false;
 
-          // 3. بناء الواجهة
-          return SingleChildScrollView(
-            child: Column(
-              children: [
-                // --- Header Banner ---
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.bannerGradientStart,
-                        AppColors.bannerGradientEnd
+                // ج. فلترة نوع الحيوان (Dropdown)
+                if (_selectedPetType != null &&
+                    _selectedPetType != "All Pet Types" &&
+                    pet.type != _selectedPetType) return false;
+
+                // د. فلترة البحث (Search)
+                if (_searchQuery.isNotEmpty) {
+                  final query = _searchQuery.toLowerCase();
+                  final name = pet.name.toLowerCase();
+                  final location = pet.location.toLowerCase();
+                  if (!name.contains(query) && !location.contains(query)) {
+                    return false;
+                  }
+                }
+
+                return true;
+              }).toList();
+            }
+
+            // 3. بناء الواجهة
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  // --- Header Banner ---
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.bannerGradientStart,
+                          AppColors.bannerGradientEnd
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Lost & Found",
+                          style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textDark),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Report lost pets or help reunite\nfound animals with their owners",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textDark.withOpacity(0.7),
+                              height: 1.4),
+                        ),
+                        const SizedBox(height: 20),
+                        // أزرار الإبلاغ
+                        Row(
+                          children: [
+                            Expanded(
+                                child: _buildActionButton(
+                              context,
+                              "Report Lost Pet",
+                              AppColors.lostRed,
+                              Icons.warning_amber_rounded,
+                            )),
+                            const SizedBox(width: 12),
+                            Expanded(
+                                child: _buildActionButton(
+                              context,
+                              "Report Found Pet",
+                              AppColors.foundGreen,
+                              Icons.check_circle_outline,
+                            )),
+                          ],
+                        )
                       ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      const Text(
-                        "Lost & Found",
-                        style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textDark),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Report lost pets or help reunite\nfound animals with their owners",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textDark.withOpacity(0.7),
-                            height: 1.4),
-                      ),
-                      const SizedBox(height: 20),
-                      // أزرار الإبلاغ
-                      Row(
-                        children: [
-                          Expanded(
-                              child: _buildActionButton(
-                                context,
-                                "Report Lost Pet",
-                                AppColors.lostRed,
-                                Icons.warning_amber_rounded,
-                              )),
-                          const SizedBox(width: 12),
-                          Expanded(
-                              child: _buildActionButton(
-                                context,
-                                "Report Found Pet",
-                                AppColors.foundGreen,
-                                Icons.check_circle_outline,
-                              )),
-                        ],
-                      )
-                    ],
+
+                  // --- Filters & Search ---
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        // Tabs
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: Row(
+                            children: [
+                              _buildTabItem("All Alerts", 0),
+                              _buildTabItem("Lost Pets", 1,
+                                  activeColor: AppColors.lostRed),
+                              _buildTabItem("Found Pets", 2,
+                                  activeColor: AppColors.foundGreen),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Dropdown Type
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: _selectedPetType,
+                              hint: const Text("Pet Type"),
+                              icon: const Icon(Icons.keyboard_arrow_down,
+                                  color: Colors.grey),
+                              items: [
+                                "All Pet Types",
+                                "Dog",
+                                "Cat",
+                                "Bird",
+                                "Rabbit",
+                                "Other"
+                              ]
+                                  .map((e) => DropdownMenuItem(
+                                      value: e, child: Text(e)))
+                                  .toList(),
+                              onChanged: (val) {
+                                setState(() => _selectedPetType = val);
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Search Field
+                        TextField(
+                          controller: _searchController,
+                          onChanged: (val) {
+                            setState(() {
+                              _searchQuery = val;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Search name, location...",
+                            hintStyle: const TextStyle(
+                                color: Colors.grey, fontSize: 14),
+                            filled: true,
+                            fillColor: Colors.white,
+                            prefixIcon:
+                                const Icon(Icons.search, color: Colors.grey),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[200]!),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[200]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide:
+                                  const BorderSide(color: AppColors.primary),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                // --- Filters & Search ---
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      // Tabs
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[200]!),
-                        ),
-                        child: Row(
-                          children: [
-                            _buildTabItem("All Alerts", 0),
-                            _buildTabItem("Lost Pets", 1, activeColor: AppColors.lostRed),
-                            _buildTabItem("Found Pets", 2, activeColor: AppColors.foundGreen),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                  // --- List (Real Data) ---
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: displayList.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.only(top: 20),
+                            child: Text("No alerts found.",
+                                style: TextStyle(color: Colors.grey)),
+                          )
+                        : ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: displayList.length,
+                            itemBuilder: (context, index) {
+                              final pet = displayList[index];
+                              final bool isLost =
+                                  pet.postType.toLowerCase() == 'lost';
+                              final String formattedDate =
+                                  _formatDate(pet.createdAt);
 
-                      // Dropdown Type
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[200]!),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            value: _selectedPetType,
-                            hint: const Text("Pet Type"),
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
-                            items: [
-                              "All Pet Types",
-                              "Dog",
-                              "Cat",
-                              "Bird",
-                              "Rabbit",
-                              "Other"
-                            ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                            onChanged: (val) {
-                              setState(() => _selectedPetType = val);
+                              return LostFoundCard(
+                                name: pet.name,
+                                date: formattedDate,
+                                location: pet.location,
+                                imageUrl: pet.imageUrl,
+                                isLost: isLost,
+                                onViewDetails: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          LostFoundDetailsScreen(pet: pet),
+                                    ),
+                                  );
+                                },
+                              );
                             },
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Search Field
-                      TextField(
-                        controller: _searchController,
-                        onChanged: (val) {
-                          setState(() {
-                            _searchQuery = val;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          hintText: "Search name, location...",
-                          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-                          filled: true,
-                          fillColor: Colors.white,
-                          prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 14),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[200]!),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[200]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.primary),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
-                ),
-
-                // --- List (Real Data) ---
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: displayList.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.only(top: 20),
-                          child: Text("No alerts found.", style: TextStyle(color: Colors.grey)),
-                        )
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: displayList.length,
-                          itemBuilder: (context, index) {
-                            final pet = displayList[index];
-                            final bool isLost = pet.postType.toLowerCase() == 'lost';
-                            final String formattedDate = _formatDate(pet.createdAt);
-
-                            return LostFoundCard(
-                              name: pet.name,
-                              date: formattedDate,
-                              location: pet.location,
-                              imageUrl: pet.imageUrl,
-                              isLost: isLost,
-                              onViewDetails: () {
-                                // ---- التعديل الجوهري هنا ----
-                                // نقوم بإنشاء خريطة بيانات جديدة ودمجها للتأكد من وجود isLost
-                                // هذا سيمنع الخطأ: Type null is not a subtype of bool
-                                Map<String, dynamic> petData = pet.toMap();
-                                petData['isLost'] = isLost; // نمرر القيمة المحسوبة يدوياً
-                                petData['date'] = formattedDate; // نمرر التاريخ المنسق
-                                
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => LostFoundDetailsScreen(data: petData),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          );
-        }
-      ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          }),
     );
   }
 
   // Helper Widgets
-  Widget _buildActionButton(BuildContext context, String label, Color color, IconData icon) {
+  Widget _buildActionButton(
+      BuildContext context, String label, Color color, IconData icon) {
     return ElevatedButton(
       onPressed: () {
         Navigator.push(
@@ -310,7 +320,8 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
           Icon(icon, size: 18),
           const SizedBox(width: 6),
           Text(label,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              style:
+                  const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
         ],
       ),
     );

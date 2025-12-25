@@ -46,9 +46,11 @@ class DatabaseService {
     });
   }
 
-  Future<void> addPet(Pet pet) async {
+  // تعديل: الدالة الآن ترجع ID المستند الجديد لاستخدامه في الإشعار
+  Future<String> addPet(Pet pet) async {
     try {
-      await _db.collection('pets').add(pet.toMap());
+      DocumentReference docRef = await _db.collection('pets').add(pet.toMap());
+      return docRef.id;
     } catch (e) {
       print("Error adding pet: $e");
       rethrow;
@@ -56,12 +58,7 @@ class DatabaseService {
   }
 
   Future<void> deletePet(String petId) async {
-    try {
-      await _db.collection('pets').doc(petId).delete();
-    } catch (e) {
-      print("Error deleting pet: $e");
-      rethrow;
-    }
+    await _db.collection('pets').doc(petId).delete();
   }
 
   Stream<List<Clinic>> getClinics() {
@@ -78,9 +75,7 @@ class DatabaseService {
             phoneNumber: data['phoneNumber'] ?? '',
             isOpen: data['isOpen'] ?? true,
             workingHours: data['workingHours'] ?? '09:00 AM - 10:00 PM',
-            services: (data['services'] is List) 
-                ? List<String>.from(data['services']) 
-                : [],
+            services: (data['services'] is List) ? List<String>.from(data['services']) : [],
           );
         }).toList());
   }
