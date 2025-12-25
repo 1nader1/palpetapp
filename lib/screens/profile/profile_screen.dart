@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
-import '../auth/login_screen.dart'; // تأكد أن المسار صحيح لصفحة اللوج ان
+import '../auth/login_screen.dart'; 
 import 'widgets/profile_menu_item.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,10 +14,10 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // متغيرات لحفظ بيانات المستخدم
-  String _name = "جاري التحميل...";
+
+  String _name = "loading...";
   String _email = "";
-  String _photoUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=2080&auto=format&fit=crop"; // صورة افتراضية
+  String _photoUrl = "https://cdn-icons-png.flaticon.com/128/1077/1077114.png";
 
   @override
   void initState() {
@@ -25,16 +25,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _fetchUserData();
   }
 
-  // دالة لجلب البيانات من فايربيس
+
   Future<void> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       setState(() {
-        _email = user.email ?? ""; // الإيميل موجود دائماً في الـ Auth
+        _email = user.email ?? ""; 
       });
 
       try {
-        // جلب الاسم من Firestore (من كولكشن users)
+
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
@@ -42,8 +42,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         if (userDoc.exists && mounted) {
           setState(() {
-            _name = userDoc['name'] ?? "مستخدم PalPet";
-            // يمكنك هنا أيضاً جلب الصورة إذا كنت قد حفظتها في الداتابيس
+            _name = userDoc['name'] ?? "palpet user";
+
           });
         }
       } catch (e) {
@@ -52,12 +52,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // دالة تسجيل الخروج
+
   void _handleLogout() async {
     try {
       await AuthService().signOut();
       if (mounted) {
-        // العودة لصفحة تسجيل الدخول وحذف كل الصفحات السابقة من المكدس
+
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -66,7 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("فشل تسجيل الخروج: $e")),
+        SnackBar(content: Text("logout failure: $e")),
       );
     }
   }
@@ -114,7 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 60),
             
-            // عرض الاسم الحقيقي
+
             Text(
               _name,
               style: const TextStyle(
@@ -124,7 +124,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            // عرض الإيميل الحقيقي
+
             Text(
               _email,
               style: const TextStyle(
@@ -137,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  _buildStatCard("My Pets", "0"), // مؤقتاً 0 حتى نبرمج إضافة الحيوانات
+                  _buildStatCard("My Pets", "0"), 
                   const SizedBox(width: 16),
                   _buildStatCard("Bookings", "0"),
                   const SizedBox(width: 16),
@@ -199,12 +199,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 12),
                   
-                  // زر تسجيل الخروج
                   ProfileMenuItem(
                     title: "Log Out",
                     icon: Icons.logout,
                     isLogout: true,
-                    onTap: _handleLogout, // تم ربط الدالة هنا
+                    onTap: _handleLogout, 
                   ),
                   const SizedBox(height: 30),
                 ],
