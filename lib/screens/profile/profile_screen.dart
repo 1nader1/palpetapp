@@ -30,11 +30,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       setState(() {
-        _email = user.email ?? ""; // الإيميل موجود دائماً في الـ Auth
+        _email = user.email ?? "";
       });
 
       try {
-        // جلب الاسم من Firestore (من كولكشن users)
+
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (userDoc.exists && mounted) {
           setState(() {
             _name = userDoc['name'] ?? "مستخدم PalPet";
-            // يمكنك هنا أيضاً جلب الصورة إذا كنت قد حفظتها في الداتابيس
+
           });
         }
       } catch (e) {
@@ -52,12 +52,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // دالة تسجيل الخروج
   void _handleLogout() async {
     try {
       await AuthService().signOut();
       if (mounted) {
-        // العودة لصفحة تسجيل الدخول وحذف كل الصفحات السابقة من المكدس
+
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -137,7 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  _buildStatCard("My Pets", "0"), // مؤقتاً 0 حتى نبرمج إضافة الحيوانات
+                  _buildStatCard("My Pets", "0"), 
                   const SizedBox(width: 16),
                   _buildStatCard("Bookings", "0"),
                   const SizedBox(width: 16),
@@ -199,12 +198,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 12),
                   
-                  // زر تسجيل الخروج
                   ProfileMenuItem(
                     title: "Log Out",
                     icon: Icons.logout,
                     isLogout: true,
-                    onTap: _handleLogout, // تم ربط الدالة هنا
+                    onTap: _handleLogout,
                   ),
                   const SizedBox(height: 30),
                 ],

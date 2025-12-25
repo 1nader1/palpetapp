@@ -27,7 +27,7 @@ android {
     defaultConfig {
         applicationId = "com.example.palpet"
         // حل مشكلة cloud_firestore (يجب أن يكون 23 أو أعلى)
-        minSdk = 23  
+        minSdk = flutter.minSdkVersion  
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"

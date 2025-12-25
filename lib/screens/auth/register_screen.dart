@@ -26,7 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           password: _passwordController.text.trim(),
           name: _nameController.text.trim(),
         );
-        // الانتقال للصفحة الرئيسية بعد النجاح
+        // to main shell and remove all previous routes
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -64,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'إنشاء حساب جديد',
+                  'Create a new account',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
@@ -74,42 +74,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'انضم لمجتمع PalPet!',
+                  'Join the PalPet Community!',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: AppColors.textGrey),
                 ),
                 const SizedBox(height: 40),
 
-                // حقل الاسم
+                // full name field
                 TextFormField(
                   controller: _nameController,
-                  decoration: _inputDecoration('الاسم الكامل', Icons.person_outline),
+                  decoration: _inputDecoration('Full Name', Icons.person_outline),
                   validator: (value) =>
-                      value!.isEmpty ? 'الرجاء إدخال اسمك' : null,
+                      value!.isEmpty ? 'Please enter your name' : null,
                 ),
                 const SizedBox(height: 16),
 
-                // حقل الإيميل
+                // email field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: _inputDecoration('البريد الإلكتروني', Icons.email_outlined),
+                  decoration: _inputDecoration('Email', Icons.email_outlined),
                   validator: (value) =>
-                      value!.isEmpty ? 'الرجاء إدخال البريد الإلكتروني' : null,
+                      value!.isEmpty ? 'Please enter your email' : null,
                 ),
                 const SizedBox(height: 16),
 
-                // حقل كلمة المرور
+                // password field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: _inputDecoration('كلمة المرور', Icons.lock_outline),
+                  decoration: _inputDecoration('Password', Icons.lock_outline),
                   validator: (value) =>
-                      value!.length < 6 ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : null,
+                      value!.length < 6 ? 'Password must be at least 6 characters' : null,
                 ),
                 const SizedBox(height: 24),
 
-                // زر التسجيل
+                //register button
                 _isLoading
                     ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                     : ElevatedButton(
@@ -122,7 +122,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         child: const Text(
-                          'إنشاء الحساب',
+                          'Register',
                           style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),

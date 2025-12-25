@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
-        // الانتقال للصفحة الرئيسية بعد النجاح وحذف الصفحات السابقة من الذاكرة
+        // to main shell and remove all previous routes
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -58,11 +58,11 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // اللوجو أو العنوان
+                // logo and title
                 const Icon(Icons.pets, size: 80, color: AppColors.primary),
                 const SizedBox(height: 20),
                 const Text(
-                  'مرحباً بك مجدداً!',
+                  'Hello Again!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
@@ -72,33 +72,33 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'سجل دخولك للمتابعة في PalPet',
+                  'sign in to continue',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: AppColors.textGrey),
                 ),
                 const SizedBox(height: 40),
 
-                // حقل الإيميل
+                // email field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: _inputDecoration('البريد الإلكتروني', Icons.email_outlined),
+                  decoration: _inputDecoration('Email', Icons.email_outlined),
                   validator: (value) =>
-                      value!.isEmpty ? 'الرجاء إدخال البريد الإلكتروني' : null,
+                      value!.isEmpty ? 'Please enter your email' : null,
                 ),
                 const SizedBox(height: 16),
 
-                // حقل كلمة المرور
+                // password field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: _inputDecoration('كلمة المرور', Icons.lock_outline),
+                  decoration: _inputDecoration('Password', Icons.lock_outline),
                   validator: (value) =>
-                      value!.length < 6 ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : null,
+                      value!.length < 6 ? 'Password must be at least 6 characters' : null,
                 ),
                 const SizedBox(height: 24),
 
-                // زر الدخول
+                // login button
                 _isLoading
                     ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                     : ElevatedButton(
@@ -111,17 +111,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         child: const Text(
-                          'تسجيل الدخول',
+                          'Sign In',
                           style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
                 const SizedBox(height: 20),
 
-                // رابط إنشاء حساب
+                // register link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('ليس لديك حساب؟ ', style: TextStyle(color: AppColors.textGrey)),
+                    const Text('Not have an account?', style: TextStyle(color: AppColors.textGrey)),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -130,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
                       },
                       child: const Text(
-                        'أنشئ حساباً الآن',
+                        'Create an account now',
                         style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
                       ),
                     ),
