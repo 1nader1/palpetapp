@@ -19,17 +19,12 @@ class _AddPostScreenState extends State<AddPostScreen> {
   File? _selectedImage;
   String _selectedType = 'Adoption';
   final List<String> _postTypes = ['Adoption', 'Lost', 'Found', 'Hotel'];
-
-  // --- القوائم ---
   final List<String> _speciesList = ['Dog', 'Cat', 'Bird', 'Rabbit', 'Hamster', 'Turtle', 'Other'];
   final List<String> _genderList = ['Male', 'Female'];
-
-  // --- متغيرات الاختيار ---
-  String? _selectedSpecies; // للأنواع العادية (اختيار واحد)
-  List<String> _selectedHotelSpecies = []; // للفنادق (اختيار متعدد)
+  String? _selectedSpecies; 
+  List<String> _selectedHotelSpecies = [];
   String? _selectedGender;
 
-  // --- Controllers ---
   final _nameController = TextEditingController();
   final _breedController = TextEditingController();
   final _locationController = TextEditingController();

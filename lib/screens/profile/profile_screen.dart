@@ -135,11 +135,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 12),
                   
-
+                  // Dynamic Menu Items
                   ProfileMenuItem(
                     title: "Edit Profile",
                     icon: Icons.person_outline,
-                    onTap: () {
+                    onTap: ()  {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfileScreen()));
                     },
                   ),
