@@ -1,41 +1,43 @@
-import 'dart:io'; // ضروري للتعامل مع ملفات الصور
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // ضروري لخدمة التخزين
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:palpet/data/models/pet.dart';
 import 'package:palpet/data/models/clinic.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance; // تعريف خدمة التخزين
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // --- 1. دالة رفع الصور (الجديدة) ---
   Future<String> uploadImage(File imageFile) async {
     try {
-      // إنشاء اسم فريد للصورة بناءً على الوقت الحالي لضمان عدم تكرار الأسماء
       String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-      
-      // تحديد المسار داخل التخزين (داخل مجلد اسمه pets_images)
       Reference ref = _storage.ref().child('pets_images/$fileName.jpg');
-
-      // بدء عملية الرفع
       UploadTask uploadTask = ref.putFile(imageFile);
       TaskSnapshot snapshot = await uploadTask;
-
-      // بعد اكتمال الرفع، نجلب رابط التحميل (URL) لنخزنه في الداتا بيس
-      String downloadUrl = await snapshot.ref.getDownloadURL();
-      return downloadUrl;
+      return await snapshot.ref.getDownloadURL();
     } catch (e) {
       print("Error uploading image: $e");
-      throw Exception("فشل في رفع الصورة، يرجى المحاولة مرة أخرى.");
+      throw Exception("Error Uploading Image, try again");
     }
   }
 
-  // --- 2. دوال الحيوانات / المنشورات ---
+  Stream<List<Pet>> getUserPets(String userId) {
+    return _db
+        .collection('pets')
+        .where('ownerId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return Pet.fromMap(doc.data(), doc.id);
+      }).toList();
+    });
+  }
 
   Stream<List<Pet>> getPets() {
     return _db
         .collection('pets')
-        .orderBy('createdAt', descending: true) // ترتيب المنشورات: الأحدث أولاً
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -62,8 +64,6 @@ class DatabaseService {
     }
   }
 
-  // --- 3. دوال العيادات (كما هي) ---
-
   Stream<List<Clinic>> getClinics() {
     return _db.collection('clinics').snapshots().map((snapshot) =>
         snapshot.docs.map((doc) {
@@ -83,5 +83,23 @@ class DatabaseService {
                 : [],
           );
         }).toList());
+  }
+
+
+  Stream<int> getFavoritesCount(String userId) {
+    return _db
+        .collection('users')
+        .doc(userId)
+        .collection('favorites')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
+  Stream<int> getAppointmentsCount(String userId) {
+    return _db
+        .collection('appointments')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
   }
 }
