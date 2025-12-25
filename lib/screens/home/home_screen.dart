@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:palpet/core/constants/app_colors.dart';
-import 'package:palpet/data/models/pet.dart'; //
-import 'package:palpet/services/database_service.dart'; //
+import 'package:palpet/data/models/pet.dart';
+import 'package:palpet/services/database_service.dart';
 import 'package:palpet/screens/home/widgets/pet_card.dart'; 
 import 'package:palpet/screens/home/widgets/home_banner.dart'; 
 import 'package:palpet/screens/home/widgets/service_card.dart';  
+import '../adoption/pet_details_screen.dart'; // 1. تأكد من إضافة هذا الاستيراد
 
 class HomeScreen extends StatelessWidget {
   final Function(int) onNavigate;
@@ -108,9 +109,9 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 24),
 
-        // --- DYNAMIC FIREBASE SECTION START ---
+        // --- DYNAMIC FIREBASE SECTION ---
         StreamBuilder<List<Pet>>(
-          stream: DatabaseService().getPets(), // Listens to your Firestore collection
+          stream: DatabaseService().getPets(), 
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -122,27 +123,50 @@ class HomeScreen extends StatelessWidget {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.only(top: 20),
-                  child: Text("No pets available for adoption yet."),
+                  child: Text("No pets available yet."),
                 ),
               );
             }
 
-            final pets = snapshot.data!;
-            
-            // Displays all pets found in your Firestore collection
+            final allPets = snapshot.data!;
+
+            // فلترة للتبني فقط + أخذ آخر 3
+            final adoptionPets = allPets.where((pet) {
+              return pet.postType.toLowerCase() == 'adoption';
+            }).toList();
+
+            final featuredPets = adoptionPets.take(3).toList();
+
+            if (featuredPets.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 20),
+                  child: Text("No featured pets at the moment."),
+                ),
+              );
+            }
+
             return Column(
-              children: pets.map((pet) => PetCard(
+              children: featuredPets.map((pet) => PetCard(
                 name: pet.name,
                 breed: pet.breed,
                 age: pet.age,
                 description: pet.description,
                 imageUrl: pet.imageUrl,
+                // 2. هنا نمرر كود الانتقال
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PetDetailsScreen(pet: pet),
+                    ),
+                  );
+                },
               )).toList(),
             );
           },
         ),
-        // --- DYNAMIC FIREBASE SECTION END ---
-
+        
         const SizedBox(height: 20),
       ],
     );

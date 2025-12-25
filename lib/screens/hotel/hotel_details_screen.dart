@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart'; // للاتصال
 import '../../core/constants/app_colors.dart';
 
 class HotelDetailsScreen extends StatefulWidget {
@@ -13,8 +14,19 @@ class HotelDetailsScreen extends StatefulWidget {
 class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
   int _selectedTab = 0;
 
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // تجهيز البيانات
+    final String imageUrl = widget.data['imageUrl'] ?? widget.data['image'] ?? '';
+    final String name = widget.data['name'] ?? 'Hotel Name';
+    
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -36,15 +48,20 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // صورة الفندق
             SizedBox(
               height: 320,
               width: double.infinity,
-              child: Image.network(
-                widget.data['image'],
-                fit: BoxFit.cover,
-                errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
-              ),
+              child: imageUrl.isNotEmpty
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
+                    )
+                  : Container(color: Colors.grey[200], child: const Icon(Icons.hotel, size: 50, color: Colors.grey)),
             ),
+            
+            // المحتوى الأبيض
             Container(
               transform: Matrix4.translationValues(0.0, -30.0, 0.0),
               decoration: const BoxDecoration(
@@ -66,13 +83,15 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    widget.data['name'],
+                    name,
                     style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textDark),
                   ),
                   const SizedBox(height: 24),
+                  
+                  // التبويبات
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
@@ -87,6 +106,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
+                  
                   AnimatedCrossFade(
                     firstChild: _buildDetailsContent(),
                     secondChild: _buildAmenitiesContent(),
@@ -105,8 +125,20 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
   }
 
   Widget _buildDetailsContent() {
-    final List<String> supportedPets =
-        widget.data['supportedPets'] as List<String>;
+    final String description = widget.data['description'] ?? "No description available.";
+    final String price = widget.data['price'] ?? "N/A";
+    // --- قراءة حقل السعة ---
+    final String capacity = widget.data['capacity'] ?? "N/A";
+    
+    final String address = widget.data['location'] ?? widget.data['address'] ?? "Unknown Address";
+    final String phone = widget.data['contactPhone'] ?? widget.data['phone'] ?? "N/A";
+    
+    // التعامل مع supportedPets (الأنواع المقبولة)
+    List<String> supportedPets = [];
+    if (widget.data['type'] != null) {
+      // الأنواع تأتي كنص مفصول بفاصلة "Dog,Cat"
+      supportedPets = widget.data['type'].toString().split(',').map((e) => e.trim()).toList();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,13 +151,14 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                 color: AppColors.textDark)),
         const SizedBox(height: 10),
         Text(
-          widget.data['description'] ?? "No description available.",
+          description,
           style: const TextStyle(
               color: AppColors.textGrey, height: 1.6, fontSize: 15),
         ),
 
         const SizedBox(height: 24),
 
+        // ب. Info Card (Accepts + Price + Capacity)
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -136,13 +169,14 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // العمود الأيسر: الأنواع المقبولة
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text("Accepts",
                         style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: Colors.grey,
                             fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
@@ -152,7 +186,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                       children: supportedPets
                           .map((pet) => Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
+                                    horizontal: 10, vertical: 6),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(8),
@@ -169,29 +203,67 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                   ],
                 ),
               ),
+              
+              // خط فاصل
               Container(
                   width: 1,
-                  height: 50,
+                  height: 60, // زدنا الطول قليلاً ليستوعب السعة
                   color: Colors.grey[300],
                   margin: const EdgeInsets.symmetric(horizontal: 16)),
+              
+              // العمود الأيمن: السعر + السعة (تم التعديل هنا)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  // السعر
                   const Text("Price",
                       style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           color: Colors.grey,
                           fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.data['price'],
-                    style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary),
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        price,
+                        style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 3),
+                        child: Text(" /night",
+                            style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      ),
+                    ],
                   ),
-                  const Text("/ Night",
-                      style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  
+                  const SizedBox(height: 12), // مسافة فاصلة
+
+                  // السعة (Capacity) - إضافة جديدة
+                  const Text("Capacity",
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.meeting_room, size: 16, color: AppColors.textDark), // أيقونة مناسبة
+                      const SizedBox(width: 4),
+                      Text(
+                        capacity,
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textDark),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ],
@@ -200,6 +272,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
         const SizedBox(height: 24),
 
+        // ج. الموقع
         const Text("Location",
             style: TextStyle(
                 fontSize: 18,
@@ -213,7 +286,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                widget.data['address'],
+                address,
                 style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.textGrey,
@@ -225,6 +298,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
         const SizedBox(height: 24),
 
+        // د. الاتصال
         const Text("Contact Info",
             style: TextStyle(
                 fontSize: 18,
@@ -262,7 +336,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                       style: TextStyle(fontSize: 13, color: Colors.grey)),
                   const SizedBox(height: 4),
                   Text(
-                    widget.data['phone'] ?? "+962 79 000 0000",
+                    phone,
                     style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -272,7 +346,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: phone != "N/A" ? () => _makePhoneCall(phone) : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -292,7 +366,31 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
   }
 
   Widget _buildAmenitiesContent() {
-    final List<String> amenities = widget.data['amenities'] as List<String>;
+    // معالجة ال amenities (سواء كانت نص أو قائمة)
+    List<String> amenitiesList = [];
+    
+    // إذا كانت نصاً (من قاعدة البيانات)، نقسمها بفاصلة
+    if (widget.data['amenities'] is String) {
+      amenitiesList = (widget.data['amenities'] as String)
+          .split(',')
+          .where((e) => e.trim().isNotEmpty)
+          .map((e) => e.trim())
+          .toList();
+    } 
+    // إذا كانت قائمة أصلاً
+    else if (widget.data['amenities'] is List) {
+      amenitiesList = List<String>.from(widget.data['amenities']);
+    }
+
+    if (amenitiesList.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Text("No specific amenities listed."),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -308,7 +406,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
           ),
-          itemCount: amenities.length,
+          itemCount: amenitiesList.length,
           itemBuilder: (context, index) {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -324,7 +422,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      amenities[index],
+                      amenitiesList[index],
                       style: const TextStyle(
                           fontWeight: FontWeight.w600, fontSize: 13),
                       overflow: TextOverflow.ellipsis,

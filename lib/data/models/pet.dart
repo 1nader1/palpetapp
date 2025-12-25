@@ -1,69 +1,103 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Pet {
-  final String id; // ضروري للتعامل مع الحذف والتعديل لاحقاً
+  final String id;
+  final String ownerId;
+  final String postType; // Adoption, Lost, Found, Hotel
   final String name;
-  final String type;
-  final String gender;
+  final String type; // Species
   final String breed;
+  final String gender;
   final String age;
   final String description;
   final String imageUrl;
-  final List<String> healthTags;
   final String location;
   final String contactPhone;
-  final String contactEmail;
+  
+  // --- الحقول التي تمت إعادتها لحل المشكلة ---
+  final String contactEmail; 
+  final List<String> healthTags;
+
+  // --- حقول اختيارية حسب نوع البوست ---
+  final String? reward;      // للمفقودات
+  final String? price;       // للفنادق
+  final String? capacity;    // للفنادق
+  final String? amenities;   // للفنادق
+  final DateTime? createdAt;
 
   Pet({
-    this.id = '', // قيمة افتراضية
+    this.id = '',
+    required this.ownerId,
+    required this.postType,
     required this.name,
     required this.type,
-    required this.gender,
     required this.breed,
+    required this.gender,
     required this.age,
     required this.description,
     required this.imageUrl,
-    required this.healthTags,
     required this.location,
     required this.contactPhone,
-    required this.contactEmail,
+    // جعلناها اختيارية مع قيم افتراضية لتجنب الأخطاء
+    this.contactEmail = '', 
+    this.healthTags = const [],
+    
+    this.reward,
+    this.price,
+    this.capacity,
+    this.amenities,
+    this.createdAt,
   });
 
-  // تحويل البيانات من التطبيق إلى فايربيس (إرسال)
   Map<String, dynamic> toMap() {
     return {
+      'ownerId': ownerId,
+      'postType': postType,
       'name': name,
       'type': type,
-      'gender': gender,
       'breed': breed,
+      'gender': gender,
       'age': age,
       'description': description,
       'imageUrl': imageUrl,
-      'healthTags': healthTags,
       'location': location,
       'contactPhone': contactPhone,
       'contactEmail': contactEmail,
+      'healthTags': healthTags,
+      'reward': reward,
+      'price': price,
+      'capacity': capacity,
+      'amenities': amenities,
+      'createdAt': FieldValue.serverTimestamp(),
     };
   }
 
-  // تحويل البيانات من فايربيس إلى التطبيق (قراءة)
- // ... existing Pet class fields and constructor
+  factory Pet.fromMap(Map<String, dynamic> map, String documentId) {
+    return Pet(
+      id: documentId,
+      ownerId: map['ownerId'] ?? '',
+      postType: map['postType'] ?? 'Adoption',
+      name: map['name'] ?? '',
+      type: map['type'] ?? '',
+      breed: map['breed'] ?? '',
+      gender: map['gender'] ?? '',
+      age: map['age'] ?? '',
+      description: map['description'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
+      location: map['location'] ?? '',
+      contactPhone: map['contactPhone'] ?? '',
+      
+      // استرجاع الحقول القديمة بأمان
+      contactEmail: map['contactEmail'] ?? '',
+      healthTags: (map['healthTags'] is List) 
+          ? List<String>.from(map['healthTags']) 
+          : [],
 
-factory Pet.fromMap(Map<String, dynamic> map, String documentId) {
-  return Pet(
-    id: documentId,
-    name: map['name'] ?? '',
-    type: map['type'] ?? '',
-    gender: map['gender'] ?? '',
-    breed: map['breed'] ?? '',
-    age: map['age'] ?? '',
-    description: map['description'] ?? '',
-    imageUrl: map['imageUrl'] ?? '',
-    // Safety check for List type
-    healthTags: (map['healthTags'] is List) 
-        ? List<String>.from(map['healthTags']) 
-        : [],
-    location: map['location'] ?? '',
-    contactPhone: map['contactPhone'] ?? '',
-    contactEmail: map['contactEmail'] ?? '',
-  );
-}
+      reward: map['reward'],
+      price: map['price'],
+      capacity: map['capacity'],
+      amenities: map['amenities'],
+      createdAt: map['createdAt'] != null ? (map['createdAt'] as Timestamp).toDate() : null,
+    );
+  }
 }
