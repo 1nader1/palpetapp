@@ -1,15 +1,18 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:geolocator/geolocator.dart'; // أبقينا على مكتبة الموقع
-import 'package:geocoding/geocoding.dart';   // أبقينا على مكتبة العناوين
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:palpet/core/constants/app_colors.dart';
 import 'package:palpet/data/models/pet.dart';
 import 'package:palpet/services/auth_service.dart';
 import 'package:palpet/services/database_service.dart';
 
 class AddPostScreen extends StatefulWidget {
-  const AddPostScreen({super.key});
+  // إضافة متغير لاستقبال دالة التنقل
+  final Function(int)? onNavigate;
+
+  const AddPostScreen({super.key, this.onNavigate});
 
   @override
   State<AddPostScreen> createState() => _AddPostScreenState();
@@ -17,7 +20,7 @@ class AddPostScreen extends StatefulWidget {
 
 class _AddPostScreenState extends State<AddPostScreen> {
   bool _isLoading = false;
-  bool _isGettingLocation = false; // أبقينا متغير تحميل الموقع
+  bool _isGettingLocation = false;
 
   File? _selectedImage;
   String _selectedType = 'Adoption';
@@ -25,7 +28,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
   final List<String> _speciesList = ['Dog', 'Cat', 'Bird', 'Rabbit', 'Hamster', 'Turtle', 'Other'];
   final List<String> _genderList = ['Male', 'Female'];
   
-  // قائمة مناطق الأردن
   final List<String> _jordanAreas = [
     'Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Salt', 'Madaba', 
     'Jerash', 'Ajloun', 'Mafraq', 'Karak', 'Tafilah', 'Ma\'an',
@@ -35,7 +37,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
   String? _selectedSpecies; 
   List<String> _selectedHotelSpecies = [];
   String? _selectedGender;
-  String? _selectedArea; // المنطقة المختارة من القائمة
+  String? _selectedArea;
 
   final _nameController = TextEditingController();
   final _breedController = TextEditingController();
@@ -89,7 +91,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
     }
   }
 
-  // --- دالة جلب الموقع الحالي (أبقيناها كما طلبت) ---
   Future<void> _getCurrentLocation() async {
     setState(() => _isGettingLocation = true);
     
@@ -124,8 +125,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
         
         setState(() {
           _locationController.text = address;
-          // ملاحظة: الـ GPS يعطي نص حر، بينما القائمة تعطي نص ثابت.
-          // للإشعارات الدقيقة يفضل اختيار المنطقة من القائمة، لكن سنترك هذا الخيار متاحاً.
           _selectedArea = null; 
         });
       }
@@ -139,7 +138,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
     }
   }
 
-  // --- Helper Functions ---
   void _addHealthTag() {
     final text = _healthTagController.text.trim();
     if (text.isNotEmpty) {
@@ -224,11 +222,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
     );
   }
 
-  // --- دالة النشر (تم التعديل عليها للإشعارات) ---
   Future<void> _submitPost() async {
     FocusScope.of(context).unfocus();
 
-    // 1. التحقق: يجب اختيار المنطقة من القائمة (لضمان عمل الإشعارات) أو تعبئة الحقل يدوياً
     bool locationFilled = _selectedArea != null || _locationController.text.isNotEmpty;
     bool basicInfoFilled = _nameController.text.isNotEmpty && 
                            locationFilled && 
@@ -272,7 +268,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
         finalTypeValue = _selectedSpecies!;
       }
 
-      // تحديد الموقع النهائي: نفضل القائمة (Dropdown) لأنها أدق للإشعارات
       String finalLocation = _selectedArea ?? _locationController.text;
 
       Pet newPet = Pet(
@@ -285,7 +280,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         age: _ageController.text,
         description: _descriptionController.text,
         imageUrl: imageUrl,
-        location: finalLocation, // هنا نمرر الموقع المعتمد
+        location: finalLocation,
         contactPhone: _phoneController.text,
         healthTags: _healthTags, 
         reward: _rewardController.text.isNotEmpty ? _rewardController.text : null,
@@ -294,16 +289,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
         amenities: amenitiesString, 
       );
 
-      // --- التعديل هنا: استقبال الـ ID وتمريره ---
-      
-      // 1. إضافة الحيوان والحصول على الـ ID الخاص به
       String newPetId = await DatabaseService().addPet(newPet);
-
-      // 2. إرسال الإشعارات مع تمرير الـ ID الجديد
       await DatabaseService().checkAndSendNotifications(newPet, newPetId);
       
-      // ------------------------------------------
-
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -313,7 +301,25 @@ class _AddPostScreenState extends State<AddPostScreen> {
       await Future.delayed(const Duration(milliseconds: 100));
       
       if (mounted) {
-        Navigator.of(context).pop();
+        // --- كود التنقل الجديد ---
+        int targetIndex = 0; // Default
+
+        if (_selectedType == 'Adoption') {
+          targetIndex = 3; // Adoption Screen
+        } else if (_selectedType == 'Lost' || _selectedType == 'Found') {
+          targetIndex = 4; // Lost & Found Screen
+        } else if (_selectedType == 'Hotel') {
+          targetIndex = 5; // Pet Hotels Screen
+        }
+
+        if (widget.onNavigate != null) {
+          // إذا تم تمرير دالة التنقل، نذهب للصفحة المحددة
+          widget.onNavigate!(targetIndex);
+        } else {
+          // وإلا نعود للخلف بشكل طبيعي
+          Navigator.of(context).pop();
+        }
+        // -----------------------
       }
 
     } catch (e) {
@@ -390,9 +396,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
               const Text("Location", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
 
-              // --- قسم اختيار الموقع (أبقينا على الـ GPS + القائمة) ---
               _buildLocationSection(),
-              // -----------------------------
 
               const SizedBox(height: 12),
               _buildTextField(
@@ -423,11 +427,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
     );
   }
 
-  // --- بناء قسم الموقع ---
   Widget _buildLocationSection() {
     return Column(
       children: [
-        // 1. زر الموقع الحالي (GPS)
         InkWell(
           onTap: _getCurrentLocation,
           child: Container(
@@ -458,7 +460,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
         const Row(children: [Expanded(child: Divider()), Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text("OR", style: TextStyle(color: Colors.grey))), Expanded(child: Divider())]),
         const SizedBox(height: 12),
 
-        // 2. قائمة المناطق (Menu)
         Row(
           children: [
             Expanded(
@@ -478,7 +479,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 onChanged: (val) {
                   setState(() {
                     _selectedArea = val;
-                    // عند اختيار منطقة من القائمة، نحدث حقل النص أيضاً
                     if (val != null) {
                       _locationController.text = val;
                     }
@@ -489,7 +489,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
           ],
         ),
         
-        // 3. حقل النص للتعديل اليدوي
         const SizedBox(height: 12),
         _buildTextField(
           label: "Selected Location (Editable)",
@@ -500,7 +499,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
     );
   }
 
-  // ... باقي الودجات المساعدة كما هي ...
   Widget _buildMultiSelectDropdownField() {
     String displayText = _selectedHotelSpecies.isEmpty ? "Select Species" : _selectedHotelSpecies.join(", ");
     return InkWell(
