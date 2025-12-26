@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/database_service.dart';
 import '../../data/models/pet.dart';
-// استيراد الصفحات
+
 import '../adoption/pet_details_screen.dart';
 import '../lost_found/lost_found_details_screen.dart';
 
@@ -39,7 +39,7 @@ class NotificationsScreen extends StatelessWidget {
     String? petId = item['petId'];
     if (petId == null) return;
 
-    // 2. إظهار لودينج
+
     showDialog(
       context: context,
       barrierDismissible: false,

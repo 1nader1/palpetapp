@@ -46,7 +46,7 @@ class DatabaseService {
     });
   }
 
-  // تعديل: الدالة الآن ترجع ID المستند الجديد لاستخدامه في الإشعار
+
   Future<String> addPet(Pet pet) async {
     try {
       DocumentReference docRef = await _db.collection('pets').add(pet.toMap());
