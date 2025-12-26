@@ -9,10 +9,12 @@ import 'package:palpet/services/auth_service.dart';
 import 'package:palpet/services/database_service.dart';
 
 class AddPostScreen extends StatefulWidget {
-  // إضافة متغير لاستقبال دالة التنقل
+  // متغير لاستقبال دالة التنقل (اختياري)
   final Function(int)? onNavigate;
+  // NEW: متغير لاستقبال بيانات الحيوان عند التعديل
+  final Pet? petToEdit;
 
-  const AddPostScreen({super.key, this.onNavigate});
+  const AddPostScreen({super.key, this.onNavigate, this.petToEdit});
 
   @override
   State<AddPostScreen> createState() => _AddPostScreenState();
@@ -21,6 +23,10 @@ class AddPostScreen extends StatefulWidget {
 class _AddPostScreenState extends State<AddPostScreen> {
   bool _isLoading = false;
   bool _isGettingLocation = false;
+  
+  // NEW: متغيرات لحالة التعديل
+  bool _isEditing = false;
+  String? _existingImageUrl; 
 
   File? _selectedImage;
   String _selectedType = 'Adoption';
@@ -49,7 +55,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
   
   // Health Tags
   final _healthTagController = TextEditingController(); 
-  final List<String> _healthTags = []; 
+  List<String> _healthTags = []; // Removed final to allow reassignment
 
   // Lost/Found Specific
   final _phoneController = TextEditingController();
@@ -61,9 +67,60 @@ class _AddPostScreenState extends State<AddPostScreen> {
   
   // Amenities
   final _amenitiesInputController = TextEditingController();
-  final List<String> _amenities = [];
+  List<String> _amenities = []; // Removed final to allow reassignment
 
   final String _defaultImageUrl = 'https://via.placeholder.com/300?text=No+Image';
+
+  @override
+  void initState() {
+    super.initState();
+    // NEW: إذا تم تمرير بيانات للتعديل، نقوم بتحميلها
+    if (widget.petToEdit != null) {
+      _loadPetData(widget.petToEdit!);
+    }
+  }
+
+  // NEW: دالة تعبئة البيانات عند التعديل
+  void _loadPetData(Pet pet) {
+    _isEditing = true;
+    _selectedType = pet.postType;
+    _nameController.text = pet.name;
+    _breedController.text = pet.breed;
+    _descriptionController.text = pet.description;
+    _phoneController.text = pet.contactPhone;
+    _existingImageUrl = pet.imageUrl;
+
+    // معالجة الموقع
+    if (_jordanAreas.contains(pet.location)) {
+      _selectedArea = pet.location;
+    } else {
+      _locationController.text = pet.location;
+    }
+
+    // معالجة الحقول حسب النوع
+    if (pet.postType == 'Hotel') {
+      _selectedHotelSpecies = pet.type.split(',').where((e) => e.isNotEmpty).toList();
+      _priceController.text = pet.price ?? '';
+      _capacityController.text = pet.capacity ?? '';
+      if (pet.amenities != null && pet.amenities!.isNotEmpty) {
+        _amenities = pet.amenities!.split(',');
+      }
+    } else {
+      if (_speciesList.contains(pet.type)) {
+        _selectedSpecies = pet.type;
+      } else {
+        _selectedSpecies = 'Other';
+      }
+      
+      if (pet.postType == 'Adoption') {
+        _ageController.text = pet.age;
+        if (_genderList.contains(pet.gender)) _selectedGender = pet.gender;
+        _healthTags = List.from(pet.healthTags);
+      } else {
+        _rewardController.text = pet.reward ?? '';
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -250,7 +307,8 @@ class _AddPostScreenState extends State<AddPostScreen> {
       final user = AuthService().currentUser;
       if (user == null) throw Exception("User not logged in");
 
-      String imageUrl = _defaultImageUrl; 
+      // NEW: منطق الصورة (صورة جديدة -> الصورة القديمة -> الصورة الافتراضية)
+      String imageUrl = _existingImageUrl ?? _defaultImageUrl; 
       
       if (_selectedImage != null) {
         imageUrl = await DatabaseService().uploadImage(_selectedImage!);
@@ -270,7 +328,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
       String finalLocation = _selectedArea ?? _locationController.text;
 
-      Pet newPet = Pet(
+      Pet petData = Pet(
+        // NEW: إذا كنا نعدل، نحتفظ بالـ ID القديم
+        id: widget.petToEdit?.id ?? '', 
         ownerId: user.uid,
         postType: _selectedType,
         name: _nameController.text,
@@ -289,37 +349,42 @@ class _AddPostScreenState extends State<AddPostScreen> {
         amenities: amenitiesString, 
       );
 
-      String newPetId = await DatabaseService().addPet(newPet);
-      await DatabaseService().checkAndSendNotifications(newPet, newPetId);
-      
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Post created successfully!')),
-      );
-
-      await Future.delayed(const Duration(milliseconds: 100));
-      
-      if (mounted) {
-        // --- كود التنقل الجديد ---
-        int targetIndex = 0; // Default
-
-        if (_selectedType == 'Adoption') {
-          targetIndex = 3; // Adoption Screen
-        } else if (_selectedType == 'Lost' || _selectedType == 'Found') {
-          targetIndex = 4; // Lost & Found Screen
-        } else if (_selectedType == 'Hotel') {
-          targetIndex = 5; // Pet Hotels Screen
+      // NEW: التمييز بين الإضافة والتعديل
+      if (_isEditing) {
+        await DatabaseService().updatePet(petData);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Post updated successfully!')),
+          );
+          Navigator.pop(context, true); // الرجوع مع نتيجة true للتحديث
         }
+      } else {
+        String newPetId = await DatabaseService().addPet(petData);
+        await DatabaseService().checkAndSendNotifications(petData, newPetId);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Post created successfully!')),
+          );
+          await Future.delayed(const Duration(milliseconds: 100));
+          
+          if (mounted) {
+            int targetIndex = 0;
+            if (_selectedType == 'Adoption') {
+              targetIndex = 3;
+            } else if (_selectedType == 'Lost' || _selectedType == 'Found') {
+              targetIndex = 4;
+            } else if (_selectedType == 'Hotel') {
+              targetIndex = 5;
+            }
 
-        if (widget.onNavigate != null) {
-          // إذا تم تمرير دالة التنقل، نذهب للصفحة المحددة
-          widget.onNavigate!(targetIndex);
-        } else {
-          // وإلا نعود للخلف بشكل طبيعي
-          Navigator.of(context).pop();
+            if (widget.onNavigate != null) {
+              widget.onNavigate!(targetIndex);
+            } else {
+              Navigator.of(context).pop();
+            }
+          }
         }
-        // -----------------------
       }
 
     } catch (e) {
@@ -337,9 +402,10 @@ class _AddPostScreenState extends State<AddPostScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          "Create New Post",
-          style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold),
+        // NEW: تغيير العنوان حسب الحالة
+        title: Text(
+          _isEditing ? "Edit Post" : "Create New Post",
+          style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -360,7 +426,14 @@ class _AddPostScreenState extends State<AddPostScreen> {
               const SizedBox(height: 24),
               const Text("Post Type", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
-              _buildTypeSelector(),
+              // NEW: تعطيل تغيير النوع عند التعديل لمنع الأخطاء
+              AbsorbPointer(
+                absorbing: _isEditing,
+                child: Opacity(
+                  opacity: _isEditing ? 0.6 : 1.0,
+                  child: _buildTypeSelector(),
+                ),
+              ),
 
               const SizedBox(height: 24),
               const Text("Basic Info", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -418,7 +491,8 @@ class _AddPostScreenState extends State<AddPostScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 2,
                   ),
-                  child: const Text("Post Now", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  // NEW: تغيير نص الزر
+                  child: Text(_isEditing ? "Update Post" : "Post Now", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -533,6 +607,14 @@ class _AddPostScreenState extends State<AddPostScreen> {
   }
 
   Widget _buildImagePicker() {
+    // NEW: تحديد الصورة المعروضة (جديدة أو موجودة مسبقاً)
+    ImageProvider? imageProvider;
+    if (_selectedImage != null) {
+      imageProvider = FileImage(_selectedImage!);
+    } else if (_existingImageUrl != null && _existingImageUrl != _defaultImageUrl) {
+      imageProvider = NetworkImage(_existingImageUrl!);
+    }
+
     return Container(
       height: 200,
       width: double.infinity,
@@ -540,11 +622,11 @@ class _AddPostScreenState extends State<AddPostScreen> {
         color: AppColors.primary.withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.5),
-        image: _selectedImage != null 
-          ? DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover)
+        image: imageProvider != null 
+          ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
           : null,
       ),
-      child: _selectedImage == null 
+      child: imageProvider == null 
         ? Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

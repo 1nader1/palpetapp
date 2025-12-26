@@ -12,14 +12,14 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController(); // New controller
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   
   bool _isLoading = false;
-  String? _selectedLocation; // متغير لحفظ المنطقة المختارة
+  String? _selectedLocation;
 
-  // نفس قائمة المناطق الموحدة في التطبيق
   final List<String> _jordanAreas = [
     'Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Salt', 'Madaba', 
     'Jerash', 'Ajloun', 'Mafraq', 'Karak', 'Tafilah', 'Ma\'an',
@@ -28,7 +28,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _register() async {
     if (_formKey.currentState!.validate()) {
-      // التحقق من اختيار المنطقة
       if (_selectedLocation == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please select your location'), backgroundColor: Colors.red),
@@ -42,7 +41,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
           name: _nameController.text.trim(),
-          location: _selectedLocation!, // نرسل المنطقة للباك إند
+          username: _usernameController.text.trim(), // Pass username
+          location: _selectedLocation!,
         );
         
         if (mounted) {
@@ -84,11 +84,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const Text(
                   'Create a new account',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textDark),
                 ),
                 const SizedBox(height: 10),
                 const Text(
@@ -98,26 +94,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Name
+                // Name Field
                 TextFormField(
                   controller: _nameController,
                   decoration: _inputDecoration('Full Name', Icons.person_outline),
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter your name' : null,
+                  validator: (value) => value!.isEmpty ? 'Please enter your name' : null,
                 ),
                 const SizedBox(height: 16),
 
-                // Email
+                // Username Field
+                TextFormField(
+                  controller: _usernameController,
+                  decoration: _inputDecoration('Username', Icons.alternate_email),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Please enter a username';
+                    if (value.contains(' ')) return 'Username cannot contain spaces';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Email Field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: _inputDecoration('Email', Icons.email_outlined),
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter your email' : null,
+                  validator: (value) => value!.isEmpty ? 'Please enter your email' : null,
                 ),
                 const SizedBox(height: 16),
                 
-                // --- Location Dropdown (الجديد) ---
+                // Location Dropdown
                 DropdownButtonFormField<String>(
                   value: _selectedLocation,
                   decoration: _inputDecoration('Select City / Area', Icons.location_on_outlined),
@@ -128,19 +134,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   validator: (val) => val == null ? 'Please select your area' : null,
                 ),
                 const SizedBox(height: 16),
-                // ----------------------------------
 
-                // Password
+                // Password Field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
                   decoration: _inputDecoration('Password', Icons.lock_outline),
-                  validator: (value) =>
-                      value!.length < 6 ? 'Password must be at least 6 characters' : null,
+                  validator: (value) => value!.length < 6 ? 'Password must be at least 6 characters' : null,
                 ),
                 const SizedBox(height: 24),
 
-                // Register Button
                 _isLoading
                     ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                     : ElevatedButton(
@@ -148,9 +151,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: const Text(
                           'Register',
