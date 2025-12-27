@@ -42,15 +42,12 @@ class DatabaseService {
   }
 
   // --- 3. Pet Functions (CRUD) ---
-
-  // Get all pets (Global feed)
   Stream<List<Pet>> getPets() {
     return _db.collection('pets').orderBy('createdAt', descending: true).snapshots().map((snapshot) {
       return snapshot.docs.map((doc) => Pet.fromMap(doc.data(), doc.id)).toList();
     });
   }
 
-  // NEW: Get pets specific to a user (My Posts)
   Stream<List<Pet>> getUserPets(String uid) {
     return _db.collection('pets')
         .where('ownerId', isEqualTo: uid)
@@ -71,7 +68,6 @@ class DatabaseService {
     }
   }
 
-  // NEW: Update an existing pet
   Future<void> updatePet(Pet pet) async {
     try {
       await _db.collection('pets').doc(pet.id).update(pet.toMap());
@@ -97,13 +93,46 @@ class DatabaseService {
     return null;
   }
 
-  // --- 4. Clinics & Notifications (Existing) ---
+  // --- 4. Clinics & Notifications ---
+  
+  // إضافة عيادة جديدة
+  Future<void> addClinic(Clinic clinic) async {
+    try {
+      await _db.collection('clinics').add(clinic.toMap());
+    } catch (e) {
+      print("Error adding clinic: $e");
+      throw Exception("Failed to add clinic.");
+    }
+  }
+
+  // تعديل بيانات العيادة
+  Future<void> updateClinic(Clinic clinic) async {
+    try {
+      await _db.collection('clinics').doc(clinic.id).update(clinic.toMap());
+    } catch (e) {
+      print("Error updating clinic: $e");
+      throw Exception("Failed to update clinic.");
+    }
+  }
+
+  // حذف العيادة
+  Future<void> deleteClinic(String id) async {
+    try {
+      await _db.collection('clinics').doc(id).delete();
+    } catch (e) {
+      print("Error deleting clinic: $e");
+      throw Exception("Failed to delete clinic.");
+    }
+  }
+
+  // جلب العيادات (مع قراءة ownerId)
   Stream<List<Clinic>> getClinics() {
     return _db.collection('clinics').snapshots().map((snapshot) =>
         snapshot.docs.map((doc) {
           final data = doc.data();
           return Clinic(
             id: doc.id,
+            ownerId: data['ownerId'] ?? '', // [مهم] قراءة معرف المالك
             name: data['name'] ?? '',
             address: data['address'] ?? '',
             description: data['description'] ?? '',
@@ -117,6 +146,7 @@ class DatabaseService {
         }).toList());
   }
 
+  // --- Notifications Logic ---
   Future<void> checkAndSendNotifications(Pet newPet, String petId) async {
     try {
       if (newPet.postType == 'Found') {

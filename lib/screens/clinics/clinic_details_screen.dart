@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart'; // [مهم]
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/clinic.dart';
+import '../../services/database_service.dart';
 
 class ClinicDetailsScreen extends StatefulWidget {
   final Clinic clinic;
@@ -13,13 +17,192 @@ class ClinicDetailsScreen extends StatefulWidget {
 }
 
 class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
-  int _selectedTab = 0; 
+  final DatabaseService _dbService = DatabaseService();
+  late Clinic _clinic;
+  int _selectedTab = 0;
+  bool _isOwner = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _clinic = widget.clinic;
+    _checkOwnership();
+  }
+
+  void _checkOwnership() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && user.uid == widget.clinic.ownerId) {
+      setState(() {
+        _isOwner = true;
+      });
+    }
+  }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri);
     }
+  }
+
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Clinic"),
+        content: const Text("Are you sure you want to delete this clinic?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              await _dbService.deleteClinic(_clinic.id);
+              if (mounted) {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              }
+            },
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDialog() {
+    final nameController = TextEditingController(text: _clinic.name);
+    final phoneController = TextEditingController(text: _clinic.phoneNumber);
+    final addressController = TextEditingController(text: _clinic.address);
+    final descController = TextEditingController(text: _clinic.description);
+    final hoursController = TextEditingController(text: _clinic.workingHours);
+    final servicesController = TextEditingController(text: _clinic.services.join(', '));
+    
+    File? newImageFile;
+    bool isOpen = _clinic.isOpen;
+    bool isUpdating = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text("Edit Clinic"),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // --- تعديل الصورة ---
+                  GestureDetector(
+                    onTap: () async {
+                      final picker = ImagePicker();
+                      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                      if (pickedFile != null) {
+                        setDialogState(() {
+                          newImageFile = File(pickedFile.path);
+                        });
+                      }
+                    },
+                    child: Container(
+                      height: 150,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                        image: DecorationImage(
+                          image: newImageFile != null
+                              ? FileImage(newImageFile!)
+                              : NetworkImage(_clinic.imageUrl) as ImageProvider,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          Container(color: Colors.black26),
+                          const Center(child: Icon(Icons.edit, color: Colors.white, size: 40)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextField(controller: nameController, decoration: const InputDecoration(labelText: "Clinic Name")),
+                  TextField(controller: phoneController, decoration: const InputDecoration(labelText: "Phone Number")),
+                  TextField(controller: addressController, decoration: const InputDecoration(labelText: "Address")),
+                  
+                  // --- الحقول الجديدة للتعديل ---
+                  TextField(controller: hoursController, decoration: const InputDecoration(labelText: "Working Hours")),
+                  TextField(controller: servicesController, decoration: const InputDecoration(labelText: "Services (comma separated)")),
+                  // ---------------------------
+
+                  TextField(controller: descController, decoration: const InputDecoration(labelText: "Description"), maxLines: 3),
+                  const SizedBox(height: 10),
+                  SwitchListTile(
+                    title: const Text("Is Open?"),
+                    value: isOpen,
+                    onChanged: (val) {
+                      setDialogState(() => isOpen = val);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+              isUpdating
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: () async {
+                        setDialogState(() => isUpdating = true);
+
+                        String finalImageUrl = _clinic.imageUrl;
+                        // رفع الصورة الجديدة إذا تم تغييرها
+                        if (newImageFile != null) {
+                          try {
+                            finalImageUrl = await _dbService.uploadImage(newImageFile!);
+                          } catch (e) {
+                            print("Error updating image: $e");
+                          }
+                        }
+
+                        // تحديث قائمة الخدمات
+                        List<String> updatedServices = servicesController.text
+                            .split(',')
+                            .map((e) => e.trim())
+                            .where((e) => e.isNotEmpty)
+                            .toList();
+
+                        final updatedClinic = Clinic(
+                          id: _clinic.id,
+                          ownerId: _clinic.ownerId,
+                          name: nameController.text,
+                          address: addressController.text,
+                          description: descController.text,
+                          imageUrl: finalImageUrl, // الصورة الجديدة أو القديمة
+                          rating: _clinic.rating,
+                          phoneNumber: phoneController.text,
+                          isOpen: isOpen,
+                          workingHours: hoursController.text, // الساعات المعدلة
+                          services: updatedServices, // الخدمات المعدلة
+                        );
+
+                        await _dbService.updateClinic(updatedClinic);
+                        
+                        if (mounted) {
+                          setState(() {
+                            _clinic = updatedClinic;
+                          });
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: const Text("Save"),
+                    ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -42,23 +225,49 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
             onPressed: () => Navigator.pop(context),
           ),
         ),
+        actions: _isOwner
+            ? [
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.edit, color: AppColors.primary, size: 20),
+                    onPressed: _showEditDialog,
+                  ),
+                ),
+                Container(
+                  margin: const EdgeInsets.only(right: 12, left: 4),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                    onPressed: _confirmDelete,
+                  ),
+                ),
+              ]
+            : null,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             SizedBox(
               height: 320,
               width: double.infinity,
               child: Image.network(
-                widget.clinic.imageUrl,
+                _clinic.imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
               ),
             ),
-
             Container(
               transform: Matrix4.translationValues(0.0, -30.0, 0.0),
               decoration: const BoxDecoration(
@@ -69,7 +278,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   Center(
                     child: Container(
                       width: 40,
@@ -81,13 +289,12 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
-                          widget.clinic.name,
+                          _clinic.name,
                           style: const TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
@@ -106,7 +313,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                             const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
                             const SizedBox(width: 4),
                             Text(
-                              widget.clinic.rating.toString(),
+                              _clinic.rating.toString(),
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                             ),
                           ],
@@ -114,9 +321,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                       ),
                     ],
                   ),
-                  
                   const SizedBox(height: 24),
-
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
@@ -131,9 +336,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
                     child: _buildCurrentTabContent(),
@@ -149,10 +352,14 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
   Widget _buildCurrentTabContent() {
     switch (_selectedTab) {
-      case 0: return _buildDetailsContent();
-      case 1: return _buildHoursContent();
-      case 2: return _buildServicesContent();
-      default: return _buildDetailsContent();
+      case 0:
+        return _buildDetailsContent();
+      case 1:
+        return _buildHoursContent();
+      case 2:
+        return _buildServicesContent();
+      default:
+        return _buildDetailsContent();
     }
   }
 
@@ -193,17 +400,14 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
         const Text("About Clinic", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
         const SizedBox(height: 10),
         Text(
-          widget.clinic.description,
+          _clinic.description,
           style: const TextStyle(color: AppColors.textGrey, height: 1.6, fontSize: 15),
         ),
-
         const SizedBox(height: 24),
-
         const Text("Location", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
         const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.all(12),
-          
           child: Row(
             children: [
               Container(
@@ -212,16 +416,14 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  widget.clinic.address,
+                  _clinic.address,
                   style: const TextStyle(fontSize: 15, color: AppColors.textDark, fontWeight: FontWeight.w500),
                 ),
               ),
             ],
           ),
         ),
-
         const SizedBox(height: 24),
-
         const Text("Contact Info", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
         const SizedBox(height: 12),
         Container(
@@ -246,14 +448,14 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                   const Text("Phone Number", style: TextStyle(fontSize: 13, color: Colors.grey)),
                   const SizedBox(height: 4),
                   Text(
-                    widget.clinic.phoneNumber,
+                    _clinic.phoneNumber,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
                   ),
                 ],
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: () => _makePhoneCall(widget.clinic.phoneNumber),
+                onPressed: () => _makePhoneCall(_clinic.phoneNumber),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -277,32 +479,32 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: widget.clinic.isOpen ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+            color: _clinic.isOpen ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: widget.clinic.isOpen ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA),
+              color: _clinic.isOpen ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA),
             ),
           ),
           child: Column(
             children: [
               Icon(
-                widget.clinic.isOpen ? Icons.check_circle : Icons.cancel,
+                _clinic.isOpen ? Icons.check_circle : Icons.cancel,
                 size: 50,
-                color: widget.clinic.isOpen ? Colors.green : Colors.red,
+                color: _clinic.isOpen ? Colors.green : Colors.red,
               ),
               const SizedBox(height: 16),
               Text(
-                widget.clinic.isOpen ? "Open Now" : "Closed",
+                _clinic.isOpen ? "Open Now" : "Closed",
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: widget.clinic.isOpen ? Colors.green[800] : Colors.red[800],
+                  color: _clinic.isOpen ? Colors.green[800] : Colors.red[800],
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 "You can visit us now",
-                style: TextStyle(color: widget.clinic.isOpen ? Colors.green[600] : Colors.red[600]),
+                style: TextStyle(color: _clinic.isOpen ? Colors.green[600] : Colors.red[600]),
               ),
             ],
           ),
@@ -324,7 +526,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                 children: [
                   const Text("Working Hours", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark)),
                   const SizedBox(height: 4),
-                  Text(widget.clinic.workingHours, style: const TextStyle(color: AppColors.textGrey)),
+                  Text(_clinic.workingHours, style: const TextStyle(color: AppColors.textGrey)),
                 ],
               ),
             ],
@@ -350,7 +552,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
           ),
-          itemCount: widget.clinic.services.length,
+          itemCount: _clinic.services.length,
           itemBuilder: (context, index) {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -365,7 +567,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      widget.clinic.services[index],
+                      _clinic.services[index],
                       style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textDark),
                       overflow: TextOverflow.ellipsis,
                     ),
