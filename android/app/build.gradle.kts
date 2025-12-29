@@ -24,15 +24,14 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-    defaultConfig {
+   defaultConfig {
         applicationId = "com.example.palpet"
-        // حل مشكلة cloud_firestore (يجب أن يكون 23 أو أعلى)
-        minSdk = flutter.minSdkVersion  
+        // حل مشكلة cloud_firestore لنظام أندرويد
+        minSdk = 23
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
     }
-
     buildTypes {
         release {
             // استخدام مفاتيح الديباج للتشغيل المؤقت بصيغة ريليس

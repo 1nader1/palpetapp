@@ -1,14 +1,165 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/pet.dart';
+import '../../services/database_service.dart';
 
-class PetDetailsScreen extends StatelessWidget {
+class PetDetailsScreen extends StatefulWidget {
   final Pet pet;
 
   const PetDetailsScreen({super.key, required this.pet});
 
   @override
+  State<PetDetailsScreen> createState() => _PetDetailsScreenState();
+}
+
+class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBindingObserver {
+  bool _isCallClicked = false;
+  bool _isFavorite = false; // متغير لحالة القلب
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkIfFavorite();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _isCallClicked) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          setState(() {
+            _isCallClicked = false;
+          });
+          _checkAndShowRatingDialog();
+        }
+      });
+    }
+  }
+
+  Future<void> _checkIfFavorite() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      bool isFav = await DatabaseService().isFavorite(user.uid, widget.pet.id);
+      if (mounted) {
+        setState(() {
+          _isFavorite = isFav;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please login to add favorites")),
+      );
+      return;
+    }
+
+    setState(() {
+      _isFavorite = !_isFavorite;
+    });
+
+    try {
+      await DatabaseService().toggleFavorite(user.uid, widget.pet.id);
+    } catch (e) {
+      setState(() {
+        _isFavorite = !_isFavorite;
+      });
+      print("Error toggling favorite: $e");
+    }
+  }
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    setState(() { _isCallClicked = true; });
+    try { await launchUrl(launchUri); } 
+    catch (e) { setState(() { _isCallClicked = false; }); }
+  }
+
+  Future<void> _checkAndShowRatingDialog() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final String targetUserId = widget.pet.ownerId;
+
+    if (currentUser == null) return;
+    if (currentUser.uid == targetUserId) return;
+
+    bool alreadyReviewed = await DatabaseService().hasUserReviewed(currentUser.uid, targetUserId, 'adoption');
+    
+    if (!mounted) return;
+
+    if (alreadyReviewed) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("You have already reviewed this owner."), backgroundColor: Colors.orange));
+      return;
+    }
+
+    _showRatingDialog(currentUser.uid, targetUserId);
+  }
+
+  void _showRatingDialog(String currentUserId, String targetUserId) {
+    double rating = 0;
+    TextEditingController commentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Row(children: [Icon(Icons.star, color: Colors.amber), SizedBox(width: 8), Text("Rate Owner")]),
+              content: Column(mainAxisSize: MainAxisSize.min, children: [
+                  const Text("How was your experience dealing with this owner?"),
+                  const SizedBox(height: 20),
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (index) { return IconButton(icon: Icon(index < rating ? Icons.star : Icons.star_border, color: Colors.amber, size: 32), onPressed: () { setStateDialog(() { rating = index + 1.0; }); }); })),
+                  const SizedBox(height: 10),
+                  TextField(controller: commentController, decoration: InputDecoration(hintText: "Write a comment (optional)", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.grey[50]), maxLines: 2),
+                ]),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text("Skip", style: TextStyle(color: Colors.grey))),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (rating > 0) {
+                      await DatabaseService().addReview(
+                        targetUserId: targetUserId,
+                        reviewerId: currentUserId,
+                        rating: rating,
+                        comment: commentController.text,
+                        reviewType: 'adoption', 
+                      );
+                      if (mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Thanks for your feedback!"), backgroundColor: Colors.green));
+                      }
+                    } else {
+                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select a star rating")));
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  child: const Text("Submit"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final pet = widget.pet;
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -21,20 +172,21 @@ class PetDetailsScreen extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back,
-                color: AppColors.textDark, size: 20),
+            icon: const Icon(Icons.arrow_back, color: AppColors.textDark, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
         ),
         actions: [
           Container(
             margin: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-                color: Colors.white, shape: BoxShape.circle),
+            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
             child: IconButton(
-              icon: const Icon(Icons.favorite_border,
-                  color: Colors.red, size: 20),
-              onPressed: () {},
+              icon: Icon(
+                _isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: _isFavorite ? Colors.red : Colors.grey,
+                size: 20,
+              ),
+              onPressed: _toggleFavorite,
             ),
           ),
         ],
@@ -155,6 +307,7 @@ class PetDetailsScreen extends StatelessWidget {
                         const Spacer(),
                         ElevatedButton(
                           onPressed: () {
+                            _makePhoneCall(pet.contactPhone);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
@@ -167,7 +320,6 @@ class PetDetailsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-
                 ],
               ),
             ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart'; // للاتصال
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:url_launcher/url_launcher.dart'; 
 import '../../core/constants/app_colors.dart';
+import '../../services/database_service.dart';
 
 class HotelDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -11,19 +13,182 @@ class HotelDetailsScreen extends StatefulWidget {
   State<HotelDetailsScreen> createState() => _HotelDetailsScreenState();
 }
 
-class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
+class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBindingObserver {
   int _selectedTab = 0;
+  bool _isCallClicked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _isCallClicked) {
+      // تأخير بسيط لضمان استقرار الواجهة
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          setState(() {
+            _isCallClicked = false;
+          });
+          _checkAndShowRatingDialog();
+        }
+      });
+    }
+  }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
-    if (await canLaunchUrl(launchUri)) {
+    
+    setState(() {
+      _isCallClicked = true;
+    });
+
+    try {
       await launchUrl(launchUri);
+    } catch (e) {
+      debugPrint("Error launching call: $e");
+      setState(() {
+        _isCallClicked = false;
+      });
     }
+  }
+
+  Future<void> _checkAndShowRatingDialog() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final String? targetUserId = widget.data['ownerId']; 
+
+    if (currentUser == null || targetUserId == null) return;
+    
+    // 1. فحص الحماية: منع المالك من تقييم نفسه
+    if (currentUser.uid == targetUserId) return;
+
+    // 2. فحص التكرار: هل قام بتقييم هذا الفندق (خدمة الفندقة) مسبقاً؟
+    bool alreadyReviewed = await DatabaseService().hasUserReviewed(currentUser.uid, targetUserId, 'hotel');
+    
+    if (!mounted) return;
+
+    if (alreadyReviewed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You have already reviewed this hotel."),
+          backgroundColor: Colors.orange,
+        )
+      );
+      return;
+    }
+
+    _showRatingDialog(currentUser.uid, targetUserId);
+  }
+
+  void _showRatingDialog(String currentUserId, String targetUserId) {
+    double rating = 0;
+    TextEditingController commentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                   Icon(Icons.star, color: Colors.amber),
+                   SizedBox(width: 8),
+                   Text("Rate Hotel Service"),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("How was your experience with this hotel?"),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 32,
+                        ),
+                        onPressed: () {
+                          setStateDialog(() {
+                            rating = index + 1.0;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: commentController,
+                    decoration: InputDecoration(
+                      hintText: "Write a comment (optional)",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Skip", style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (rating > 0) {
+                      await DatabaseService().addReview(
+                        targetUserId: targetUserId,
+                        reviewerId: currentUserId,
+                        rating: rating,
+                        comment: commentController.text,
+                        reviewType: 'hotel', // تحديد النوع كـ hotel
+                      );
+                      if (mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Thanks for your feedback!"),
+                            backgroundColor: Colors.green,
+                          )
+                        );
+                      }
+                    } else {
+                       ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Please select a star rating"))
+                       );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text("Submit"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // تجهيز البيانات
     final String imageUrl = widget.data['imageUrl'] ?? widget.data['image'] ?? '';
     final String name = widget.data['name'] ?? 'Hotel Name';
     
@@ -48,7 +213,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // صورة الفندق
             SizedBox(
               height: 320,
               width: double.infinity,
@@ -61,7 +225,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                   : Container(color: Colors.grey[200], child: const Icon(Icons.hotel, size: 50, color: Colors.grey)),
             ),
             
-            // المحتوى الأبيض
             Container(
               transform: Matrix4.translationValues(0.0, -30.0, 0.0),
               decoration: const BoxDecoration(
@@ -91,7 +254,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                   ),
                   const SizedBox(height: 24),
                   
-                  // التبويبات
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
@@ -127,23 +289,18 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
   Widget _buildDetailsContent() {
     final String description = widget.data['description'] ?? "No description available.";
     final String price = widget.data['price'] ?? "N/A";
-    // --- قراءة حقل السعة ---
     final String capacity = widget.data['capacity'] ?? "N/A";
-    
     final String address = widget.data['location'] ?? widget.data['address'] ?? "Unknown Address";
     final String phone = widget.data['contactPhone'] ?? widget.data['phone'] ?? "N/A";
     
-    // التعامل مع supportedPets (الأنواع المقبولة)
     List<String> supportedPets = [];
     if (widget.data['type'] != null) {
-      // الأنواع تأتي كنص مفصول بفاصلة "Dog,Cat"
       supportedPets = widget.data['type'].toString().split(',').map((e) => e.trim()).toList();
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // أ. About
         const Text("About Hotel",
             style: TextStyle(
                 fontSize: 18,
@@ -158,7 +315,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
         const SizedBox(height: 24),
 
-        // ب. Info Card (Accepts + Price + Capacity)
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -169,7 +325,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // العمود الأيسر: الأنواع المقبولة
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,18 +359,15 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                 ),
               ),
               
-              // خط فاصل
               Container(
                   width: 1,
-                  height: 60, // زدنا الطول قليلاً ليستوعب السعة
+                  height: 60, 
                   color: Colors.grey[300],
                   margin: const EdgeInsets.symmetric(horizontal: 16)),
               
-              // العمود الأيمن: السعر + السعة (تم التعديل هنا)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  // السعر
                   const Text("Price",
                       style: TextStyle(
                           fontSize: 13,
@@ -241,9 +393,8 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                     ],
                   ),
                   
-                  const SizedBox(height: 12), // مسافة فاصلة
+                  const SizedBox(height: 12), 
 
-                  // السعة (Capacity) - إضافة جديدة
                   const Text("Capacity",
                       style: TextStyle(
                           fontSize: 13,
@@ -253,7 +404,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.meeting_room, size: 16, color: AppColors.textDark), // أيقونة مناسبة
+                      const Icon(Icons.meeting_room, size: 16, color: AppColors.textDark), 
                       const SizedBox(width: 4),
                       Text(
                         capacity,
@@ -272,7 +423,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
         const SizedBox(height: 24),
 
-        // ج. الموقع
         const Text("Location",
             style: TextStyle(
                 fontSize: 18,
@@ -298,7 +448,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
         const SizedBox(height: 24),
 
-        // د. الاتصال
         const Text("Contact Info",
             style: TextStyle(
                 fontSize: 18,
@@ -366,10 +515,8 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
   }
 
   Widget _buildAmenitiesContent() {
-    // معالجة ال amenities (سواء كانت نص أو قائمة)
     List<String> amenitiesList = [];
     
-    // إذا كانت نصاً (من قاعدة البيانات)، نقسمها بفاصلة
     if (widget.data['amenities'] is String) {
       amenitiesList = (widget.data['amenities'] as String)
           .split(',')
@@ -377,7 +524,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
           .map((e) => e.trim())
           .toList();
     } 
-    // إذا كانت قائمة أصلاً
     else if (widget.data['amenities'] is List) {
       amenitiesList = List<String>.from(widget.data['amenities']);
     }

@@ -3,10 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../services/database_service.dart';
 import '../auth/login_screen.dart'; 
 import 'widgets/profile_menu_item.dart';
 import 'edit_profile_screen.dart'; 
-import 'my_posts_screen.dart'; // Ensure this import matches your file structure
+import 'my_posts_screen.dart'; 
+import 'favorites_screen.dart'; 
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -19,7 +21,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _name = "loading...";
   String _username = ""; 
   String _photoUrl = "https://cdn-icons-png.flaticon.com/128/1077/1077114.png";
-  int _postsCount = 0; // Variable to store the number of posts
+  int _postsCount = 0; 
+  String _ratingDisplay = "0.0";
 
   @override
   void initState() {
@@ -31,18 +34,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        // 1. Fetch User Profile Data
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .get();
 
-        // 2. Fetch User's Post Count
-        // We count documents in 'pets' collection where 'ownerId' matches current user
         QuerySnapshot postsSnapshot = await FirebaseFirestore.instance
             .collection('pets')
             .where('ownerId', isEqualTo: user.uid)
             .get();
+
+        final ratingStats = await DatabaseService().getUserRatingStats(user.uid);
+        double avg = ratingStats['average'];
 
         if (mounted) {
           setState(() {
@@ -50,8 +53,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _name = userDoc['name'] ?? "palpet user";
               _username = userDoc['username'] ?? ""; 
             }
-            // Update the post count
             _postsCount = postsSnapshot.docs.length;
+            _ratingDisplay = avg.toStringAsFixed(1);
           });
         }
       } catch (e) {
@@ -84,7 +87,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- Header & Profile Picture ---
             Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.center,
@@ -121,7 +123,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 60),
             
-            // --- User Info ---
             Text(
               _name,
               style: const TextStyle(
@@ -132,7 +133,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 4),
             
-            // Display Unique Username
             Text(
               _username.isNotEmpty ? "@$_username" : "",
               style: const TextStyle(
@@ -144,24 +144,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             
             const SizedBox(height: 24),
             
-            // --- Stats Row ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  // Updated: Shows "My Posts" with dynamic count
                   _buildStatCard("My Posts", _postsCount.toString()), 
                   const SizedBox(width: 16),
                   _buildStatCard("Bookings", "0"),
                   const SizedBox(width: 16),
-                  _buildStatCard("Reviews", "0"),
+                  _buildStatCard("Rating", "$_ratingDisplay ★"),
                 ],
               ),
             ),
             
             const SizedBox(height: 24),
             
-            // --- Menu Items ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -175,7 +172,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 12),
                   
-                  // Edit Profile
                   ProfileMenuItem(
                     title: "Edit Profile",
                     icon: Icons.person_outline,
@@ -190,17 +186,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   
-                  // New: My Posts Option
                   ProfileMenuItem(
                     title: "My Posts",
-                    icon: Icons.article_outlined, // Icon representing posts/articles
+                    icon: Icons.article_outlined, 
                     onTap: () async {
-                      // Navigate to My Posts Screen
                       await Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const MyPostsScreen()),
                       );
-                      // Refresh data when returning (to update post count if items were deleted)
                       _fetchUserData();
                     },
                   ),
@@ -210,10 +203,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.calendar_today_outlined,
                     onTap: () {},
                   ),
+                  
                   ProfileMenuItem(
                     title: "Favorites",
                     icon: Icons.favorite_border,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const FavoritesScreen()),
+                      );
+                    },
                   ),
                   const SizedBox(height: 20),
                   

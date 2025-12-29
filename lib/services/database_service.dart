@@ -95,7 +95,6 @@ class DatabaseService {
 
   // --- 4. Clinics & Notifications ---
   
-  // إضافة عيادة جديدة
   Future<void> addClinic(Clinic clinic) async {
     try {
       await _db.collection('clinics').add(clinic.toMap());
@@ -105,7 +104,6 @@ class DatabaseService {
     }
   }
 
-  // تعديل بيانات العيادة
   Future<void> updateClinic(Clinic clinic) async {
     try {
       await _db.collection('clinics').doc(clinic.id).update(clinic.toMap());
@@ -115,7 +113,6 @@ class DatabaseService {
     }
   }
 
-  // حذف العيادة
   Future<void> deleteClinic(String id) async {
     try {
       await _db.collection('clinics').doc(id).delete();
@@ -125,14 +122,13 @@ class DatabaseService {
     }
   }
 
-  // جلب العيادات (مع قراءة ownerId)
   Stream<List<Clinic>> getClinics() {
     return _db.collection('clinics').snapshots().map((snapshot) =>
         snapshot.docs.map((doc) {
           final data = doc.data();
           return Clinic(
             id: doc.id,
-            ownerId: data['ownerId'] ?? '', // [مهم] قراءة معرف المالك
+            ownerId: data['ownerId'] ?? '', 
             name: data['name'] ?? '',
             address: data['address'] ?? '',
             description: data['description'] ?? '',
@@ -146,7 +142,6 @@ class DatabaseService {
         }).toList());
   }
 
-  // --- Notifications Logic ---
   Future<void> checkAndSendNotifications(Pet newPet, String petId) async {
     try {
       if (newPet.postType == 'Found') {
@@ -211,6 +206,120 @@ class DatabaseService {
       'type': notificationType,
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // --- 5. Reviews System ---
+  Future<void> addReview({
+    required String targetUserId,
+    required String reviewerId,
+    required double rating,
+    required String comment,
+    required String reviewType,
+  }) async {
+    try {
+      await _db.collection('reviews').add({
+        'targetUserId': targetUserId,
+        'reviewerId': reviewerId,
+        'rating': rating,
+        'comment': comment,
+        'reviewType': reviewType,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Error adding review: $e");
+      throw Exception("Failed to add review.");
+    }
+  }
+
+  Future<bool> hasUserReviewed(String reviewerId, String targetUserId, String reviewType) async {
+    try {
+      final snapshot = await _db
+          .collection('reviews')
+          .where('reviewerId', isEqualTo: reviewerId)
+          .where('targetUserId', isEqualTo: targetUserId)
+          .where('reviewType', isEqualTo: reviewType)
+          .limit(1)
+          .get();
+      return snapshot.docs.isNotEmpty;
+    } catch (e) {
+      print("Error checking review status: $e");
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> getUserRatingStats(String userId, {String? reviewType}) async {
+    try {
+      Query query = _db.collection('reviews').where('targetUserId', isEqualTo: userId);
+      if (reviewType != null) {
+        query = query.where('reviewType', isEqualTo: reviewType);
+      }
+      QuerySnapshot snapshot = await query.get();
+
+      if (snapshot.docs.isEmpty) {
+        return {'average': 0.0, 'count': 0};
+      }
+
+      double totalStars = 0;
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        totalStars += (data['rating'] ?? 0.0).toDouble();
+      }
+
+      double average = totalStars / snapshot.docs.length;
+      return {'average': average, 'count': snapshot.docs.length};
+    } catch (e) {
+      print("Error calculating rating: $e");
+      return {'average': 0.0, 'count': 0};
+    }
+  }
+
+  // --- 6. Favorites System (NEW) ---
+  
+  // إضافة أو حذف من المفضلة
+  Future<void> toggleFavorite(String userId, String petId) async {
+    final docRef = _db.collection('users').doc(userId).collection('favorites').doc(petId);
+    final doc = await docRef.get();
+
+    if (doc.exists) {
+      await docRef.delete();
+    } else {
+      await docRef.set({
+        'addedAt': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  // التحقق من حالة المفضلة
+  Future<bool> isFavorite(String userId, String petId) async {
+    final doc = await _db.collection('users').doc(userId).collection('favorites').doc(petId).get();
+    return doc.exists;
+  }
+
+  // جلب قائمة المفضلة
+  Stream<List<Pet>> getUserFavorites(String userId) {
+    return _db
+        .collection('users')
+        .doc(userId)
+        .collection('favorites')
+        .orderBy('addedAt', descending: true)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      List<String> petIds = snapshot.docs.map((doc) => doc.id).toList();
+      if (petIds.isEmpty) return [];
+
+      List<Pet> favoritePets = [];
+      for (String id in petIds) {
+        try {
+          var petDoc = await _db.collection('pets').doc(id).get();
+          if (petDoc.exists) {
+            favoritePets.add(Pet.fromMap(petDoc.data()!, petDoc.id));
+          }
+        } catch (e) {
+          print("Error fetching favorite pet $id: $e");
+        }
+      }
+      return favoritePets;
     });
   }
 }

@@ -136,7 +136,6 @@ class AdoptionPetCard extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // --- التعديل هنا: استخدام ElevatedButton.icon ---
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -150,9 +149,7 @@ class AdoptionPetCard extends StatelessWidget {
                       ),
                       elevation: 0,
                     ),
-                    // إضافة الأيقونة هنا
                     icon: const Icon(Icons.pets, size: 20), 
-                    // النص يصبح label
                     label: const Text(
                       "View Details",
                       style: TextStyle(

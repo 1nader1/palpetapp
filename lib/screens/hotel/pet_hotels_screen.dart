@@ -17,7 +17,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
   String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
 
-  // تيار البيانات
   late Stream<List<Pet>> _hotelsStream;
 
   @override
@@ -39,7 +38,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
       body: StreamBuilder<List<Pet>>(
         stream: _hotelsStream,
         builder: (context, snapshot) {
-          // حالة التحميل
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -52,12 +50,9 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
               // 1. تصفية حسب النوع: Hotel فقط
               if (pet.postType != 'Hotel') return false;
 
-              // 2. فلترة حسب نوع الحيوان المدعوم (تم الإصلاح هنا)
+              // 2. فلترة حسب نوع الحيوان
               if (_selectedPetType != null && _selectedPetType != "All Types") {
-                // نحول النص "Dog,Cat" إلى قائمة ["Dog", "Cat"]
                 final List<String> supportedTypes = pet.type.split(',').map((e) => e.trim()).toList();
-                
-                // نتحقق إذا كان النوع المختار موجوداً ضمن القائمة
                 if (!supportedTypes.contains(_selectedPetType)) {
                   return false;
                 }
@@ -192,17 +187,19 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                           itemBuilder: (context, index) {
                             final pet = displayList[index];
 
-                            // تحويل النص "Dog,Cat" إلى قائمة ["Dog", "Cat"]
-                            // ليتم عرضها كأيقونات منفصلة في الكارد
                             List<String> supported = pet.type.split(',').map((e) => e.trim()).toList();
 
                             return HotelCard(
                               name: pet.name,
                               address: pet.location, 
-                              rating: 0.0, 
+                              // --- التعديل هنا ---
+                              // حذفنا rating: 0.0
+                              // أضفنا ownerId بدلاً منه
+                              ownerId: pet.ownerId, 
+                              // -------------------
                               imageUrl: pet.imageUrl,
                               description: pet.description,
-                              supportedPets: supported, // نمرر القائمة الصحيحة هنا
+                              supportedPets: supported,
                               onTap: () {
                                 Navigator.push(
                                   context,

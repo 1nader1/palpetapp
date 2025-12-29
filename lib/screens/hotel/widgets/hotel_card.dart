@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../services/database_service.dart';
 
 class HotelCard extends StatelessWidget {
   final String name;
   final String address;
-  final double rating;
   final String imageUrl;
   final String description;
   final List<String> supportedPets;
+  final String ownerId; // ضروري لجلب التقييم
   final VoidCallback onTap;
 
   const HotelCard({
     super.key,
     required this.name,
     required this.address,
-    required this.rating,
     required this.imageUrl,
     required this.description,
     required this.supportedPets,
+    required this.ownerId,
     required this.onTap,
   });
 
@@ -62,19 +63,37 @@ class HotelCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.95),
                     borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.star_rounded,
-                          color: Colors.amber, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        rating.toString(),
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 12),
-                      ),
+                    boxShadow: [
+                       BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))
                     ],
+                  ),
+                  // هنا التغيير الجوهري: نطلب تقييمات الفندق فقط
+                  child: FutureBuilder<Map<String, dynamic>>(
+                    future: DatabaseService().getUserRatingStats(ownerId, reviewType: 'hotel'),
+                    builder: (context, snapshot) {
+                      String ratingText = "-.-";
+                      if (snapshot.hasData) {
+                        double avg = snapshot.data!['average'] ?? 0.0;
+                        if (avg > 0) {
+                           ratingText = avg.toStringAsFixed(1);
+                        } else {
+                           ratingText = "New"; // إذا لم يكن هناك تقييم بعد
+                        }
+                      }
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.star_rounded,
+                              color: Colors.amber, size: 18),
+                          const SizedBox(width: 4),
+                          Text(
+                            ratingText,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
