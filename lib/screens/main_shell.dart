@@ -61,7 +61,6 @@ class _MainShellState extends State<MainShell> {
           child: Icon(Icons.pets, color: AppColors.primary, size: 32),
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.language), onPressed: () {}),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {

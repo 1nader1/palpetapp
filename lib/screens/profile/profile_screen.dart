@@ -199,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
 
                   ProfileMenuItem(
-                    title: "My Appointments",
+                    title: "My Bookings",
                     icon: Icons.calendar_today_outlined,
                     onTap: () {},
                   ),
@@ -224,11 +224,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ProfileMenuItem(
-                    title: "Notifications",
-                    icon: Icons.notifications_none,
-                    onTap: () {},
-                  ),
                   ProfileMenuItem(
                     title: "Language",
                     icon: Icons.language,
