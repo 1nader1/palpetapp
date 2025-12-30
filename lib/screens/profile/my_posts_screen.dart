@@ -52,13 +52,12 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => AddPostScreen(
-          petToEdit: pet, // Pass the pet to the edit screen
+          petToEdit: pet,
         ),
       ),
     );
   }
 
-  // Handle navigation based on post type
   void _openPostDetails(Pet pet) {
     if (pet.postType == 'Adoption') {
       Navigator.push(
@@ -167,6 +166,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                     ),
                   ),
                 ),
+
                 // Badge for Post Type
                 Positioned(
                   top: 12,
@@ -211,6 +211,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      
                       // Edit/Delete Buttons
                       Row(
                         children: [

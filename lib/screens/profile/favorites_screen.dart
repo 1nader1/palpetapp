@@ -54,7 +54,7 @@ class FavoritesScreen extends StatelessWidget {
             itemCount: pets.length,
             itemBuilder: (context, index) {
               final pet = pets[index];
-              // *** التعديل هنا أيضاً: تمرير البيانات منفصلة ***
+
               return AdoptionPetCard(
                 name: pet.name,
                 age: pet.age,

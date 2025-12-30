@@ -12,7 +12,7 @@ class MyBookingsScreen extends StatefulWidget {
 }
 
 class _MyBookingsScreenState extends State<MyBookingsScreen> {
-  // تتبع المستخدم والحجز لتجنب إعادة البناء المتكررة
+
   final String? userId = FirebaseAuth.instance.currentUser?.uid;
   late Stream<List<Map<String, dynamic>>> _bookingsStream;
 
@@ -20,7 +20,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   void initState() {
     super.initState();
     if (userId != null) {
-      // تهيئة الـ Stream مرة واحدة عند بداية الشاشة
       _bookingsStream = DatabaseService().getUserBookings(userId!);
     }
   }
@@ -45,7 +44,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _bookingsStream,
         builder: (context, snapshot) {
-          // 1. معالجة حالة الخطأ (مهم جداً لمعرفة سبب الاختفاء)
           if (snapshot.hasError) {
             return Center(
               child: Padding(
@@ -72,12 +70,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             );
           }
 
-          // 2. حالة التحميل
+          // 2. loading state
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // 3. حالة عدم وجود بيانات
+          // 3. no data found
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(
               child: Column(
@@ -98,7 +96,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             itemCount: bookings.length,
             itemBuilder: (context, index) {
               final booking = bookings[index];
-              // معالجة آمنة للتاريخ
               final date = booking['createdAt'] != null 
                   ? (booking['createdAt'] as dynamic).toDate() 
                   : DateTime.now();

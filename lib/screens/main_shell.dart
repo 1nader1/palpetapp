@@ -27,15 +27,13 @@ class _MainShellState extends State<MainShell> {
 
     _screens = [
       HomeScreen(onNavigate: _onItemTapped),
-      // --- التعديل هنا: تمرير دالة التنقل للصفحة ---
       AddPostScreen(onNavigate: _onItemTapped),
-      // -------------------------------------------
+
       const ProfileScreen(),
       const AdoptionScreen(),
       const LostFoundScreen(),
       const PetHotelsScreen(),
       const ClinicsScreen(),
-      // العناصر الإضافية في حال كانت موجودة للكود القديم
       HomeScreen(onNavigate: _onItemTapped),
       AddPostScreen(onNavigate: _onItemTapped),
       const ProfileScreen(),

@@ -49,7 +49,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final ratingStats = await DatabaseService().getUserRatingStats(user.uid);
         double avg = ratingStats['average'];
 
-        // [جلب عدد الحجوزات]
         final bookingsCount = await DatabaseService().getUserBookingsCount(user.uid);
 
         if (mounted) {
@@ -60,7 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             }
             _postsCount = postsSnapshot.docs.length;
             _ratingDisplay = avg.toStringAsFixed(1);
-            _bookingsCount = bookingsCount; // [تحديث القيمة]
+            _bookingsCount = bookingsCount; 
           });
         }
       } catch (e) {
@@ -156,7 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   _buildStatCard("My Posts", _postsCount.toString()), 
                   const SizedBox(width: 16),
-                  _buildStatCard("Bookings", _bookingsCount.toString()), // [استخدام المتغير المحدث]
+                  _buildStatCard("Bookings", _bookingsCount.toString()), 
                   const SizedBox(width: 16),
                   _buildStatCard("Rating", "$_ratingDisplay ★"),
                 ],
@@ -208,7 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: "My Bookings",
                     icon: Icons.calendar_today_outlined,
                     onTap: () {
-                      // [فتح الشاشة الجديدة]
+
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const MyBookingsScreen()),
