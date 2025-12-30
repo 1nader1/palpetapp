@@ -91,6 +91,9 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
   void _showRatingDialog(String currentUserId, String targetUserId) {
     double rating = 0;
     TextEditingController commentController = TextEditingController();
+    
+    // متغير للتحكم في واجهة الحوار: هل تم تأكيد العملية؟
+    bool isTransactionConfirmed = false; 
 
     showDialog(
       context: context,
@@ -100,49 +103,91 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
           builder: (context, setStateDialog) {
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Row(
+              // تغيير العنوان بناءً على المرحلة
+              title: Row(
                 children: [
-                   Icon(Icons.star, color: Colors.amber),
-                   SizedBox(width: 8),
-                   Text("Rate Hotel Service"),
+                   Icon(
+                     isTransactionConfirmed ? Icons.star : Icons.check_circle_outline, 
+                     color: isTransactionConfirmed ? Colors.amber : AppColors.primary
+                   ),
+                   const SizedBox(width: 8),
+                   Text(isTransactionConfirmed ? "Rate Service" : "Service Confirmation"),
                 ],
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("How was your experience with this hotel?"),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      return IconButton(
-                        icon: Icon(
-                          index < rating ? Icons.star : Icons.star_border,
-                          color: Colors.amber,
-                          size: 32,
-                        ),
-                        onPressed: () {
-                          setStateDialog(() {
-                            rating = index + 1.0;
-                          });
-                        },
-                      );
-                    }),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: commentController,
-                    decoration: InputDecoration(
-                      hintText: "Write a comment (optional)",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                      fillColor: Colors.grey[50],
+                  // --- المرحلة الأولى: السؤال عن إتمام العملية ---
+                  if (!isTransactionConfirmed) ...[
+                    const Text(
+                      "Did the booking/transaction take place successfully?",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      textAlign: TextAlign.center,
                     ),
-                    maxLines: 2,
-                  ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // زر لا: لم تتم العملية
+                        TextButton(
+                          onPressed: () {
+                             Navigator.pop(context); // إغلاق فقط
+                          },
+                          child: const Text("No", style: TextStyle(color: Colors.grey, fontSize: 16)),
+                        ),
+                        // زر نعم: تمت العملية، ننتقل للتقييم
+                        ElevatedButton(
+                          onPressed: () {
+                            setStateDialog(() {
+                              isTransactionConfirmed = true;
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text("Yes"),
+                        ),
+                      ],
+                    ),
+                  ] 
+                  // --- المرحلة الثانية: التقييم (تظهر بعد الضغط على Yes) ---
+                  else ...[
+                    const Text("How was your experience with this hotel?"),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        return IconButton(
+                          icon: Icon(
+                            index < rating ? Icons.star : Icons.star_border,
+                            color: Colors.amber,
+                            size: 32,
+                          ),
+                          onPressed: () {
+                            setStateDialog(() {
+                              rating = index + 1.0;
+                            });
+                          },
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: commentController,
+                      decoration: InputDecoration(
+                        hintText: "Write a comment (optional)",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                      ),
+                      maxLines: 2,
+                    ),
+                  ],
                 ],
               ),
-              actions: [
+              // الأزرار السفلية تظهر فقط في مرحلة التقييم
+              actions: isTransactionConfirmed ? [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text("Skip", style: TextStyle(color: Colors.grey)),
@@ -150,18 +195,33 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
                 ElevatedButton(
                   onPressed: () async {
                     if (rating > 0) {
+                      // 1. إضافة التقييم
                       await DatabaseService().addReview(
                         targetUserId: targetUserId,
                         reviewerId: currentUserId,
                         rating: rating,
                         comment: commentController.text,
-                        reviewType: 'hotel', // تحديد النوع كـ hotel
+                        reviewType: 'hotel', 
                       );
+
+                      // 2. تسجيل العملية كحجز في السجل
+                      await DatabaseService().addBooking(
+                        userId: currentUserId,
+                        providerId: targetUserId,
+                        serviceType: 'Hotel Booking',
+                        itemName: widget.data['name'] ?? 'Hotel Service',
+                        details: {
+                           'price': widget.data['price'],
+                           'ratingGiven': rating,
+                           'location': widget.data['location'],
+                        },
+                      );
+
                       if (mounted) {
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text("Thanks for your feedback!"),
+                            content: Text("Feedback and Booking recorded!"),
                             backgroundColor: Colors.green,
                           )
                         );
@@ -179,7 +239,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
                   ),
                   child: const Text("Submit"),
                 ),
-              ],
+              ] : null,
             );
           },
         );

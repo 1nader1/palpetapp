@@ -16,7 +16,7 @@ class PetDetailsScreen extends StatefulWidget {
 
 class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBindingObserver {
   bool _isCallClicked = false;
-  bool _isFavorite = false; // متغير لحالة القلب
+  bool _isFavorite = false; 
 
   @override
   void initState() {
@@ -92,8 +92,11 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
     final String targetUserId = widget.pet.ownerId;
 
     if (currentUser == null) return;
+    
+    // منع المالك من تقييم نفسه
     if (currentUser.uid == targetUserId) return;
 
+    // فحص التكرار
     bool alreadyReviewed = await DatabaseService().hasUserReviewed(currentUser.uid, targetUserId, 'adoption');
     
     if (!mounted) return;
@@ -106,9 +109,13 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
     _showRatingDialog(currentUser.uid, targetUserId);
   }
 
+  // --- تم تعديل هذه الدالة لتشمل سؤال التأكيد وتسجيل الحجز ---
   void _showRatingDialog(String currentUserId, String targetUserId) {
     double rating = 0;
     TextEditingController commentController = TextEditingController();
+    
+    // متغير للتحكم في مرحلة الحوار
+    bool isTransactionConfirmed = false; 
 
     showDialog(
       context: context,
@@ -118,19 +125,86 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
           builder: (context, setStateDialog) {
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Row(children: [Icon(Icons.star, color: Colors.amber), SizedBox(width: 8), Text("Rate Owner")]),
-              content: Column(mainAxisSize: MainAxisSize.min, children: [
-                  const Text("How was your experience dealing with this owner?"),
-                  const SizedBox(height: 20),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (index) { return IconButton(icon: Icon(index < rating ? Icons.star : Icons.star_border, color: Colors.amber, size: 32), onPressed: () { setStateDialog(() { rating = index + 1.0; }); }); })),
-                  const SizedBox(height: 10),
-                  TextField(controller: commentController, decoration: InputDecoration(hintText: "Write a comment (optional)", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.grey[50]), maxLines: 2),
-                ]),
-              actions: [
+              title: Row(
+                children: [
+                   Icon(
+                     isTransactionConfirmed ? Icons.star : Icons.check_circle_outline, 
+                     color: isTransactionConfirmed ? Colors.amber : AppColors.primary
+                   ),
+                   const SizedBox(width: 8),
+                   Text(isTransactionConfirmed ? "Rate Owner" : "Adoption Status"),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min, 
+                children: [
+                  // --- المرحلة الأولى: هل تمت عملية التبني؟ ---
+                  if (!isTransactionConfirmed) ...[
+                    const Text(
+                      "Did you adopt this pet successfully?",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // زر لا
+                        TextButton(
+                          onPressed: () {
+                             Navigator.pop(context); 
+                          },
+                          child: const Text("No", style: TextStyle(color: Colors.grey, fontSize: 16)),
+                        ),
+                        // زر نعم
+                        ElevatedButton(
+                          onPressed: () {
+                            setStateDialog(() {
+                              isTransactionConfirmed = true;
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text("Yes"),
+                        ),
+                      ],
+                    ),
+                  ] 
+                  // --- المرحلة الثانية: التقييم ---
+                  else ...[
+                    const Text("How was your experience dealing with this owner?"),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center, 
+                      children: List.generate(5, (index) { 
+                        return IconButton(
+                          icon: Icon(index < rating ? Icons.star : Icons.star_border, color: Colors.amber, size: 32), 
+                          onPressed: () { setStateDialog(() { rating = index + 1.0; }); }
+                        ); 
+                      })
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: commentController, 
+                      decoration: InputDecoration(
+                        hintText: "Write a comment (optional)", 
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), 
+                        filled: true, 
+                        fillColor: Colors.grey[50]
+                      ), 
+                      maxLines: 2
+                    ),
+                  ],
+                ],
+              ),
+              actions: isTransactionConfirmed ? [
                 TextButton(onPressed: () => Navigator.pop(context), child: const Text("Skip", style: TextStyle(color: Colors.grey))),
                 ElevatedButton(
                   onPressed: () async {
                     if (rating > 0) {
+                      // 1. إضافة التقييم
                       await DatabaseService().addReview(
                         targetUserId: targetUserId,
                         reviewerId: currentUserId,
@@ -138,9 +212,23 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
                         comment: commentController.text,
                         reviewType: 'adoption', 
                       );
+
+                      // 2. تسجيل العملية في سجل الحجوزات/العمليات [جديد]
+                      await DatabaseService().addBooking(
+                        userId: currentUserId,
+                        providerId: targetUserId,
+                        serviceType: 'Adoption', // نوع الخدمة
+                        itemName: "${widget.pet.type} - ${widget.pet.breed}", // اسم العنصر
+                        details: {
+                           'petAge': widget.pet.age,
+                           'location': widget.pet.location,
+                           'ratingGiven': rating,
+                        },
+                      );
+
                       if (mounted) {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Thanks for your feedback!"), backgroundColor: Colors.green));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Adoption recorded & Feedback sent!"), backgroundColor: Colors.green));
                       }
                     } else {
                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select a star rating")));
@@ -149,7 +237,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
                   style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                   child: const Text("Submit"),
                 ),
-              ],
+              ] : null,
             );
           },
         );

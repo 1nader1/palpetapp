@@ -8,7 +8,8 @@ import '../auth/login_screen.dart';
 import 'widgets/profile_menu_item.dart';
 import 'edit_profile_screen.dart'; 
 import 'my_posts_screen.dart'; 
-import 'favorites_screen.dart'; 
+import 'favorites_screen.dart';
+import 'my_bookings_screen.dart'; // [استيراد الملف الجديد]
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,6 +24,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _photoUrl = "https://cdn-icons-png.flaticon.com/128/1077/1077114.png";
   int _postsCount = 0; 
   String _ratingDisplay = "0.0";
+  int _bookingsCount = 0; // [متغير جديد]
 
   @override
   void initState() {
@@ -47,6 +49,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final ratingStats = await DatabaseService().getUserRatingStats(user.uid);
         double avg = ratingStats['average'];
 
+        // [جلب عدد الحجوزات]
+        final bookingsCount = await DatabaseService().getUserBookingsCount(user.uid);
+
         if (mounted) {
           setState(() {
             if (userDoc.exists) {
@@ -55,6 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             }
             _postsCount = postsSnapshot.docs.length;
             _ratingDisplay = avg.toStringAsFixed(1);
+            _bookingsCount = bookingsCount; // [تحديث القيمة]
           });
         }
       } catch (e) {
@@ -150,7 +156,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   _buildStatCard("My Posts", _postsCount.toString()), 
                   const SizedBox(width: 16),
-                  _buildStatCard("Bookings", "0"),
+                  _buildStatCard("Bookings", _bookingsCount.toString()), // [استخدام المتغير المحدث]
                   const SizedBox(width: 16),
                   _buildStatCard("Rating", "$_ratingDisplay ★"),
                 ],
@@ -201,7 +207,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ProfileMenuItem(
                     title: "My Bookings",
                     icon: Icons.calendar_today_outlined,
-                    onTap: () {},
+                    onTap: () {
+                      // [فتح الشاشة الجديدة]
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MyBookingsScreen()),
+                      );
+                    },
                   ),
                   
                   ProfileMenuItem(

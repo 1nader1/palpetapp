@@ -322,4 +322,60 @@ class DatabaseService {
       return favoritePets;
     });
   }
+
+  // --- 7. Bookings & Transactions System (NEW) ---
+
+  // إضافة حجز جديد عند تأكيد العملية
+  Future<void> addBooking({
+    required String userId,
+    required String providerId, 
+    required String serviceType, // 'hotel', 'adoption', 'clinic'
+    required String itemName, 
+    required Map<String, dynamic> details,
+  }) async {
+    try {
+      await _db.collection('bookings').add({
+        'userId': userId,
+        'providerId': providerId,
+        'serviceType': serviceType,
+        'itemName': itemName,
+        'details': details,
+        'status': 'Completed',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Error adding booking: $e");
+      throw Exception("Failed to add booking record.");
+    }
+  }
+
+  // جلب حجوزات المستخدم
+  Stream<List<Map<String, dynamic>>> getUserBookings(String userId) {
+    return _db
+        .collection('bookings')
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
+  }
+
+  // جلب عدد الحجوزات
+  Future<int> getUserBookingsCount(String userId) async {
+    try {
+      final snapshot = await _db
+          .collection('bookings')
+          .where('userId', isEqualTo: userId)
+          .count()
+          .get();
+      return snapshot.count ?? 0;
+    } catch (e) {
+      return 0;
+    }
+  }
 }
