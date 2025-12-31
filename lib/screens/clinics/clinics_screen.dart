@@ -1,11 +1,13 @@
-import 'dart:io'; // للتعامل مع ملف الصورة
+import 'dart:io'; 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart'; // [مهم] لاستيراد مكتبة الصور
+import 'package:image_picker/image_picker.dart'; 
 import '../../core/constants/app_colors.dart';
 import '../../data/models/clinic.dart';
 import '../../services/database_service.dart';
+import 'clinic_details_screen.dart'; // تأكد من استيراد صفحة التفاصيل إذا كانت موجودة للتنقل
 import 'widgets/clinic_card.dart';
+import 'widgets/clinic_card_skeleton.dart'; // [مهم] تأكد من وجود ملف السكيلتون الذي أنشأناه سابقاً
 
 class ClinicsScreen extends StatefulWidget {
   const ClinicsScreen({super.key});
@@ -22,7 +24,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50], // تعديل لون الخلفية ليكون أفتح قليلاً ومناسب للتصميم الجديد
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -52,6 +54,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
       ),
       body: Column(
         children: [
+          // --- شريط البحث ---
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
             child: TextField(
@@ -66,30 +69,39 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                 hintStyle: const TextStyle(color: Colors.grey),
                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 filled: true,
-                fillColor: const Color(0xFFF3F4F6),
+                fillColor: Colors.white, // تعديل للون الأبيض ليتناسب مع الخلفية الرمادية
                 contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(15), // تقليل نصف القطر قليلاً ليتناسب مع التصميم الحديث
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(15),
                   borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                 ),
               ),
             ),
           ),
+
+          // --- القائمة ---
           Expanded(
             child: StreamBuilder<List<Clinic>>(
               stream: _dbService.getClinics(),
               builder: (context, snapshot) {
+                
+                // 1. حالة التحميل (Shimmer Effect)
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    itemCount: 5, // عدد عناصر وهمية
+                    itemBuilder: (context, index) => const ClinicCardSkeleton(),
+                  );
                 }
+
                 if (snapshot.hasError) {
                   return const Center(child: Text("Error loading clinics"));
                 }
@@ -99,27 +111,76 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                     clinic.name.toLowerCase().contains(_searchKeyword.toLowerCase())
                 ).toList();
 
+                // 2. حالة عدم وجود بيانات (Empty State Illustration)
                 if (filteredClinics.isEmpty) {
                   return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.search_off_rounded, size: 80, color: Colors.grey[200]),
-                        const SizedBox(height: 16),
-                        const Text(
-                          "No clinics found",
-                          style: TextStyle(color: Colors.grey, fontSize: 16),
-                        ),
-                      ],
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            height: 200,
+                            width: 200,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  blurRadius: 20,
+                                  spreadRadius: 5,
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: Image.network(
+                                'https://i.pinimg.com/1200x/85/d6/fe/85d6fe2e402686d661019df7e4c09a30.jpg',
+                                fit: BoxFit.cover,
+                                errorBuilder: (ctx, _, __) => const Icon(Icons.local_hospital, size: 60, color: Colors.grey),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            "No Clinics Found",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "We couldn't find any clinics matching\nyour search.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textDark.withOpacity(0.6),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }
 
+                // 3. عرض القائمة الفعلية
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   itemCount: filteredClinics.length,
                   itemBuilder: (context, index) {
-                    return ClinicCard(clinic: filteredClinics[index]);
+                    final clinic = filteredClinics[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ClinicDetailsScreen(clinic: clinic)),
+                        );
+                      },
+                      child: ClinicCard(
+                        clinic: clinic,
+                      ),
+                    );
                   },
                 );
               },
@@ -143,11 +204,11 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
     final addressController = TextEditingController();
     final phoneController = TextEditingController();
     final descController = TextEditingController();
-    final hoursController = TextEditingController(text: "09:00 AM - 05:00 PM"); // القيمة الافتراضية
-    final servicesController = TextEditingController(); // لإدخال الخدمات مفصولة بفواصل
+    final hoursController = TextEditingController(text: "09:00 AM - 05:00 PM");
+    final servicesController = TextEditingController();
     
-    File? selectedImage; // لتخزين الصورة المختارة
-    bool isUploading = false; // حالة التحميل
+    File? selectedImage;
+    bool isUploading = false;
 
     showDialog(
       context: context,
@@ -159,7 +220,6 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // --- اختيار الصورة ---
                   GestureDetector(
                     onTap: () async {
                       final picker = ImagePicker();
@@ -193,12 +253,9 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   TextField(controller: nameController, decoration: const InputDecoration(labelText: "Clinic Name")),
                   TextField(controller: addressController, decoration: const InputDecoration(labelText: "Address")),
                   TextField(controller: phoneController, decoration: const InputDecoration(labelText: "Phone Number"), keyboardType: TextInputType.phone),
-                  
-                  // --- حقول جديدة ---
                   TextField(
                     controller: hoursController, 
                     decoration: const InputDecoration(
@@ -213,8 +270,6 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                       hintText: "Separate by comma (e.g. Surgery, Grooming)"
                     ),
                   ),
-                  // ------------------
-                  
                   TextField(controller: descController, decoration: const InputDecoration(labelText: "Description"), maxLines: 3),
                 ],
               ),
@@ -233,9 +288,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
 
                         setState(() => isUploading = true);
 
-                        String imageUrl = 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?q=80&w=2070'; // صورة افتراضية
+                        String imageUrl = 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?q=80&w=2070';
                         
-                        // رفع الصورة إذا تم اختيارها
                         if (selectedImage != null) {
                           try {
                             imageUrl = await _dbService.uploadImage(selectedImage!);
@@ -244,7 +298,6 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                           }
                         }
 
-                        // تحويل نص الخدمات إلى قائمة
                         List<String> servicesList = servicesController.text.isNotEmpty
                             ? servicesController.text.split(',').map((e) => e.trim()).toList()
                             : ['General Checkup'];
@@ -256,11 +309,11 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                           address: addressController.text,
                           phoneNumber: phoneController.text,
                           description: descController.text,
-                          imageUrl: imageUrl, // استخدام الرابط (المرفوع أو الافتراضي)
+                          imageUrl: imageUrl,
                           rating: 0.0,
                           isOpen: true,
-                          workingHours: hoursController.text, // القيمة المدخلة
-                          services: servicesList, // القائمة المحولة
+                          workingHours: hoursController.text,
+                          services: servicesList,
                         );
 
                         await _dbService.addClinic(newClinic);
