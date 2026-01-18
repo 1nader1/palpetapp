@@ -12,7 +12,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
-  final _usernameController = TextEditingController(); // New controller
+  final _usernameController = TextEditingController(); 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -41,7 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
           name: _nameController.text.trim(),
-          username: _usernameController.text.trim(), // Pass username
+          username: _usernameController.text.trim(), 
           location: _selectedLocation!,
         );
         
@@ -94,7 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Name Field
+
                 TextFormField(
                   controller: _nameController,
                   decoration: _inputDecoration('Full Name', Icons.person_outline),
@@ -102,7 +102,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Username Field
+
                 TextFormField(
                   controller: _usernameController,
                   decoration: _inputDecoration('Username', Icons.alternate_email),
@@ -114,7 +114,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Email Field
+
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -123,7 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Location Dropdown
+
                 DropdownButtonFormField<String>(
                   value: _selectedLocation,
                   decoration: _inputDecoration('Select City / Area', Icons.location_on_outlined),
@@ -135,7 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Password Field
+
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,

@@ -54,7 +54,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final uid = FirebaseAuth.instance.currentUser!.uid;
       final newUsername = _usernameController.text.trim().toLowerCase();
 
-      // Validate uniqueness only if changed
+
       if (newUsername != _initialUsername) {
         bool isUnique = await AuthService().isUsernameUnique(newUsername);
         if (!isUnique) throw 'Username is already taken';
@@ -68,7 +68,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
 
       if (mounted) {
-        Navigator.pop(context, true); // Return true to trigger refresh
+        Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile updated!")));
       }
     } catch (e) {

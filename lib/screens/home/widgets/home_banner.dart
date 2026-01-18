@@ -8,18 +8,18 @@ class HomeBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 220, // ارتفاع مناسب للبانر
+      height: 220, 
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.circular(24),
         image: DecorationImage(
-          // صورة كلب مشابهة للخلفية مع دمج لوني برتقالي
+
           image: const NetworkImage('https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=800&q=80'),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(
-            AppColors.primary.withOpacity(0.85), // دمج اللون البرتقالي فوق الصورة
-            BlendMode.srcOver, // طريقة الدمج لتبدو مثل التصميم
+            AppColors.primary.withOpacity(0.85), 
+            BlendMode.srcOver, 
           ),
         ),
       ),

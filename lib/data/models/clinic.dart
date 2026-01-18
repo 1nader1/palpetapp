@@ -1,6 +1,6 @@
 class Clinic {
   final String id;
-  final String ownerId; // [جديد] معرف صاحب المنشور
+  final String ownerId; 
   final String name;
   final String address;
   final String description;
@@ -13,7 +13,7 @@ class Clinic {
 
   Clinic({
     required this.id,
-    required this.ownerId, // [جديد]
+    required this.ownerId,
     required this.name,
     required this.address,
     required this.description,
@@ -27,7 +27,7 @@ class Clinic {
 
   Map<String, dynamic> toMap() {
     return {
-      'ownerId': ownerId, // حفظ المعرف في قاعدة البيانات
+      'ownerId': ownerId, 
       'name': name,
       'address': address,
       'description': description,
@@ -41,7 +41,7 @@ class Clinic {
   }
 }
 
-// بيانات وهمية للاختبار (اختياري)
+
 final List<Clinic> dummyClinics = [
   Clinic(
     id: '1',

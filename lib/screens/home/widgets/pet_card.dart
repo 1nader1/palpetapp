@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // [جديد]
+import 'package:cloud_firestore/cloud_firestore.dart'; 
 import '../../../core/constants/app_colors.dart';
-import '../../../services/database_service.dart'; // [جديد]
+import '../../../services/database_service.dart';
 
 class PetCard extends StatelessWidget {
-  final String ownerId; // <--- [جديد]
+  final String ownerId; 
   final String name;
   final String breed;
   final String gender;
@@ -15,7 +15,7 @@ class PetCard extends StatelessWidget {
 
   const PetCard({
     super.key,
-    required this.ownerId, // <--- [جديد]
+    required this.ownerId, 
     required this.name,
     required this.breed,
     required this.gender,
@@ -25,7 +25,6 @@ class PetCard extends StatelessWidget {
     required this.onTap,
   });
 
-  // [جديد] دالة عرض بروفايل المالك (نفس المنطق المستخدم سابقاً)
   void _showOwnerProfile(BuildContext context) {
     showDialog(
       context: context,
@@ -174,7 +173,7 @@ class PetCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- [جديد] البار العلوي (Adoption + Owner Button) ---
+
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
@@ -209,9 +208,9 @@ class PetCard extends StatelessWidget {
             ),
           ),
 
-          // --- الصورة (تم تعديل الحواف لتلتصق بالبار) ---
+
           ClipRRect(
-            borderRadius: BorderRadius.zero, // جعلناها مربعة لأن فوقها البار
+            borderRadius: BorderRadius.zero,
             child: AspectRatio(
               aspectRatio: 1.5,
               child: Image.network(
@@ -225,7 +224,7 @@ class PetCard extends StatelessWidget {
             ),
           ),
 
-          // --- باقي التفاصيل ---
+
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(

@@ -26,9 +26,9 @@ class NotificationsScreen extends StatelessWidget {
     await batch.commit();
   }
 
-  // --- دالة التنقل (تم إصلاحها) ---
+
   void _handleNotificationTap(BuildContext context, Map<String, dynamic> item) async {
-    // 1. تعليم الإشعار كمقروء
+
     if (item['isRead'] == false) {
       FirebaseFirestore.instance
           .collection('notifications')
@@ -47,14 +47,14 @@ class NotificationsScreen extends StatelessWidget {
     );
 
     try {
-      // 3. جلب بيانات البوست
+
       Pet? pet = await DatabaseService().getPetById(petId);
       
       if (context.mounted) {
-        Navigator.pop(context); // إخفاء اللودينج
+        Navigator.pop(context); 
 
         if (pet != null) {
-          // 4. التوجيه للصفحة المناسبة (كلاهما الآن يستقبل pet)
+
           if (pet.postType == 'Adoption') {
             Navigator.push(
               context,

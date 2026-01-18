@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // تأكد من وجود المكتبة
+import 'package:shared_preferences/shared_preferences.dart'; 
 import '../../core/constants/app_colors.dart';
 import '../auth/login_screen.dart';
 
@@ -14,22 +14,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _currentIndex = 0;
   final PageController _controller = PageController();
 
-  // بيانات شاشات الشرح (تم تحديث الروابط لصور تعمل وموثوقة)
+
   final List<OnboardingContent> _contents = [
     OnboardingContent(
-      // صورة تعبر عن التبني والصداقة
+
       image: 'https://images.unsplash.com/photo-1450778869180-41d0601e046e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
       title: "Find Your Best Friend",
       description: "Browse hundreds of pets looking for a forever home. Adopt, don't shop, and make a new friend today.",
     ),
     OnboardingContent(
-      // صورة تعبر عن العناية البيطرية
+
       image: 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
       title: "Top-Notch Care & Stays",
       description: "Discover the best veterinary clinics and cozy pet hotels nearby. Only the best for your furry companion.",
     ),
     OnboardingContent(
-      // صورة تعبر عن البحث والمفقودات
+
       image: 'https://images.unsplash.com/photo-1535930749574-1399327ce78f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
       title: "Reunite Lost Pets",
       description: "Lost your pet? Use our community-driven 'Lost & Found' alert system to bring them back home safely.",
@@ -43,7 +43,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // زر "تخطي" في الأعلى
+
             Align(
               alignment: Alignment.topRight,
               child: TextButton(
@@ -55,7 +55,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             
-            // منطقة العرض المتغير (PageView)
+
             Expanded(
               child: PageView.builder(
                 controller: _controller,
@@ -67,13 +67,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
                 itemBuilder: (context, index) {
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40.0), // تعديل الـ padding
+                    padding: const EdgeInsets.symmetric(horizontal: 40.0), 
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // الصورة
+
                         Container(
-                          height: 320, // زيادة الارتفاع قليلاً
+                          height: 320, 
                           width: double.infinity,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(25),
@@ -90,7 +90,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             child: Image.network(
                               _contents[index].image,
                               fit: BoxFit.cover,
-                              // إضافة مؤشر تحميل لضمان تجربة جيدة
+
                               loadingBuilder: (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
                                 return Center(
@@ -119,7 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         const SizedBox(height: 40),
                         
-                        // العنوان
+
                         Text(
                           _contents[index].title,
                           textAlign: TextAlign.center,
@@ -131,7 +131,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         const SizedBox(height: 16),
                         
-                        // الوصف
+
                         Text(
                           _contents[index].description,
                           textAlign: TextAlign.center,
@@ -148,13 +148,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // منطقة التحكم السفلية
+
             Padding(
               padding: const EdgeInsets.only(bottom: 50, left: 24, right: 24),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // مؤشر النقاط
+
                   Row(
                     children: List.generate(
                       _contents.length,
@@ -162,7 +162,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   
-                  // الزر الرئيسي
+
                   ElevatedButton(
                     onPressed: () {
                       if (_currentIndex == _contents.length - 1) {
@@ -180,7 +180,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         borderRadius: BorderRadius.circular(15),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      elevation: 4, // إضافة ظل للزر
+                      elevation: 4, 
                     ),
                     child: Text(
                       _currentIndex == _contents.length - 1 ? "Get Started" : "Next",

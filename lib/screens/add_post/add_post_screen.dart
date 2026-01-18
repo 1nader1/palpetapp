@@ -28,7 +28,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
   bool _isLoading = false;
   bool _isGettingLocation = false;
   
-  // 1. متغير للتحكم في إظهار الأخطاء (اللون الأحمر)
+
   bool _showErrors = false;
 
   bool _isEditing = false;
@@ -306,33 +306,33 @@ class _AddPostScreenState extends State<AddPostScreen> {
   Future<void> _submitPost() async {
     FocusScope.of(context).unfocus();
     
-    // 2. تفعيل المتغير لإظهار الأخطاء في الواجهة
+
     setState(() => _showErrors = true);
 
-    // التحقق من الحقول (الاسم مطلوب دائماً كعنوان)
+
     bool nameFilled = _nameController.text.isNotEmpty;
-    // الموقع مطلوب (إما من القائمة أو النص)
+
     bool locationFilled = _selectedArea != null || _locationController.text.isNotEmpty;
-    // النوع مطلوب
+
     bool speciesSelected = false;
     if (_selectedType == 'Hotel') {
       speciesSelected = _selectedHotelSpecies.isNotEmpty;
     } else {
       speciesSelected = _selectedSpecies != null;
     }
-    // الهاتف مطلوب
+
     bool phoneFilled = _phoneController.text.isNotEmpty;
 
-    // شروط خاصة للتبني (الجنس والوصف)
+
     bool adoptionRequirementsMet = true;
     if (_selectedType == 'Adoption') {
-      // يجب أن يختار الجنس ويكتب الوصف
+
       adoptionRequirementsMet = (_selectedGender != null) && (_descriptionController.text.isNotEmpty);
     }
 
-    // إذا كان هناك أي نقص، نوقف العملية (وستظهر الحقول باللون الأحمر تلقائياً)
+
     if (!nameFilled || !locationFilled || !speciesSelected || !phoneFilled || !adoptionRequirementsMet) {
-      // لن نظهر SnackBar هنا، لأن الحقول ستتلون بالأحمر
+
       return;
     }
 
@@ -475,12 +475,12 @@ class _AddPostScreenState extends State<AddPostScreen> {
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   
-                  // 3. تمرير isRequired: true للحقول الاجبارية
+
                   _buildTextField(
                       label: "Name (Pet/Hotel)",
                       controller: _nameController,
                       icon: Icons.pets,
-                      isRequired: true, // الاسم مطلوب
+                      isRequired: true,
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -495,7 +495,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                                 icon: Icons.category,
                                 onChanged: (val) =>
                                     setState(() => _selectedSpecies = val),
-                                isRequired: true, // النوع مطلوب
+                                isRequired: true, 
                               ),
                       ),
                       const SizedBox(width: 12),
@@ -519,7 +519,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                   _buildLocationSection(),
                   const SizedBox(height: 12),
                   
-                  // الوصف مطلوب فقط في حالة التبني
+
                   _buildTextField(
                     label: "Description / Caption",
                     controller: _descriptionController,
@@ -629,8 +629,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
           label: "Selected Location (Editable)",
           controller: _locationController,
           icon: Icons.pin_drop,
-          // هنا نجعل الحقل مطلوباً، وبما أن هذا الحقل يتعبأ تلقائياً عند اختيار المنطقة
-          // أو الـ GPS، فإن التحقق منه يكفي لضمان وجود موقع
           isRequired: true, 
         ),
       ],
@@ -642,7 +640,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         ? "Select Species"
         : _selectedHotelSpecies.join(", ");
     
-    // تحديد لون الإطار بناءً على الخطأ
+
     Color borderColor = (_showErrors && _selectedHotelSpecies.isEmpty) 
         ? Colors.red 
         : Colors.grey[200]!;
@@ -655,10 +653,10 @@ class _AddPostScreenState extends State<AddPostScreen> {
           prefixIcon: const Icon(Icons.category, color: Colors.grey, size: 22),
           filled: true,
           fillColor: const Color(0xFFF9FAFB),
-          // تخصيص الحدود لإظهار اللون الأحمر عند الخطأ
+
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: borderColor)), // هنا التغيير
+              borderSide: BorderSide(color: borderColor)), 
           focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: AppColors.primary)),
@@ -666,7 +664,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none),
           suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-          // رسالة خطأ اختيارية
+
           errorText: (_showErrors && _selectedHotelSpecies.isEmpty) ? "Required" : null,
         ),
         child: Text(displayText,
@@ -683,7 +681,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
       required List<String> items,
       required Function(String?) onChanged,
       IconData? icon,
-      bool isRequired = false}) { // إضافة المتغير
+      bool isRequired = false}) {
     return DropdownButtonFormField<String>(
       value: value,
       onChanged: onChanged,
@@ -699,7 +697,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none),
-        // إظهار الخطأ إذا كان الحقل مطلوباً وفارغاً وتم تفعيل عرض الأخطاء
+
         errorText: (_showErrors && isRequired && value == null) ? "Required" : null,
       ),
     );
@@ -818,7 +816,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                         icon: Icons.male,
                         onChanged: (val) =>
                             setState(() => _selectedGender = val),
-                        isRequired: true, // الجنس مطلوب للتبني
+                        isRequired: true, 
                     )),
               ],
             ),
@@ -828,7 +826,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 controller: _phoneController,
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
-                isRequired: true // الهاتف مطلوب
+                isRequired: true 
             ),
             const SizedBox(height: 12),
             _buildHealthTagsInput(),
@@ -848,7 +846,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 controller: _phoneController,
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
-                isRequired: true // الهاتف مطلوب
+                isRequired: true 
             ),
             const SizedBox(height: 12),
             _buildTextField(
@@ -889,7 +887,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 controller: _phoneController,
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
-                isRequired: true // الهاتف مطلوب
+                isRequired: true 
             ),
           ],
         );
@@ -980,7 +978,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
       TextEditingController? controller,
       int maxLines = 1,
       TextInputType keyboardType = TextInputType.text,
-      bool isRequired = false}) { // إضافة المتغير
+      bool isRequired = false}) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
@@ -995,7 +993,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none),
-        // إظهار الخطأ إذا كان الحقل مطلوباً وفارغاً وتم تفعيل عرض الأخطاء
+
         errorText: (_showErrors && isRequired && (controller?.text.isEmpty ?? true)) ? "Required" : null,
       ),
     );

@@ -109,7 +109,7 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 24),
 
-        // --- DYNAMIC FIREBASE SECTION ---
+
         StreamBuilder<List<Pet>>(
           stream: DatabaseService().getPets(), 
           builder: (context, snapshot) {
@@ -145,7 +145,7 @@ class HomeScreen extends StatelessWidget {
 
             return Column(
               children: featuredPets.map((pet) => PetCard(
-                ownerId: pet.ownerId, // <--- [مهم] تمرير معرف المالك هنا
+                ownerId: pet.ownerId, 
                 name: pet.name,
                 breed: pet.breed,
                 age: pet.age,

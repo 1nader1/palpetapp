@@ -25,7 +25,7 @@ class AdoptionPetCardSkeleton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // مكان الصورة
+
             Container(
               height: 200,
               width: double.infinity,
@@ -39,7 +39,7 @@ class AdoptionPetCardSkeleton extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // مكان الاسم والجنس
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -48,15 +48,15 @@ class AdoptionPetCardSkeleton extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  // مكان السلالة والعمر
+
                   Container(width: 150, height: 16, color: Colors.white),
                   const SizedBox(height: 12),
-                  // مكان الوصف
+
                   Container(width: double.infinity, height: 14, color: Colors.white),
                   const SizedBox(height: 6),
                   Container(width: 200, height: 14, color: Colors.white),
                   const SizedBox(height: 16),
-                  // مكان التاجز
+
                   Row(
                     children: [
                       Container(width: 50, height: 20, color: Colors.white),
@@ -65,7 +65,7 @@ class AdoptionPetCardSkeleton extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  // مكان الزر
+
                   Container(width: double.infinity, height: 48, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
                 ],
               ),

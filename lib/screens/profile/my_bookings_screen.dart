@@ -58,7 +58,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
-                    // عرض نص الخطأ للمطور (سيظهر لك رابط الفهرس هنا)
+
                     SelectableText(
                       snapshot.error.toString(),
                       textAlign: TextAlign.center,
@@ -70,12 +70,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             );
           }
 
-          // 2. loading state
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // 3. no data found
+
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(
               child: Column(

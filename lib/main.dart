@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // [مهم] استيراد المكتبة
+import 'package:shared_preferences/shared_preferences.dart'; 
 import 'firebase_options.dart';
 import 'core/constants/app_colors.dart';
 import 'screens/main_shell.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/onboarding/onboarding_screen.dart'; // [مهم] استيراد شاشة الـ Onboarding
+import 'screens/onboarding/onboarding_screen.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 1. تهيئة الفايربيس
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 2. فحص هل المستخدم فتح التطبيق من قبل؟
   final prefs = await SharedPreferences.getInstance();
   final bool seenOnboarding = prefs.getBool('seenOnboarding') ?? false;
 
@@ -24,7 +22,7 @@ void main() async {
 }
 
 class PalPetApp extends StatelessWidget {
-  final bool showOnboarding; // متغير لتحديد حالة البدء
+  final bool showOnboarding; 
 
   const PalPetApp({super.key, required this.showOnboarding});
 
@@ -59,11 +57,10 @@ class PalPetApp extends StatelessWidget {
         ),
       ),
       
-      // منطق التوجيه الرئيسي
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
-          // A. حالة الانتظار
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
               body: Center(
@@ -72,13 +69,11 @@ class PalPetApp extends StatelessWidget {
             );
           }
           
-          // B. إذا كان المستخدم مسجل دخول بالفعل -> الرئيسية مباشرة
+
           if (snapshot.hasData) {
             return const MainShell();
           }
           
-          // C. إذا لم يكن مسجل دخول:
-          // نفحص هل يجب عرض الـ Onboarding أم شاشة تسجيل الدخول؟
           if (showOnboarding) {
             return const OnboardingScreen();
           } else {

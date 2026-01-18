@@ -26,7 +26,7 @@ class ClinicCardSkeleton extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // مربع الصورة
+
               Container(
                 width: 100,
                 height: 100,
@@ -36,7 +36,7 @@ class ClinicCardSkeleton extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              // تفاصيل النصوص
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,7 +47,7 @@ class ClinicCardSkeleton extends StatelessWidget {
                     const SizedBox(height: 8),
                     Container(width: double.infinity, height: 14, color: Colors.white),
                     const SizedBox(height: 12),
-                    // زر وهمي
+
                     Container(
                       width: double.infinity,
                       height: 36,

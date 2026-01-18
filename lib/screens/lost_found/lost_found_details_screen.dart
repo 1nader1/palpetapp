@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart'; // 1. استيراد المكتبة
+import 'package:url_launcher/url_launcher.dart'; 
 import '../../core/constants/app_colors.dart';
 import '../../data/models/pet.dart';
 
@@ -8,7 +8,7 @@ class LostFoundDetailsScreen extends StatelessWidget {
 
   const LostFoundDetailsScreen({super.key, required this.pet});
 
-  // 2. دالة الاتصال
+
   Future<void> _makePhoneCall(BuildContext context, String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     try {
@@ -213,7 +213,7 @@ class LostFoundDetailsScreen extends StatelessWidget {
                         ),
                         const Spacer(),
                         ElevatedButton(
-                          // 3. ربط الزر بالدالة
+
                           onPressed: () =>
                               _makePhoneCall(context, pet.contactPhone),
                           style: ElevatedButton.styleFrom(

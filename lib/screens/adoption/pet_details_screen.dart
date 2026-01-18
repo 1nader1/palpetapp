@@ -237,9 +237,9 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
                             await DatabaseService().addBooking(
                               userId: currentUserId,
                               providerId: targetUserId,
-                              serviceType: 'Adoption', // نوع الخدمة
+                              serviceType: 'Adoption', 
                               itemName:
-                                  "${widget.pet.type} - ${widget.pet.breed}", // اسم العنصر
+                                  "${widget.pet.type} - ${widget.pet.breed}", 
                               details: {
                                 'petAge': widget.pet.age,
                                 'location': widget.pet.location,

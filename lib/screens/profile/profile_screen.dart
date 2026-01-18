@@ -9,7 +9,7 @@ import 'widgets/profile_menu_item.dart';
 import 'edit_profile_screen.dart'; 
 import 'my_posts_screen.dart'; 
 import 'favorites_screen.dart';
-import 'my_bookings_screen.dart'; // [استيراد الملف الجديد]
+import 'my_bookings_screen.dart'; 
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -24,7 +24,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _photoUrl = "https://cdn-icons-png.flaticon.com/128/1077/1077114.png";
   int _postsCount = 0; 
   String _ratingDisplay = "0.0";
-  int _bookingsCount = 0; // [متغير جديد]
+  int _bookingsCount = 0; 
 
   @override
   void initState() {
@@ -82,6 +82,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("logout failure: $e")),
       );
+    }
+  }
+
+
+  void _confirmDeleteAccount() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Account"),
+        content: const Text(
+            "Are you sure you want to delete your account? This action cannot be undone."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); 
+              _executeDeleteAccount();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  void _executeDeleteAccount() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+
+      await DatabaseService().deleteUserData(user.uid);
+
+
+      await AuthService().deleteAccount();
+
+      if (mounted) {
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Delete failed: $e")),
+        );
+      }
     }
   }
 
@@ -207,7 +262,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: "My Bookings",
                     icon: Icons.calendar_today_outlined,
                     onTap: () {
-
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const MyBookingsScreen()),
@@ -235,10 +289,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  
+
                   ProfileMenuItem(
-                    title: "Language",
-                    icon: Icons.language,
-                    onTap: () {},
+                    title: "Delete Account",
+                    icon: Icons.delete_outline,
+                    isLogout: true,
+                    onTap: _confirmDeleteAccount,
                   ),
                   const SizedBox(height: 12),
                   

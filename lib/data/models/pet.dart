@@ -3,9 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Pet {
   final String id;
   final String ownerId;
-  final String postType; // Adoption, Lost, Found, Hotel
+  final String postType; 
   final String name;
-  final String type; // Species
+  final String type; 
   final String breed;
   final String gender;
   final String age;
@@ -14,15 +14,14 @@ class Pet {
   final String location;
   final String contactPhone;
   
-  // --- الحقول التي تمت إعادتها لحل المشكلة ---
+
   final String contactEmail; 
   final List<String> healthTags;
 
-  // --- حقول اختيارية حسب نوع البوست ---
-  final String? reward;      // للمفقودات
-  final String? price;       // للفنادق
-  final String? capacity;    // للفنادق
-  final String? amenities;   // للفنادق
+  final String? reward;      
+  final String? price;     
+  final String? capacity;   
+  final String? amenities;   
   final DateTime? createdAt;
 
   Pet({
@@ -38,7 +37,7 @@ class Pet {
     required this.imageUrl,
     required this.location,
     required this.contactPhone,
-    // جعلناها اختيارية مع قيم افتراضية لتجنب الأخطاء
+
     this.contactEmail = '', 
     this.healthTags = const [],
     
@@ -87,7 +86,7 @@ class Pet {
       location: map['location'] ?? '',
       contactPhone: map['contactPhone'] ?? '',
       
-      // استرجاع الحقول القديمة بأمان
+
       contactEmail: map['contactEmail'] ?? '',
       healthTags: (map['healthTags'] is List) 
           ? List<String>.from(map['healthTags']) 

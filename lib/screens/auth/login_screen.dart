@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
-        // to main shell and remove all previous routes
+
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // logo and title
+
                 const Icon(Icons.pets, size: 80, color: AppColors.primary),
                 const SizedBox(height: 20),
                 const Text(
@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // email field
+
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // password field
+
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
@@ -98,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // login button
+
                 _isLoading
                     ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                     : ElevatedButton(
@@ -117,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                 const SizedBox(height: 20),
 
-                // register link
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

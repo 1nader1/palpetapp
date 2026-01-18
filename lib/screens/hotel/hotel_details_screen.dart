@@ -64,12 +64,12 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
   Future<void> _checkAndShowRatingDialog() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final String? targetUserId = widget.data['ownerId'];
-    final String? petId = widget.data['id']; // جلبنا الآيدي
+    final String? petId = widget.data['id']; 
 
     if (currentUser == null || targetUserId == null) return;
     if (currentUser.uid == targetUserId) return;
 
-    // تم التعديل: الفحص بناءً على petId للسماح بتقييم فنادق مختلفة لنفس المالك
+
     bool alreadyReviewed = await DatabaseService()
         .hasUserReviewed(currentUser.uid, targetUserId, 'hotel', petId: petId);
 
@@ -197,17 +197,17 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                       ElevatedButton(
                         onPressed: () async {
                           if (rating > 0) {
-                            // 1. إضافة التقييم مع الـ petId
+
                             await DatabaseService().addReview(
                               targetUserId: targetUserId,
                               reviewerId: currentUserId,
                               rating: rating,
                               comment: commentController.text,
                               reviewType: 'hotel',
-                              petId: petId, // هنا التعديل الجوهري
+                              petId: petId,
                             );
 
-                            // 2. تسجيل العملية
+
                             await DatabaseService().addBooking(
                               userId: currentUserId,
                               providerId: targetUserId,
@@ -254,7 +254,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
 
   @override
   Widget build(BuildContext context) {
-    // باقي كود الـ UI كما هو (لم يتغير)
+
     final String imageUrl =
         widget.data['imageUrl'] ?? widget.data['image'] ?? '';
     final String name = widget.data['name'] ?? 'Hotel Name';
@@ -354,7 +354,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
     );
   }
 
-  // الدوال المساعدة للواجهة (لم تتغير، ولكن سأدرجها ليكون الملف كاملاً)
+
   Widget _buildDetailsContent() {
     final String description =
         widget.data['description'] ?? "No description available.";

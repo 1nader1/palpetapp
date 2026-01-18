@@ -18,7 +18,7 @@ class LostFoundCardSkeleton extends StatelessWidget {
         highlightColor: Colors.grey[100]!,
         child: Column(
           children: [
-            // صورة كبيرة
+
             Container(
               height: 200,
               decoration: const BoxDecoration(

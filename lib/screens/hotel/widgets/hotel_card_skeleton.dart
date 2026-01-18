@@ -19,7 +19,7 @@ class HotelCardSkeleton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // صورة الفندق
+
             Container(
               height: 180,
               decoration: const BoxDecoration(
