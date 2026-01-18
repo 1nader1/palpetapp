@@ -96,7 +96,8 @@ class AdoptionPetCard extends StatelessWidget {
                   "$breed • $age",
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textGrey,
                   ),
                 ),
                 const SizedBox(height: 12),

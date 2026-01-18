@@ -5,7 +5,7 @@ import 'package:palpet/services/database_service.dart';
 import 'package:palpet/screens/home/widgets/pet_card.dart'; 
 import 'package:palpet/screens/home/widgets/home_banner.dart'; 
 import 'package:palpet/screens/home/widgets/service_card.dart';  
-import '../adoption/pet_details_screen.dart'; // 1. تأكد من إضافة هذا الاستيراد
+import '../adoption/pet_details_screen.dart'; 
 
 class HomeScreen extends StatelessWidget {
   final Function(int) onNavigate;
@@ -129,12 +129,9 @@ class HomeScreen extends StatelessWidget {
             }
 
             final allPets = snapshot.data!;
-
-            // فلترة للتبني فقط + أخذ آخر 3
             final adoptionPets = allPets.where((pet) {
               return pet.postType.toLowerCase() == 'adoption';
             }).toList();
-
             final featuredPets = adoptionPets.take(3).toList();
 
             if (featuredPets.isEmpty) {
@@ -151,9 +148,9 @@ class HomeScreen extends StatelessWidget {
                 name: pet.name,
                 breed: pet.breed,
                 age: pet.age,
-                description: pet.description,
+                gender: pet.gender, // تمرير الجنس للبوكس
+                description: pet.description, // تمرير الوصف
                 imageUrl: pet.imageUrl,
-                // 2. هنا نمرر كود الانتقال
                 onTap: () {
                   Navigator.push(
                     context,

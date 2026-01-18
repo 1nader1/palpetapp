@@ -4,61 +4,61 @@ import '../../../core/constants/app_colors.dart';
 class PetCard extends StatelessWidget {
   final String name;
   final String breed;
+  final String gender;
   final String age;
   final String description;
   final String imageUrl;
-  final VoidCallback onTap; // 1. أضفنا هذا المتغير لاستقبال أمر الضغط
+  final VoidCallback onTap;
 
   const PetCard({
     super.key,
     required this.name,
     required this.breed,
+    required this.gender,
     required this.age,
     required this.description,
     required this.imageUrl,
-    required this.onTap, // 2. أضفناه للكونستركتور
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isMale = gender.toLowerCase() == 'male';
+    final genderBgColor = isMale ? Colors.blue[50] : Colors.pink[50];
+    final genderTextColor = isMale ? Colors.blue : Colors.pink;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // الصورة
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: SizedBox(
-              height: 200,
-              width: double.infinity,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: AspectRatio(
+              aspectRatio: 1.5,
               child: Image.network(
                 imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.pets, size: 50, color: Colors.grey),
-                  );
-                },
+                errorBuilder: (ctx, _, __) => Container(
+                  color: Colors.grey[100],
+                  child: const Icon(Icons.pets, size: 50, color: Colors.grey),
+                ),
               ),
             ),
           ),
-          
-          // المعلومات
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -74,30 +74,46 @@ class PetCard extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: genderBgColor,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        age,
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
+                        gender,
+                        style: TextStyle(
                           fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: genderTextColor,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  breed,
-                  style: const TextStyle(
-                    color: AppColors.textGrey,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      breed,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textGrey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const CircleAvatar(radius: 2, backgroundColor: Colors.grey),
+                    const SizedBox(width: 8),
+                    Text(
+                      age,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textGrey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -105,29 +121,27 @@ class PetCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: AppColors.textDark.withOpacity(0.7),
                     fontSize: 14,
-                    height: 1.5,
+                    color: AppColors.textDark.withOpacity(0.6),
+                    height: 1.4,
                   ),
                 ),
                 const SizedBox(height: 16),
-                
-                // زر Learn More
                 SizedBox(
                   width: double.infinity,
-                  height: 45,
                   child: ElevatedButton(
-                    onPressed: onTap, // 3. ربطنا الزر بالمتغير
+                    onPressed: onTap,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
+                      elevation: 0,
                     ),
                     child: const Text(
-                      "Learn More",
+                      "View Details",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

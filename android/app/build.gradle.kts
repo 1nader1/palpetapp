@@ -24,10 +24,10 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-   defaultConfig {
+  defaultConfig {
         applicationId = "com.example.palpet"
-        // حل مشكلة cloud_firestore لنظام أندرويد
-        minSdk = flutter.minSdkVersion
+        
+        minSdk = 23
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"

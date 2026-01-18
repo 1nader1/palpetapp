@@ -9,12 +9,16 @@ import 'package:palpet/services/auth_service.dart';
 import 'package:palpet/services/database_service.dart';
 
 class AddPostScreen extends StatefulWidget {
-  // متغير لاستقبال دالة التنقل (اختياري)
   final Function(int)? onNavigate;
-  // NEW: متغير لاستقبال بيانات الحيوان عند التعديل
   final Pet? petToEdit;
+  final String? initialPostType;
 
-  const AddPostScreen({super.key, this.onNavigate, this.petToEdit});
+  const AddPostScreen({
+    super.key, 
+    this.onNavigate, 
+    this.petToEdit,
+    this.initialPostType,
+  });
 
   @override
   State<AddPostScreen> createState() => _AddPostScreenState();
@@ -24,63 +28,85 @@ class _AddPostScreenState extends State<AddPostScreen> {
   bool _isLoading = false;
   bool _isGettingLocation = false;
   
-  // NEW: متغيرات لحالة التعديل
+  // 1. متغير للتحكم في إظهار الأخطاء (اللون الأحمر)
+  bool _showErrors = false;
+
   bool _isEditing = false;
-  String? _existingImageUrl; 
+  String? _existingImageUrl;
 
   File? _selectedImage;
   String _selectedType = 'Adoption';
   final List<String> _postTypes = ['Adoption', 'Lost', 'Found', 'Hotel'];
-  final List<String> _speciesList = ['Dog', 'Cat', 'Bird', 'Rabbit', 'Hamster', 'Turtle', 'Other'];
+  final List<String> _speciesList = [
+    'Dog',
+    'Cat',
+    'Bird',
+    'Rabbit',
+    'Hamster',
+    'Turtle',
+    'Other'
+  ];
   final List<String> _genderList = ['Male', 'Female'];
-  
+
   final List<String> _jordanAreas = [
-    'Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Salt', 'Madaba', 
-    'Jerash', 'Ajloun', 'Mafraq', 'Karak', 'Tafilah', 'Ma\'an',
-    'Abdoun', 'Dabouq', 'Khalda', 'Sweifieh', 'Jubaiha', 'Tla\' Al-Ali'
+    'Amman',
+    'Zarqa',
+    'Irbid',
+    'Aqaba',
+    'Salt',
+    'Madaba',
+    'Jerash',
+    'Ajloun',
+    'Mafraq',
+    'Karak',
+    'Tafilah',
+    'Ma\'an',
+    'Abdoun',
+    'Dabouq',
+    'Khalda',
+    'Sweifieh',
+    'Jubaiha',
+    'Tla\' Al-Ali'
   ];
 
-  String? _selectedSpecies; 
+  String? _selectedSpecies;
   List<String> _selectedHotelSpecies = [];
   String? _selectedGender;
   String? _selectedArea;
 
   final _nameController = TextEditingController();
   final _breedController = TextEditingController();
-  final _locationController = TextEditingController(); 
+  final _locationController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
-  // Adoption Specific
-  final _ageController = TextEditingController();
-  
-  // Health Tags
-  final _healthTagController = TextEditingController(); 
-  List<String> _healthTags = []; // Removed final to allow reassignment
 
-  // Lost/Found Specific
+  final _ageController = TextEditingController();
+
+  final _healthTagController = TextEditingController();
+  List<String> _healthTags = [];
+
   final _phoneController = TextEditingController();
   final _rewardController = TextEditingController();
-  
-  // Hotel Specific
+
   final _priceController = TextEditingController();
   final _capacityController = TextEditingController();
-  
-  // Amenities
-  final _amenitiesInputController = TextEditingController();
-  List<String> _amenities = []; // Removed final to allow reassignment
 
-  final String _defaultImageUrl = 'https://via.placeholder.com/300?text=No+Image';
+  final _amenitiesInputController = TextEditingController();
+  List<String> _amenities = [];
+
+  final String _defaultImageUrl =
+      'https://via.placeholder.com/300?text=No+Image';
 
   @override
   void initState() {
     super.initState();
-    // NEW: إذا تم تمرير بيانات للتعديل، نقوم بتحميلها
     if (widget.petToEdit != null) {
       _loadPetData(widget.petToEdit!);
+    } 
+    else if (widget.initialPostType != null) {
+      _selectedType = widget.initialPostType!;
     }
   }
 
-  // NEW: دالة تعبئة البيانات عند التعديل
   void _loadPetData(Pet pet) {
     _isEditing = true;
     _selectedType = pet.postType;
@@ -90,16 +116,15 @@ class _AddPostScreenState extends State<AddPostScreen> {
     _phoneController.text = pet.contactPhone;
     _existingImageUrl = pet.imageUrl;
 
-    // معالجة الموقع
     if (_jordanAreas.contains(pet.location)) {
       _selectedArea = pet.location;
     } else {
       _locationController.text = pet.location;
     }
 
-    // معالجة الحقول حسب النوع
     if (pet.postType == 'Hotel') {
-      _selectedHotelSpecies = pet.type.split(',').where((e) => e.isNotEmpty).toList();
+      _selectedHotelSpecies =
+          pet.type.split(',').where((e) => e.isNotEmpty).toList();
       _priceController.text = pet.price ?? '';
       _capacityController.text = pet.capacity ?? '';
       if (pet.amenities != null && pet.amenities!.isNotEmpty) {
@@ -111,7 +136,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
       } else {
         _selectedSpecies = 'Other';
       }
-      
+
       if (pet.postType == 'Adoption') {
         _ageController.text = pet.age;
         if (_genderList.contains(pet.gender)) _selectedGender = pet.gender;
@@ -150,7 +175,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
   Future<void> _getCurrentLocation() async {
     setState(() => _isGettingLocation = true);
-    
+
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -164,28 +189,26 @@ class _AddPostScreenState extends State<AddPostScreen> {
           throw 'Location permissions are denied';
         }
       }
-      
+
       if (permission == LocationPermission.deniedForever) {
         throw 'Location permissions are permanently denied';
       }
 
       Position position = await Geolocator.getCurrentPosition();
 
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude, 
-        position.longitude
-      );
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
 
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
-        String address = "${place.subLocality ?? place.locality}, ${place.administrativeArea}";
-        
+        String address =
+            "${place.subLocality ?? place.locality}, ${place.administrativeArea}";
+
         setState(() {
           _locationController.text = address;
-          _selectedArea = null; 
+          _selectedArea = null;
         });
       }
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error getting location: $e')),
@@ -269,7 +292,8 @@ class _AddPostScreenState extends State<AddPostScreen> {
                     });
                     Navigator.pop(context);
                   },
-                  child: const Text("OK", style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text("OK",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -281,24 +305,35 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
   Future<void> _submitPost() async {
     FocusScope.of(context).unfocus();
+    
+    // 2. تفعيل المتغير لإظهار الأخطاء في الواجهة
+    setState(() => _showErrors = true);
 
+    // التحقق من الحقول (الاسم مطلوب دائماً كعنوان)
+    bool nameFilled = _nameController.text.isNotEmpty;
+    // الموقع مطلوب (إما من القائمة أو النص)
     bool locationFilled = _selectedArea != null || _locationController.text.isNotEmpty;
-    bool basicInfoFilled = _nameController.text.isNotEmpty && 
-                           locationFilled && 
-                           _descriptionController.text.isNotEmpty;
-
+    // النوع مطلوب
     bool speciesSelected = false;
     if (_selectedType == 'Hotel') {
       speciesSelected = _selectedHotelSpecies.isNotEmpty;
     } else {
       speciesSelected = _selectedSpecies != null;
     }
+    // الهاتف مطلوب
+    bool phoneFilled = _phoneController.text.isNotEmpty;
 
-    if (!basicInfoFilled || !speciesSelected) {
-       ScaffoldMessenger.of(context).showSnackBar(
-         const SnackBar(content: Text('Please fill basic info, select area & species'))
-       );
-       return;
+    // شروط خاصة للتبني (الجنس والوصف)
+    bool adoptionRequirementsMet = true;
+    if (_selectedType == 'Adoption') {
+      // يجب أن يختار الجنس ويكتب الوصف
+      adoptionRequirementsMet = (_selectedGender != null) && (_descriptionController.text.isNotEmpty);
+    }
+
+    // إذا كان هناك أي نقص، نوقف العملية (وستظهر الحقول باللون الأحمر تلقائياً)
+    if (!nameFilled || !locationFilled || !speciesSelected || !phoneFilled || !adoptionRequirementsMet) {
+      // لن نظهر SnackBar هنا، لأن الحقول ستتلون بالأحمر
+      return;
     }
 
     setState(() => _isLoading = true);
@@ -307,16 +342,15 @@ class _AddPostScreenState extends State<AddPostScreen> {
       final user = AuthService().currentUser;
       if (user == null) throw Exception("User not logged in");
 
-      // NEW: منطق الصورة (صورة جديدة -> الصورة القديمة -> الصورة الافتراضية)
-      String imageUrl = _existingImageUrl ?? _defaultImageUrl; 
-      
+      String imageUrl = _existingImageUrl ?? _defaultImageUrl;
+
       if (_selectedImage != null) {
         imageUrl = await DatabaseService().uploadImage(_selectedImage!);
       }
 
       String? amenitiesString;
       if (_amenities.isNotEmpty) {
-        amenitiesString = _amenities.join(','); 
+        amenitiesString = _amenities.join(',');
       }
 
       String finalTypeValue = '';
@@ -329,45 +363,46 @@ class _AddPostScreenState extends State<AddPostScreen> {
       String finalLocation = _selectedArea ?? _locationController.text;
 
       Pet petData = Pet(
-        // NEW: إذا كنا نعدل، نحتفظ بالـ ID القديم
-        id: widget.petToEdit?.id ?? '', 
+        id: widget.petToEdit?.id ?? '',
         ownerId: user.uid,
         postType: _selectedType,
         name: _nameController.text,
         type: finalTypeValue,
         breed: _breedController.text,
-        gender: _selectedGender ?? '', 
+        gender: _selectedGender ?? '',
         age: _ageController.text,
         description: _descriptionController.text,
         imageUrl: imageUrl,
         location: finalLocation,
         contactPhone: _phoneController.text,
-        healthTags: _healthTags, 
-        reward: _rewardController.text.isNotEmpty ? _rewardController.text : null,
+        healthTags: _healthTags,
+        reward:
+            _rewardController.text.isNotEmpty ? _rewardController.text : null,
         price: _priceController.text.isNotEmpty ? _priceController.text : null,
-        capacity: _capacityController.text.isNotEmpty ? _capacityController.text : null,
-        amenities: amenitiesString, 
+        capacity: _capacityController.text.isNotEmpty
+            ? _capacityController.text
+            : null,
+        amenities: amenitiesString,
       );
 
-      // NEW: التمييز بين الإضافة والتعديل
       if (_isEditing) {
         await DatabaseService().updatePet(petData);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Post updated successfully!')),
           );
-          Navigator.pop(context, true); // الرجوع مع نتيجة true للتحديث
+          Navigator.pop(context, true);
         }
       } else {
         String newPetId = await DatabaseService().addPet(petData);
         await DatabaseService().checkAndSendNotifications(petData, newPetId);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Post created successfully!')),
           );
           await Future.delayed(const Duration(milliseconds: 100));
-          
+
           if (mounted) {
             int targetIndex = 0;
             if (_selectedType == 'Adoption') {
@@ -386,7 +421,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
           }
         }
       }
-
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -402,102 +436,118 @@ class _AddPostScreenState extends State<AddPostScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        // NEW: تغيير العنوان حسب الحالة
         title: Text(
           _isEditing ? "Edit Post" : "Create New Post",
-          style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+              color: AppColors.textDark, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-        : SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: _buildImagePicker(),
-              ),
-
-              const SizedBox(height: 24),
-              const Text("Post Type", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              // NEW: تعطيل تغيير النوع عند التعديل لمنع الأخطاء
-              AbsorbPointer(
-                absorbing: _isEditing,
-                child: Opacity(
-                  opacity: _isEditing ? 0.6 : 1.0,
-                  child: _buildTypeSelector(),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              const Text("Basic Info", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              _buildTextField(label: "Name (Pet/Hotel)", controller: _nameController, icon: Icons.pets),
-              const SizedBox(height: 12),
-              
-              Row(
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: _selectedType == 'Hotel'
-                        ? _buildMultiSelectDropdownField()
-                        : _buildDropdownField(
-                            label: "Species", 
-                            value: _selectedSpecies,
-                            items: _speciesList,
-                            icon: Icons.category,
-                            onChanged: (val) => setState(() => _selectedSpecies = val),
-                          ),
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: _buildImagePicker(),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildTextField(label: "Breed/Details", controller: _breedController, icon: Icons.style)),
+                  const SizedBox(height: 24),
+                  const Text("Post Type",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  AbsorbPointer(
+                    absorbing: _isEditing,
+                    child: Opacity(
+                      opacity: _isEditing ? 0.6 : 1.0,
+                      child: _buildTypeSelector(),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text("Basic Info",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  
+                  // 3. تمرير isRequired: true للحقول الاجبارية
+                  _buildTextField(
+                      label: "Name (Pet/Hotel)",
+                      controller: _nameController,
+                      icon: Icons.pets,
+                      isRequired: true, // الاسم مطلوب
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _selectedType == 'Hotel'
+                            ? _buildMultiSelectDropdownField()
+                            : _buildDropdownField(
+                                label: "Species",
+                                value: _selectedSpecies,
+                                items: _speciesList,
+                                icon: Icons.category,
+                                onChanged: (val) =>
+                                    setState(() => _selectedSpecies = val),
+                                isRequired: true, // النوع مطلوب
+                              ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                          child: _buildTextField(
+                              label: "Breed/Details",
+                              controller: _breedController,
+                              icon: Icons.style)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _buildDynamicFields(),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text("Location",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  _buildLocationSection(),
+                  const SizedBox(height: 12),
+                  
+                  // الوصف مطلوب فقط في حالة التبني
+                  _buildTextField(
+                    label: "Description / Caption",
+                    controller: _descriptionController,
+                    icon: Icons.description,
+                    maxLines: 4,
+                    isRequired: _selectedType == 'Adoption', 
+                  ),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: _submitPost,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        elevation: 2,
+                      ),
+                      child: Text(_isEditing ? "Update Post" : "Post Now",
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 ],
               ),
-
-              const SizedBox(height: 24),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: _buildDynamicFields(),
-              ),
-
-              const SizedBox(height: 24),
-              const Text("Location", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-
-              _buildLocationSection(),
-
-              const SizedBox(height: 12),
-              _buildTextField(
-                label: "Description / Caption",
-                controller: _descriptionController,
-                icon: Icons.description,
-                maxLines: 4,
-              ),
-
-              const SizedBox(height: 30),
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _submitPost,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 2,
-                  ),
-                  // NEW: تغيير نص الزر
-                  child: Text(_isEditing ? "Update Post" : "Post Now", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
     );
   }
 
@@ -515,25 +565,35 @@ class _AddPostScreenState extends State<AddPostScreen> {
             ),
             child: Row(
               children: [
-                _isGettingLocation 
-                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.my_location, color: AppColors.primary),
+                _isGettingLocation
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.my_location, color: AppColors.primary),
                 const SizedBox(width: 12),
                 const Expanded(
                   child: Text(
                     "Use Current Location (GPS)",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textDark),
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textDark),
                   ),
                 ),
               ],
             ),
           ),
         ),
-        
         const SizedBox(height: 12),
-        const Row(children: [Expanded(child: Divider()), Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text("OR", style: TextStyle(color: Colors.grey))), Expanded(child: Divider())]),
+        const Row(children: [
+          Expanded(child: Divider()),
+          Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Text("OR", style: TextStyle(color: Colors.grey))),
+          Expanded(child: Divider())
+        ]),
         const SizedBox(height: 12),
-
         Row(
           children: [
             Expanded(
@@ -545,7 +605,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
                   prefixIcon: const Icon(Icons.map, color: Colors.grey),
                   filled: true,
                   fillColor: const Color(0xFFF9FAFB),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none),
                 ),
                 items: _jordanAreas.map((area) {
                   return DropdownMenuItem(value: area, child: Text(area));
@@ -562,19 +624,29 @@ class _AddPostScreenState extends State<AddPostScreen> {
             ),
           ],
         ),
-        
         const SizedBox(height: 12),
         _buildTextField(
           label: "Selected Location (Editable)",
           controller: _locationController,
           icon: Icons.pin_drop,
+          // هنا نجعل الحقل مطلوباً، وبما أن هذا الحقل يتعبأ تلقائياً عند اختيار المنطقة
+          // أو الـ GPS، فإن التحقق منه يكفي لضمان وجود موقع
+          isRequired: true, 
         ),
       ],
     );
   }
 
   Widget _buildMultiSelectDropdownField() {
-    String displayText = _selectedHotelSpecies.isEmpty ? "Select Species" : _selectedHotelSpecies.join(", ");
+    String displayText = _selectedHotelSpecies.isEmpty
+        ? "Select Species"
+        : _selectedHotelSpecies.join(", ");
+    
+    // تحديد لون الإطار بناءً على الخطأ
+    Color borderColor = (_showErrors && _selectedHotelSpecies.isEmpty) 
+        ? Colors.red 
+        : Colors.grey[200]!;
+
     return InkWell(
       onTap: _showMultiSelectDialog,
       child: InputDecorator(
@@ -583,35 +655,62 @@ class _AddPostScreenState extends State<AddPostScreen> {
           prefixIcon: const Icon(Icons.category, color: Colors.grey, size: 22),
           filled: true,
           fillColor: const Color(0xFFF9FAFB),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          // تخصيص الحدود لإظهار اللون الأحمر عند الخطأ
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: borderColor)), // هنا التغيير
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.primary)),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none),
           suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+          // رسالة خطأ اختيارية
+          errorText: (_showErrors && _selectedHotelSpecies.isEmpty) ? "Required" : null,
         ),
-        child: Text(displayText, style: const TextStyle(fontSize: 16, color: Colors.black87), overflow: TextOverflow.ellipsis, maxLines: 1),
+        child: Text(displayText,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1),
       ),
     );
   }
 
-  Widget _buildDropdownField({required String label, required String? value, required List<String> items, required Function(String?) onChanged, IconData? icon}) {
+  Widget _buildDropdownField(
+      {required String label,
+      required String? value,
+      required List<String> items,
+      required Function(String?) onChanged,
+      IconData? icon,
+      bool isRequired = false}) { // إضافة المتغير
     return DropdownButtonFormField<String>(
       value: value,
       onChanged: onChanged,
-      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+      items: items
+          .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+          .toList(),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: icon != null ? Icon(icon, color: Colors.grey, size: 22) : null,
+        prefixIcon:
+            icon != null ? Icon(icon, color: Colors.grey, size: 22) : null,
         filled: true,
         fillColor: const Color(0xFFF9FAFB),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none),
+        // إظهار الخطأ إذا كان الحقل مطلوباً وفارغاً وتم تفعيل عرض الأخطاء
+        errorText: (_showErrors && isRequired && value == null) ? "Required" : null,
       ),
     );
   }
 
   Widget _buildImagePicker() {
-    // NEW: تحديد الصورة المعروضة (جديدة أو موجودة مسبقاً)
     ImageProvider? imageProvider;
     if (_selectedImage != null) {
       imageProvider = FileImage(_selectedImage!);
-    } else if (_existingImageUrl != null && _existingImageUrl != _defaultImageUrl) {
+    } else if (_existingImageUrl != null &&
+        _existingImageUrl != _defaultImageUrl) {
       imageProvider = NetworkImage(_existingImageUrl!);
     }
 
@@ -621,29 +720,38 @@ class _AddPostScreenState extends State<AddPostScreen> {
       decoration: BoxDecoration(
         color: AppColors.primary.withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.5),
-        image: imageProvider != null 
-          ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
-          : null,
+        border:
+            Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.5),
+        image: imageProvider != null
+            ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
+            : null,
       ),
-      child: imageProvider == null 
-        ? Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 10)],
+      child: imageProvider == null
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                          color: AppColors.primary.withOpacity(0.1),
+                          blurRadius: 10)
+                    ],
+                  ),
+                  child: const Icon(Icons.add_a_photo,
+                      size: 32, color: AppColors.primary),
                 ),
-                child: const Icon(Icons.add_a_photo, size: 32, color: AppColors.primary),
-              ),
-              const SizedBox(height: 12),
-              const Text("Add Photo (Optional)", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark)),
-            ],
-          )
-        : null,
+                const SizedBox(height: 12),
+                const Text("Add Photo (Optional)",
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark)),
+              ],
+            )
+          : null,
     );
   }
 
@@ -662,10 +770,21 @@ class _AddPostScreenState extends State<AddPostScreen> {
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.primary : Colors.white,
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: isSelected ? AppColors.primary : Colors.grey[300]!),
-                boxShadow: isSelected ? [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
+                border: Border.all(
+                    color: isSelected ? AppColors.primary : Colors.grey[300]!),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                            color: AppColors.primary.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4))
+                      ]
+                    : [],
               ),
-              child: Text(type, style: TextStyle(color: isSelected ? Colors.white : Colors.grey[600], fontWeight: FontWeight.bold)),
+              child: Text(type,
+                  style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.grey[600],
+                      fontWeight: FontWeight.bold)),
             ),
           );
         }).toList(),
@@ -680,17 +799,37 @@ class _AddPostScreenState extends State<AddPostScreen> {
           key: const ValueKey('Adoption'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Adoption Details", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text("Adoption Details",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildTextField(label: "Age", controller: _ageController, icon: Icons.cake)),
+                Expanded(
+                    child: _buildTextField(
+                        label: "Age",
+                        controller: _ageController,
+                        icon: Icons.cake)),
                 const SizedBox(width: 12),
-                Expanded(child: _buildDropdownField(label: "Gender", value: _selectedGender, items: _genderList, icon: Icons.male, onChanged: (val) => setState(() => _selectedGender = val))),
+                Expanded(
+                    child: _buildDropdownField(
+                        label: "Gender",
+                        value: _selectedGender,
+                        items: _genderList,
+                        icon: Icons.male,
+                        onChanged: (val) =>
+                            setState(() => _selectedGender = val),
+                        isRequired: true, // الجنس مطلوب للتبني
+                    )),
               ],
             ),
             const SizedBox(height: 12),
-            _buildTextField(label: "Contact Phone", controller: _phoneController, icon: Icons.phone, keyboardType: TextInputType.phone),
+            _buildTextField(
+                label: "Contact Phone",
+                controller: _phoneController,
+                icon: Icons.phone,
+                keyboardType: TextInputType.phone,
+                isRequired: true // الهاتف مطلوب
+            ),
             const SizedBox(height: 12),
             _buildHealthTagsInput(),
           ],
@@ -701,11 +840,21 @@ class _AddPostScreenState extends State<AddPostScreen> {
           key: const ValueKey('LostFound'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Contact & Reward", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text("Contact & Reward",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            _buildTextField(label: "Contact Phone Number", controller: _phoneController, icon: Icons.phone, keyboardType: TextInputType.phone),
+            _buildTextField(
+                label: "Contact Phone Number",
+                controller: _phoneController,
+                icon: Icons.phone,
+                keyboardType: TextInputType.phone,
+                isRequired: true // الهاتف مطلوب
+            ),
             const SizedBox(height: 12),
-            _buildTextField(label: "Reward (Optional)", controller: _rewardController, icon: Icons.monetization_on_outlined),
+            _buildTextField(
+                label: "Reward (Optional)",
+                controller: _rewardController,
+                icon: Icons.monetization_on_outlined),
           ],
         );
       case 'Hotel':
@@ -713,22 +862,39 @@ class _AddPostScreenState extends State<AddPostScreen> {
           key: const ValueKey('Hotel'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Hotel Details", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text("Hotel Details",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildTextField(label: "Price / Night", controller: _priceController, icon: Icons.attach_money, keyboardType: TextInputType.number)),
+                Expanded(
+                    child: _buildTextField(
+                        label: "Price / Night",
+                        controller: _priceController,
+                        icon: Icons.attach_money,
+                        keyboardType: TextInputType.number)),
                 const SizedBox(width: 12),
-                Expanded(child: _buildTextField(label: "Capacity", controller: _capacityController, icon: Icons.home_work)),
+                Expanded(
+                    child: _buildTextField(
+                        label: "Capacity",
+                        controller: _capacityController,
+                        icon: Icons.home_work)),
               ],
             ),
             const SizedBox(height: 12),
-            _buildAmenitiesInput(), 
+            _buildAmenitiesInput(),
             const SizedBox(height: 12),
-            _buildTextField(label: "Contact Phone", controller: _phoneController, icon: Icons.phone, keyboardType: TextInputType.phone),
+            _buildTextField(
+                label: "Contact Phone",
+                controller: _phoneController,
+                icon: Icons.phone,
+                keyboardType: TextInputType.phone,
+                isRequired: true // الهاتف مطلوب
+            ),
           ],
         );
-      default: return const SizedBox.shrink();
+      default:
+        return const SizedBox.shrink();
     }
   }
 
@@ -738,16 +904,34 @@ class _AddPostScreenState extends State<AddPostScreen> {
       children: [
         Row(
           children: [
-            Expanded(child: _buildTextField(label: "Health Info (e.g. Vaccinated)", controller: _healthTagController, icon: Icons.local_hospital)),
+            Expanded(
+                child: _buildTextField(
+                    label: "Health Info (e.g. Vaccinated)",
+                    controller: _healthTagController,
+                    icon: Icons.local_hospital)),
             const SizedBox(width: 8),
             InkWell(
               onTap: _addHealthTag,
-              child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.add, color: Colors.white)),
+              child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.add, color: Colors.white)),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        if (_healthTags.isNotEmpty) Wrap(spacing: 8, children: _healthTags.map((tag) => Chip(label: Text(tag), backgroundColor: AppColors.primary.withOpacity(0.1), deleteIcon: const Icon(Icons.close, size: 18), onDeleted: () => _removeHealthTag(tag))).toList()),
+        if (_healthTags.isNotEmpty)
+          Wrap(
+              spacing: 8,
+              children: _healthTags
+                  .map((tag) => Chip(
+                      label: Text(tag),
+                      backgroundColor: AppColors.primary.withOpacity(0.1),
+                      deleteIcon: const Icon(Icons.close, size: 18),
+                      onDeleted: () => _removeHealthTag(tag)))
+                  .toList()),
       ],
     );
   }
@@ -758,21 +942,45 @@ class _AddPostScreenState extends State<AddPostScreen> {
       children: [
         Row(
           children: [
-            Expanded(child: _buildTextField(label: "Amenities (e.g. Wifi, Pool)", controller: _amenitiesInputController, icon: Icons.star_border)),
+            Expanded(
+                child: _buildTextField(
+                    label: "Amenities (e.g. Wifi, Pool)",
+                    controller: _amenitiesInputController,
+                    icon: Icons.star_border)),
             const SizedBox(width: 8),
             InkWell(
               onTap: _addAmenity,
-              child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.add, color: Colors.white)),
+              child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.add, color: Colors.white)),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        if (_amenities.isNotEmpty) Wrap(spacing: 8, children: _amenities.map((item) => Chip(label: Text(item), backgroundColor: Colors.orange.withOpacity(0.1), deleteIcon: const Icon(Icons.close, size: 18), onDeleted: () => _removeAmenity(item))).toList()),
+        if (_amenities.isNotEmpty)
+          Wrap(
+              spacing: 8,
+              children: _amenities
+                  .map((item) => Chip(
+                      label: Text(item),
+                      backgroundColor: Colors.orange.withOpacity(0.1),
+                      deleteIcon: const Icon(Icons.close, size: 18),
+                      onDeleted: () => _removeAmenity(item)))
+                  .toList()),
       ],
     );
   }
 
-  Widget _buildTextField({required String label, IconData? icon, TextEditingController? controller, int maxLines = 1, TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField(
+      {required String label,
+      IconData? icon,
+      TextEditingController? controller,
+      int maxLines = 1,
+      TextInputType keyboardType = TextInputType.text,
+      bool isRequired = false}) { // إضافة المتغير
     return TextField(
       controller: controller,
       maxLines: maxLines,
@@ -780,10 +988,15 @@ class _AddPostScreenState extends State<AddPostScreen> {
       decoration: InputDecoration(
         labelText: label,
         alignLabelWithHint: true,
-        prefixIcon: icon != null ? Icon(icon, color: Colors.grey, size: 22) : null,
+        prefixIcon:
+            icon != null ? Icon(icon, color: Colors.grey, size: 22) : null,
         filled: true,
         fillColor: const Color(0xFFF9FAFB),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none),
+        // إظهار الخطأ إذا كان الحقل مطلوباً وفارغاً وتم تفعيل عرض الأخطاء
+        errorText: (_showErrors && isRequired && (controller?.text.isEmpty ?? true)) ? "Required" : null,
       ),
     );
   }

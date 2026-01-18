@@ -5,7 +5,7 @@ import '../../services/database_service.dart';
 import '../add_post/add_post_screen.dart';
 import 'widgets/lost_found_card.dart';
 import 'lost_found_details_screen.dart';
-import 'widgets/lost_found_card_skeleton.dart'; // [مهم] تأكد من استيراد السكيلتون
+import 'widgets/lost_found_card_skeleton.dart'; 
 
 class LostFoundScreen extends StatefulWidget {
   const LostFoundScreen({super.key});
@@ -45,17 +45,16 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      // استخدام SingleChildScrollView للكولوم الرئيسي ليسمح بالتمرير العام
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. Header Section (ثابت)
+            // 1. Header Section
             _buildHeader(),
 
-            // 2. Filters & Search (ثابت)
+            // 2. Filters & Search
             _buildFilters(),
 
-            // 3. List Data (متغير حسب الحالة)
+            // 3. List Data
             _buildListStream(),
           ],
         ),
@@ -105,6 +104,7 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
                   "Report Lost Pet",
                   AppColors.lostRed,
                   Icons.warning_amber_rounded,
+                  'Lost', // 1. تمرير نوع Lost
                 ),
               ),
               const SizedBox(width: 12),
@@ -114,6 +114,7 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
                   "Report Found Pet",
                   AppColors.foundGreen,
                   Icons.check_circle_outline,
+                  'Found', // 2. تمرير نوع Found
                 ),
               ),
             ],
@@ -217,13 +218,13 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
       stream: _petsStream,
       builder: (context, snapshot) {
         
-        // 1. حالة التحميل (Shimmer Effect)
+        // 1. حالة التحميل
         if (snapshot.connectionState == ConnectionState.waiting) {
           return ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: 3, // عدد عناصر الهيكل الوهمي
+            itemCount: 3, 
             itemBuilder: (context, index) => const LostFoundCardSkeleton(),
           );
         }
@@ -233,21 +234,18 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
         if (snapshot.hasData) {
           final allPets = snapshot.data!;
           displayList = allPets.where((pet) {
-            // أ. قبول فقط أنواع Lost و Found
+            
             if (!['Lost', 'Found', 'lost', 'found'].contains(pet.postType)) {
               return false;
             }
 
-            // ب. فلترة التبويب
             if (_selectedFilterIndex == 1 && pet.postType.toLowerCase() != 'lost') return false;
             if (_selectedFilterIndex == 2 && pet.postType.toLowerCase() != 'found') return false;
 
-            // ج. فلترة النوع
             if (_selectedPetType != null &&
                 _selectedPetType != "All Pet Types" &&
                 pet.type != _selectedPetType) return false;
 
-            // د. فلترة البحث
             if (_searchQuery.isNotEmpty) {
               final query = _searchQuery.toLowerCase();
               final name = pet.name.toLowerCase();
@@ -260,7 +258,7 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
           }).toList();
         }
 
-        // 3. حالة عدم وجود بيانات (Empty State Illustration)
+        // 3. حالة عدم وجود بيانات
         if (displayList.isEmpty) {
           return Padding(
             padding: const EdgeInsets.only(top: 40, bottom: 40),
@@ -343,13 +341,16 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
     );
   }
 
-  // Helper Widget for Buttons
-  Widget _buildActionButton(BuildContext context, String label, Color color, IconData icon) {
+  // 3. تعديل الدالة لاستقبال الـ type
+  Widget _buildActionButton(BuildContext context, String label, Color color, IconData icon, String postType) {
     return ElevatedButton(
       onPressed: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const AddPostScreen()),
+          MaterialPageRoute(
+            // 4. تمرير الـ type للصفحة
+            builder: (context) => AddPostScreen(initialPostType: postType),
+          ),
         );
       },
       style: ElevatedButton.styleFrom(
@@ -370,7 +371,6 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
     );
   }
 
-  // Helper Widget for Tabs
   Widget _buildTabItem(String label, int index, {Color activeColor = AppColors.textDark}) {
     final bool isSelected = _selectedFilterIndex == index;
     return Expanded(
