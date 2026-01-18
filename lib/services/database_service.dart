@@ -43,19 +43,28 @@ class DatabaseService {
 
   // --- 3. Pet Functions (CRUD) ---
   Stream<List<Pet>> getPets() {
-    return _db.collection('pets').orderBy('createdAt', descending: true).snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) => Pet.fromMap(doc.data(), doc.id)).toList();
+    return _db
+        .collection('pets')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) => Pet.fromMap(doc.data(), doc.id))
+          .toList();
     });
   }
 
   Stream<List<Pet>> getUserPets(String uid) {
-    return _db.collection('pets')
+    return _db
+        .collection('pets')
         .where('ownerId', isEqualTo: uid)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) => Pet.fromMap(doc.data(), doc.id)).toList();
-        });
+      return snapshot.docs
+          .map((doc) => Pet.fromMap(doc.data(), doc.id))
+          .toList();
+    });
   }
 
   Future<String> addPet(Pet pet) async {
@@ -94,7 +103,7 @@ class DatabaseService {
   }
 
   // --- 4. Clinics & Notifications ---
-  
+
   Future<void> addClinic(Clinic clinic) async {
     try {
       await _db.collection('clinics').add(clinic.toMap());
@@ -123,23 +132,27 @@ class DatabaseService {
   }
 
   Stream<List<Clinic>> getClinics() {
-    return _db.collection('clinics').snapshots().map((snapshot) =>
-        snapshot.docs.map((doc) {
-          final data = doc.data();
-          return Clinic(
-            id: doc.id,
-            ownerId: data['ownerId'] ?? '', 
-            name: data['name'] ?? '',
-            address: data['address'] ?? '',
-            description: data['description'] ?? '',
-            imageUrl: data['imageUrl'] ?? '',
-            rating: (data['rating'] ?? 0.0).toDouble(),
-            phoneNumber: data['phoneNumber'] ?? '',
-            isOpen: data['isOpen'] ?? true,
-            workingHours: data['workingHours'] ?? '09:00 AM - 10:00 PM',
-            services: (data['services'] is List) ? List<String>.from(data['services']) : [],
-          );
-        }).toList());
+    return _db
+        .collection('clinics')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final data = doc.data();
+              return Clinic(
+                id: doc.id,
+                ownerId: data['ownerId'] ?? '',
+                name: data['name'] ?? '',
+                address: data['address'] ?? '',
+                description: data['description'] ?? '',
+                imageUrl: data['imageUrl'] ?? '',
+                rating: (data['rating'] ?? 0.0).toDouble(),
+                phoneNumber: data['phoneNumber'] ?? '',
+                isOpen: data['isOpen'] ?? true,
+                workingHours: data['workingHours'] ?? '09:00 AM - 10:00 PM',
+                services: (data['services'] is List)
+                    ? List<String>.from(data['services'])
+                    : [],
+              );
+            }).toList());
   }
 
   Future<void> checkAndSendNotifications(Pet newPet, String petId) async {
@@ -159,7 +172,8 @@ class DatabaseService {
             await _createNotification(
               userId: ownerId,
               title: "Possible Match! 🐾",
-              body: "A ${newPet.type} was found in ${newPet.location} matching your lost pet.",
+              body:
+                  "A ${newPet.type} was found in ${newPet.location} matching your lost pet.",
               petId: petId,
               notificationType: 'found_match',
             );
@@ -179,7 +193,8 @@ class DatabaseService {
             await _createNotification(
               userId: targetUserId,
               title: "Lost Pet Alert 🚨",
-              body: "A ${newPet.type} was lost in your area (${newPet.location}). Help find them!",
+              body:
+                  "A ${newPet.type} was lost in your area (${newPet.location}). Help find them!",
               petId: petId,
               notificationType: 'lost_alert',
             );
@@ -209,18 +224,47 @@ class DatabaseService {
     });
   }
 
-  // --- 5. Reviews System ---
+  // --- 5. Reviews System (تم التعديل) ---
+
+  // دالة جديدة لجلب تقييم عنصر محدد (مثل فندق)
+  Future<Map<String, dynamic>> getItemRatingStats(String itemId) async {
+    try {
+      QuerySnapshot snapshot = await _db
+          .collection('reviews')
+          .where('petId', isEqualTo: itemId)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        return {'average': 0.0, 'count': 0};
+      }
+
+      double totalStars = 0;
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        totalStars += (data['rating'] ?? 0.0).toDouble();
+      }
+
+      double average = totalStars / snapshot.docs.length;
+      return {'average': average, 'count': snapshot.docs.length};
+    } catch (e) {
+      print("Error calculating item rating: $e");
+      return {'average': 0.0, 'count': 0};
+    }
+  }
+
   Future<void> addReview({
     required String targetUserId,
     required String reviewerId,
     required double rating,
     required String comment,
     required String reviewType,
+    String? petId, // إضافة اختيارية
   }) async {
     try {
       await _db.collection('reviews').add({
         'targetUserId': targetUserId,
         'reviewerId': reviewerId,
+        'petId': petId, // تخزين معرف العنصر
         'rating': rating,
         'comment': comment,
         'reviewType': reviewType,
@@ -232,15 +276,23 @@ class DatabaseService {
     }
   }
 
-  Future<bool> hasUserReviewed(String reviewerId, String targetUserId, String reviewType) async {
+  Future<bool> hasUserReviewed(
+      String reviewerId, String targetUserId, String reviewType,
+      {String? petId}) async {
     try {
-      final snapshot = await _db
+      Query query = _db
           .collection('reviews')
           .where('reviewerId', isEqualTo: reviewerId)
-          .where('targetUserId', isEqualTo: targetUserId)
-          .where('reviewType', isEqualTo: reviewType)
-          .limit(1)
-          .get();
+          .where('reviewType', isEqualTo: reviewType);
+
+      // إذا تم تمرير petId، نتحقق منه بدلاً من المستخدم المستهدف فقط
+      if (petId != null) {
+        query = query.where('petId', isEqualTo: petId);
+      } else {
+        query = query.where('targetUserId', isEqualTo: targetUserId);
+      }
+
+      final snapshot = await query.limit(1).get();
       return snapshot.docs.isNotEmpty;
     } catch (e) {
       print("Error checking review status: $e");
@@ -248,9 +300,11 @@ class DatabaseService {
     }
   }
 
-  Future<Map<String, dynamic>> getUserRatingStats(String userId, {String? reviewType}) async {
+  Future<Map<String, dynamic>> getUserRatingStats(String userId,
+      {String? reviewType}) async {
     try {
-      Query query = _db.collection('reviews').where('targetUserId', isEqualTo: userId);
+      Query query =
+          _db.collection('reviews').where('targetUserId', isEqualTo: userId);
       if (reviewType != null) {
         query = query.where('reviewType', isEqualTo: reviewType);
       }
@@ -274,11 +328,11 @@ class DatabaseService {
     }
   }
 
-  // --- 6. Favorites System (NEW) ---
-  
-  // إضافة أو حذف من المفضلة
+  // --- 6. Favorites System ---
+
   Future<void> toggleFavorite(String userId, String petId) async {
-    final docRef = _db.collection('users').doc(userId).collection('favorites').doc(petId);
+    final docRef =
+        _db.collection('users').doc(userId).collection('favorites').doc(petId);
     final doc = await docRef.get();
 
     if (doc.exists) {
@@ -290,13 +344,16 @@ class DatabaseService {
     }
   }
 
-  // التحقق من حالة المفضلة
   Future<bool> isFavorite(String userId, String petId) async {
-    final doc = await _db.collection('users').doc(userId).collection('favorites').doc(petId).get();
+    final doc = await _db
+        .collection('users')
+        .doc(userId)
+        .collection('favorites')
+        .doc(petId)
+        .get();
     return doc.exists;
   }
 
-  // جلب قائمة المفضلة
   Stream<List<Pet>> getUserFavorites(String userId) {
     return _db
         .collection('users')
@@ -323,14 +380,13 @@ class DatabaseService {
     });
   }
 
-  // --- 7. Bookings & Transactions System (NEW) ---
+  // --- 7. Bookings & Transactions System ---
 
-  // إضافة حجز جديد عند تأكيد العملية
   Future<void> addBooking({
     required String userId,
-    required String providerId, 
-    required String serviceType, // 'hotel', 'adoption', 'clinic'
-    required String itemName, 
+    required String providerId,
+    required String serviceType,
+    required String itemName,
     required Map<String, dynamic> details,
   }) async {
     try {
@@ -349,7 +405,6 @@ class DatabaseService {
     }
   }
 
-  // جلب حجوزات المستخدم
   Stream<List<Map<String, dynamic>>> getUserBookings(String userId) {
     return _db
         .collection('bookings')
@@ -365,7 +420,6 @@ class DatabaseService {
     });
   }
 
-  // جلب عدد الحجوزات
   Future<int> getUserBookingsCount(String userId) async {
     try {
       final snapshot = await _db

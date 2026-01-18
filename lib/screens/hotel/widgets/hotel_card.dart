@@ -3,16 +3,18 @@ import '../../../core/constants/app_colors.dart';
 import '../../../services/database_service.dart';
 
 class HotelCard extends StatelessWidget {
+  final String petId; // إضافة مهمة
   final String name;
   final String address;
   final String imageUrl;
   final String description;
   final List<String> supportedPets;
-  final String ownerId; // ضروري لجلب التقييم
+  final String ownerId;
   final VoidCallback onTap;
 
   const HotelCard({
     super.key,
+    required this.petId, // مطلوب الآن
     required this.name,
     required this.address,
     required this.imageUrl,
@@ -64,20 +66,24 @@ class HotelCard extends StatelessWidget {
                     color: Colors.white.withOpacity(0.95),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
-                       BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2))
                     ],
                   ),
-                  // هنا التغيير الجوهري: نطلب تقييمات الفندق فقط
+                  // هنا نستخدم دالة التقييم الجديدة الخاصة بالعنصر
                   child: FutureBuilder<Map<String, dynamic>>(
-                    future: DatabaseService().getUserRatingStats(ownerId, reviewType: 'hotel'),
+                    future: DatabaseService().getItemRatingStats(petId),
                     builder: (context, snapshot) {
                       String ratingText = "-.-";
                       if (snapshot.hasData) {
                         double avg = snapshot.data!['average'] ?? 0.0;
-                        if (avg > 0) {
-                           ratingText = avg.toStringAsFixed(1);
+                        int count = snapshot.data!['count'] ?? 0;
+                        if (count > 0) {
+                          ratingText = avg.toStringAsFixed(1);
                         } else {
-                           ratingText = "New"; // إذا لم يكن هناك تقييم بعد
+                          ratingText = "New";
                         }
                       }
                       return Row(

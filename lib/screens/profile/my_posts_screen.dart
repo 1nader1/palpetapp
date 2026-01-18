@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../data/models/pet.dart';
 import '../../services/database_service.dart';
@@ -7,6 +9,11 @@ import '../add_post/add_post_screen.dart';
 import '../adoption/pet_details_screen.dart';
 import '../lost_found/lost_found_details_screen.dart';
 import '../hotel/hotel_details_screen.dart';
+
+// استيراد الكاردات الأصلية
+import '../adoption/widgets/adoption_pet_card.dart';
+import '../lost_found/widgets/lost_found_card.dart';
+import '../hotel/widgets/hotel_card.dart';
 
 class MyPostsScreen extends StatefulWidget {
   const MyPostsScreen({super.key});
@@ -32,7 +39,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.of(ctx).pop(); // Close dialog
+              Navigator.of(ctx).pop();
               await _databaseService.deletePet(petId);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -67,13 +74,16 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
     } else if (pet.postType == 'Lost' || pet.postType == 'Found') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => LostFoundDetailsScreen(pet: pet)),
+        MaterialPageRoute(
+            builder: (context) => LostFoundDetailsScreen(pet: pet)),
       );
     } else if (pet.postType == 'Hotel') {
-      // Hotel screen expects a Map
+      Map<String, dynamic> hotelData = pet.toMap();
+      hotelData['id'] = pet.id;
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => HotelDetailsScreen(data: pet.toMap())),
+        MaterialPageRoute(
+            builder: (context) => HotelDetailsScreen(data: hotelData)),
       );
     }
   }
@@ -87,7 +97,9 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        title: const Text("My Posts", style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold)),
+        title: const Text("My Posts",
+            style: TextStyle(
+                color: AppColors.textDark, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: AppColors.textDark,
@@ -110,7 +122,8 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                 children: [
                   Icon(Icons.post_add, size: 64, color: Colors.grey),
                   SizedBox(height: 16),
-                  Text("You haven't posted anything yet.", style: TextStyle(fontSize: 16, color: Colors.grey)),
+                  Text("You haven't posted anything yet.",
+                      style: TextStyle(fontSize: 16, color: Colors.grey)),
                 ],
               ),
             );
@@ -121,7 +134,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
             itemCount: pets.length,
             itemBuilder: (context, index) {
               final pet = pets[index];
-              return _buildPostCard(pet);
+              return _buildWrapperCard(pet);
             },
           );
         },
@@ -129,135 +142,132 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
     );
   }
 
-  Widget _buildPostCard(Pet pet) {
+  // --- Wrapper Card ---
+  Widget _buildWrapperCard(Pet pet) {
+    // استخدمنا Container لإضافة مسافة خارجية (Margin) من الأسفل تفصل كل عنصر عن الآخر
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: InkWell(
-        onTap: () => _openPostDetails(pet),
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Image Section ---
-            Stack(
+      margin: const EdgeInsets.only(
+          bottom: 32), // <--- هنا زدنا المسافة لتكون واضحة جداً
+      child: Column(
+        children: [
+          // 1. الشريط العلوي (البار)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  child: Image.network(
-                    pet.imageUrl,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (ctx, _, __) => Container(
-                      height: 180,
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.pets, size: 50, color: Colors.grey),
+                // اليسار: نوع البوست
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    pet.postType.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
 
-                // Badge for Post Type
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      pet.postType,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            // --- Details Section ---
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          pet.name,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textDark,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      
-                      // Edit/Delete Buttons
-                      Row(
+                // اليمين: القائمة (3 نقاط)
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_horiz,
+                      color: Colors.grey, size: 28),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _editPost(pet);
+                    } else if (value == 'delete') {
+                      _deletePost(pet.id);
+                    }
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                    const PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Row(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => _editPost(pet),
-                            constraints: const BoxConstraints(),
-                            padding: const EdgeInsets.all(8),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deletePost(pet.id),
-                            constraints: const BoxConstraints(),
-                            padding: const EdgeInsets.only(left: 8),
-                          ),
+                          Icon(Icons.edit, color: Colors.blue, size: 20),
+                          SizedBox(width: 8),
+                          Text('Edit'),
                         ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "${pet.type} • ${pet.location}",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
                     ),
-                  ),
-                  if (pet.description.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      pet.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textGrey,
-                        height: 1.5,
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red, size: 20),
+                          SizedBox(width: 8),
+                          Text('Delete'),
+                        ],
                       ),
                     ),
                   ],
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          // 3. الكارد الأصلي
+          _getOriginalCardWidget(pet),
+        ],
       ),
+    );
+  }
+
+  Widget _getOriginalCardWidget(Pet pet) {
+    if (pet.postType == 'Adoption') {
+      return AdoptionPetCard(
+        name: pet.name,
+        age: pet.age,
+        gender: pet.gender,
+        breed: pet.breed,
+        description: pet.description,
+        imageUrl: pet.imageUrl,
+        tags: pet.healthTags,
+        onViewDetails: () => _openPostDetails(pet),
+      );
+    } else if (pet.postType == 'Lost' || pet.postType == 'Found') {
+      String formattedDate = pet.createdAt != null
+          ? DateFormat('yyyy-MM-dd').format(pet.createdAt!)
+          : 'Unknown Date';
+
+      return LostFoundCard(
+        name: pet.name,
+        date: formattedDate,
+        location: pet.location,
+        imageUrl: pet.imageUrl,
+        isLost: pet.postType == 'Lost',
+        onViewDetails: () => _openPostDetails(pet),
+      );
+    } else if (pet.postType == 'Hotel') {
+      List<String> supported =
+          pet.type.split(',').map((e) => e.trim()).toList();
+      return HotelCard(
+        petId: pet.id,
+        name: pet.name,
+        address: pet.location,
+        imageUrl: pet.imageUrl,
+        description: pet.description,
+        supportedPets: supported,
+        ownerId: pet.ownerId,
+        onTap: () => _openPostDetails(pet),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      height: 100,
+      color: Colors.white,
+      child: Center(child: Text("Unknown Post Type: ${pet.postType}")),
     );
   }
 }

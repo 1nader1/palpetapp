@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:url_launcher/url_launcher.dart'; 
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/database_service.dart';
 
@@ -13,7 +13,8 @@ class HotelDetailsScreen extends StatefulWidget {
   State<HotelDetailsScreen> createState() => _HotelDetailsScreenState();
 }
 
-class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBindingObserver {
+class _HotelDetailsScreenState extends State<HotelDetailsScreen>
+    with WidgetsBindingObserver {
   int _selectedTab = 0;
   bool _isCallClicked = false;
 
@@ -32,7 +33,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _isCallClicked) {
-      // تأخير بسيط لضمان استقرار الواجهة
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
           setState(() {
@@ -46,7 +46,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
-    
+
     setState(() {
       _isCallClicked = true;
     });
@@ -63,37 +63,34 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
 
   Future<void> _checkAndShowRatingDialog() async {
     final currentUser = FirebaseAuth.instance.currentUser;
-    final String? targetUserId = widget.data['ownerId']; 
+    final String? targetUserId = widget.data['ownerId'];
+    final String? petId = widget.data['id']; // جلبنا الآيدي
 
     if (currentUser == null || targetUserId == null) return;
-    
-    // 1. فحص الحماية: منع المالك من تقييم نفسه
     if (currentUser.uid == targetUserId) return;
 
-    // 2. فحص التكرار: هل قام بتقييم هذا الفندق (خدمة الفندقة) مسبقاً؟
-    bool alreadyReviewed = await DatabaseService().hasUserReviewed(currentUser.uid, targetUserId, 'hotel');
-    
+    // تم التعديل: الفحص بناءً على petId للسماح بتقييم فنادق مختلفة لنفس المالك
+    bool alreadyReviewed = await DatabaseService()
+        .hasUserReviewed(currentUser.uid, targetUserId, 'hotel', petId: petId);
+
     if (!mounted) return;
 
     if (alreadyReviewed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("You have already reviewed this hotel."),
-          backgroundColor: Colors.orange,
-        )
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("You have already reviewed this hotel."),
+        backgroundColor: Colors.orange,
+      ));
       return;
     }
 
-    _showRatingDialog(currentUser.uid, targetUserId);
+    _showRatingDialog(currentUser.uid, targetUserId, petId);
   }
 
-  void _showRatingDialog(String currentUserId, String targetUserId) {
+  void _showRatingDialog(
+      String currentUserId, String targetUserId, String? petId) {
     double rating = 0;
     TextEditingController commentController = TextEditingController();
-    
-    // متغير للتحكم في واجهة الحوار: هل تم تأكيد العملية؟
-    bool isTransactionConfirmed = false; 
+    bool isTransactionConfirmed = false;
 
     showDialog(
       context: context,
@@ -102,40 +99,45 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              // تغيير العنوان بناءً على المرحلة
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               title: Row(
                 children: [
-                   Icon(
-                     isTransactionConfirmed ? Icons.star : Icons.check_circle_outline, 
-                     color: isTransactionConfirmed ? Colors.amber : AppColors.primary
-                   ),
-                   const SizedBox(width: 8),
-                   Text(isTransactionConfirmed ? "Rate Service" : "Service Confirmation"),
+                  Icon(
+                      isTransactionConfirmed
+                          ? Icons.star
+                          : Icons.check_circle_outline,
+                      color: isTransactionConfirmed
+                          ? Colors.amber
+                          : AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(isTransactionConfirmed
+                      ? "Rate Service"
+                      : "Service Confirmation"),
                 ],
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // --- المرحلة الأولى: السؤال عن إتمام العملية ---
                   if (!isTransactionConfirmed) ...[
                     const Text(
                       "Did the booking/transaction take place successfully?",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // زر لا: لم تتم العملية
                         TextButton(
                           onPressed: () {
-                             Navigator.pop(context); // إغلاق فقط
+                            Navigator.pop(context);
                           },
-                          child: const Text("No", style: TextStyle(color: Colors.grey, fontSize: 16)),
+                          child: const Text("No",
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 16)),
                         ),
-                        // زر نعم: تمت العملية، ننتقل للتقييم
                         ElevatedButton(
                           onPressed: () {
                             setStateDialog(() {
@@ -150,9 +152,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
                         ),
                       ],
                     ),
-                  ] 
-                  // --- المرحلة الثانية: التقييم (تظهر بعد الضغط على Yes) ---
-                  else ...[
+                  ] else ...[
                     const Text("How was your experience with this hotel?"),
                     const SizedBox(height: 20),
                     Row(
@@ -177,7 +177,8 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
                       controller: commentController,
                       decoration: InputDecoration(
                         hintText: "Write a comment (optional)",
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         filled: true,
                         fillColor: Colors.grey[50],
                       ),
@@ -186,60 +187,64 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
                   ],
                 ],
               ),
-              // الأزرار السفلية تظهر فقط في مرحلة التقييم
-              actions: isTransactionConfirmed ? [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Skip", style: TextStyle(color: Colors.grey)),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (rating > 0) {
-                      // 1. إضافة التقييم
-                      await DatabaseService().addReview(
-                        targetUserId: targetUserId,
-                        reviewerId: currentUserId,
-                        rating: rating,
-                        comment: commentController.text,
-                        reviewType: 'hotel', 
-                      );
+              actions: isTransactionConfirmed
+                  ? [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("Skip",
+                            style: TextStyle(color: Colors.grey)),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (rating > 0) {
+                            // 1. إضافة التقييم مع الـ petId
+                            await DatabaseService().addReview(
+                              targetUserId: targetUserId,
+                              reviewerId: currentUserId,
+                              rating: rating,
+                              comment: commentController.text,
+                              reviewType: 'hotel',
+                              petId: petId, // هنا التعديل الجوهري
+                            );
 
-                      // 2. تسجيل العملية كحجز في السجل
-                      await DatabaseService().addBooking(
-                        userId: currentUserId,
-                        providerId: targetUserId,
-                        serviceType: 'Hotel Booking',
-                        itemName: widget.data['name'] ?? 'Hotel Service',
-                        details: {
-                           'price': widget.data['price'],
-                           'ratingGiven': rating,
-                           'location': widget.data['location'],
+                            // 2. تسجيل العملية
+                            await DatabaseService().addBooking(
+                              userId: currentUserId,
+                              providerId: targetUserId,
+                              serviceType: 'Hotel Booking',
+                              itemName: widget.data['name'] ?? 'Hotel Service',
+                              details: {
+                                'price': widget.data['price'],
+                                'ratingGiven': rating,
+                                'location': widget.data['location'],
+                              },
+                            );
+
+                            if (mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text("Feedback and Booking recorded!"),
+                                backgroundColor: Colors.green,
+                              ));
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text("Please select a star rating")));
+                          }
                         },
-                      );
-
-                      if (mounted) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Feedback and Booking recorded!"),
-                            backgroundColor: Colors.green,
-                          )
-                        );
-                      }
-                    } else {
-                       ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Please select a star rating"))
-                       );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text("Submit"),
-                ),
-              ] : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text("Submit"),
+                      ),
+                    ]
+                  : null,
             );
           },
         );
@@ -249,9 +254,11 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
 
   @override
   Widget build(BuildContext context) {
-    final String imageUrl = widget.data['imageUrl'] ?? widget.data['image'] ?? '';
+    // باقي كود الـ UI كما هو (لم يتغير)
+    final String imageUrl =
+        widget.data['imageUrl'] ?? widget.data['image'] ?? '';
     final String name = widget.data['name'] ?? 'Hotel Name';
-    
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -280,11 +287,14 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
                   ? Image.network(
                       imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
+                      errorBuilder: (c, e, s) =>
+                          Container(color: Colors.grey[200]),
                     )
-                  : Container(color: Colors.grey[200], child: const Icon(Icons.hotel, size: 50, color: Colors.grey)),
+                  : Container(
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.hotel,
+                          size: 50, color: Colors.grey)),
             ),
-            
             Container(
               transform: Matrix4.translationValues(0.0, -30.0, 0.0),
               decoration: const BoxDecoration(
@@ -313,7 +323,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
                         color: AppColors.textDark),
                   ),
                   const SizedBox(height: 24),
-                  
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
@@ -328,7 +337,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
                   AnimatedCrossFade(
                     firstChild: _buildDetailsContent(),
                     secondChild: _buildAmenitiesContent(),
@@ -346,16 +354,24 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
     );
   }
 
+  // الدوال المساعدة للواجهة (لم تتغير، ولكن سأدرجها ليكون الملف كاملاً)
   Widget _buildDetailsContent() {
-    final String description = widget.data['description'] ?? "No description available.";
+    final String description =
+        widget.data['description'] ?? "No description available.";
     final String price = widget.data['price'] ?? "N/A";
     final String capacity = widget.data['capacity'] ?? "N/A";
-    final String address = widget.data['location'] ?? widget.data['address'] ?? "Unknown Address";
-    final String phone = widget.data['contactPhone'] ?? widget.data['phone'] ?? "N/A";
-    
+    final String address =
+        widget.data['location'] ?? widget.data['address'] ?? "Unknown Address";
+    final String phone =
+        widget.data['contactPhone'] ?? widget.data['phone'] ?? "N/A";
+
     List<String> supportedPets = [];
     if (widget.data['type'] != null) {
-      supportedPets = widget.data['type'].toString().split(',').map((e) => e.trim()).toList();
+      supportedPets = widget.data['type']
+          .toString()
+          .split(',')
+          .map((e) => e.trim())
+          .toList();
     }
 
     return Column(
@@ -372,9 +388,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
           style: const TextStyle(
               color: AppColors.textGrey, height: 1.6, fontSize: 15),
         ),
-
         const SizedBox(height: 24),
-
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -418,13 +432,11 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
                   ],
                 ),
               ),
-              
               Container(
                   width: 1,
-                  height: 60, 
+                  height: 60,
                   color: Colors.grey[300],
                   margin: const EdgeInsets.symmetric(horizontal: 16)),
-              
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -452,9 +464,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
                       ),
                     ],
                   ),
-                  
-                  const SizedBox(height: 12), 
-
+                  const SizedBox(height: 12),
                   const Text("Capacity",
                       style: TextStyle(
                           fontSize: 13,
@@ -464,7 +474,8 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.meeting_room, size: 16, color: AppColors.textDark), 
+                      const Icon(Icons.meeting_room,
+                          size: 16, color: AppColors.textDark),
                       const SizedBox(width: 4),
                       Text(
                         capacity,
@@ -480,9 +491,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
             ],
           ),
         ),
-
         const SizedBox(height: 24),
-
         const Text("Location",
             style: TextStyle(
                 fontSize: 18,
@@ -505,9 +514,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
             ),
           ],
         ),
-
         const SizedBox(height: 24),
-
         const Text("Contact Info",
             style: TextStyle(
                 fontSize: 18,
@@ -576,15 +583,14 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> with WidgetsBin
 
   Widget _buildAmenitiesContent() {
     List<String> amenitiesList = [];
-    
+
     if (widget.data['amenities'] is String) {
       amenitiesList = (widget.data['amenities'] as String)
           .split(',')
           .where((e) => e.trim().isNotEmpty)
           .map((e) => e.trim())
           .toList();
-    } 
-    else if (widget.data['amenities'] is List) {
+    } else if (widget.data['amenities'] is List) {
       amenitiesList = List<String>.from(widget.data['amenities']);
     }
 

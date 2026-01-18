@@ -1,15 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart'; // 1. استيراد المكتبة
 import '../../core/constants/app_colors.dart';
-import '../../data/models/pet.dart'; // تأكد من استيراد المودل
+import '../../data/models/pet.dart';
 
 class LostFoundDetailsScreen extends StatelessWidget {
-  final Pet pet; // التعديل: أصبحنا نستقبل Pet بدلاً من Map
+  final Pet pet;
 
   const LostFoundDetailsScreen({super.key, required this.pet});
 
+  // 2. دالة الاتصال
+  Future<void> _makePhoneCall(BuildContext context, String phoneNumber) async {
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    try {
+      await launchUrl(launchUri);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Could not launch phone dialer")),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // تحديد الحالة بناءً على نوع البوست
     final bool isLost = pet.postType == 'Lost';
 
     return Scaffold(
@@ -24,7 +38,8 @@ class LostFoundDetailsScreen extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textDark, size: 20),
+            icon: const Icon(Icons.arrow_back,
+                color: AppColors.textDark, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -41,9 +56,10 @@ class LostFoundDetailsScreen extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   Image.network(
-                    pet.imageUrl, // استخدام بيانات الـ Pet
+                    pet.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
+                    errorBuilder: (c, e, s) =>
+                        Container(color: Colors.grey[200]),
                   ),
                   Positioned(
                     bottom: 0,
@@ -82,9 +98,10 @@ class LostFoundDetailsScreen extends StatelessWidget {
                             color: AppColors.textDark),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isLost ? Colors.redAccent : Colors.green, // ألوان التنبيه
+                          color: isLost ? Colors.redAccent : Colors.green,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -97,7 +114,7 @@ class LostFoundDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "${pet.type} • ${pet.age}", // عرض النوع والعمر
+                    "${pet.type} • ${pet.age}",
                     style: const TextStyle(
                         fontSize: 16,
                         color: AppColors.textGrey,
@@ -182,7 +199,8 @@ class LostFoundDetailsScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text("Phone Number",
-                                style: TextStyle(fontSize: 13, color: Colors.grey)),
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.grey)),
                             const SizedBox(height: 4),
                             Text(
                               pet.contactPhone,
@@ -195,9 +213,9 @@ class LostFoundDetailsScreen extends StatelessWidget {
                         ),
                         const Spacer(),
                         ElevatedButton(
-                          onPressed: () {
-                            // يمكن إضافة كود الاتصال هنا لاحقاً
-                          },
+                          // 3. ربط الزر بالدالة
+                          onPressed: () =>
+                              _makePhoneCall(context, pet.contactPhone),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,

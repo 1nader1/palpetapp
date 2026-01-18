@@ -4,7 +4,7 @@ import '../../data/models/pet.dart';
 import '../../services/database_service.dart';
 import 'widgets/hotel_card.dart';
 import 'hotel_details_screen.dart';
-import 'widgets/hotel_card_skeleton.dart'; // [مهم] تأكد من استيراد السكيلتون
+import 'widgets/hotel_card_skeleton.dart';
 
 class PetHotelsScreen extends StatefulWidget {
   const PetHotelsScreen({super.key});
@@ -39,13 +39,8 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. Header (ثابت)
             _buildHeader(),
-
-            // 2. Filters (ثابت)
             _buildFilters(),
-
-            // 3. List Data (متغير)
             _buildListStream(),
           ],
         ),
@@ -53,17 +48,13 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
     );
   }
 
-  // --- Header Widget ---
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFFFFA726), // ألوانك المخصصة كما في الكود السابق
-            Color(0xFFEF6C00)
-          ],
+          colors: [Color(0xFFFFA726), Color(0xFFEF6C00)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -92,13 +83,11 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
     );
   }
 
-  // --- Filters Widget ---
   Widget _buildFilters() {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // Dropdown
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
@@ -122,8 +111,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Search Field
           TextField(
             controller: _searchController,
             onChanged: (val) {
@@ -157,32 +144,26 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
     );
   }
 
-  // --- List Stream Widget ---
   Widget _buildListStream() {
     return StreamBuilder<List<Pet>>(
       stream: _hotelsStream,
       builder: (context, snapshot) {
-        
-        // 1. حالة التحميل (Shimmer Effect)
         if (snapshot.connectionState == ConnectionState.waiting) {
           return ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: 3, // عدد بطاقات التحميل الوهمية
+            itemCount: 3,
             itemBuilder: (context, index) => const HotelCardSkeleton(),
           );
         }
 
-        // 2. معالجة البيانات والفلترة
         List<Pet> displayList = [];
         if (snapshot.hasData) {
           final allPets = snapshot.data!;
           displayList = allPets.where((pet) {
-            // أ. تصفية حسب النوع: Hotel فقط
             if (pet.postType != 'Hotel') return false;
 
-            // ب. فلترة حسب نوع الحيوان
             if (_selectedPetType != null && _selectedPetType != "All Types") {
               final List<String> supportedTypes =
                   pet.type.split(',').map((e) => e.trim()).toList();
@@ -191,7 +172,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
               }
             }
 
-            // ج. البحث بالاسم
             if (_searchQuery.isNotEmpty) {
               final name = pet.name.toLowerCase();
               final query = _searchQuery.toLowerCase();
@@ -203,36 +183,13 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
           }).toList();
         }
 
-        // 3. حالة عدم وجود بيانات (Empty State Illustration)
         if (displayList.isEmpty) {
           return Padding(
             padding: const EdgeInsets.only(top: 40, bottom: 40),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  height: 200,
-                  width: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        blurRadius: 20,
-                        spreadRadius: 5,
-                      ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: Image.network(
-                      'https://i.pinimg.com/1200x/85/d6/fe/85d6fe2e402686d661019df7e4c09a30.jpg',
-                      fit: BoxFit.cover,
-                      errorBuilder: (ctx, _, __) =>
-                          const Icon(Icons.hotel_class, size: 60, color: Colors.grey),
-                    ),
-                  ),
-                ),
+                const Icon(Icons.hotel_class, size: 60, color: Colors.grey),
                 const SizedBox(height: 24),
                 const Text(
                   "No Hotels Found",
@@ -253,7 +210,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
           );
         }
 
-        // 4. عرض القائمة الحقيقية
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: ListView.builder(
@@ -266,17 +222,23 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                   pet.type.split(',').map((e) => e.trim()).toList();
 
               return HotelCard(
+                petId: pet.id, // تم التعديل
                 name: pet.name,
                 address: pet.location,
-                ownerId: pet.ownerId, // الحفاظ على تعديلك الخاص بـ ownerId
+                ownerId: pet.ownerId,
                 imageUrl: pet.imageUrl,
                 description: pet.description,
                 supportedPets: supported,
                 onTap: () {
+                  // تحضير البيانات مع التأكد من إضافة ID
+                  // هذا هو الجزء الذي كان يسبب فقدان الآيدي في الصفحة التالية
+                  Map<String, dynamic> hotelData = pet.toMap();
+                  hotelData['id'] = pet.id;
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => HotelDetailsScreen(data: pet.toMap()),
+                      builder: (context) => HotelDetailsScreen(data: hotelData),
                     ),
                   );
                 },
