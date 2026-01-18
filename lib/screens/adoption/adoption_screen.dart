@@ -146,8 +146,9 @@ class _AdoptionScreenState extends State<AdoptionScreen> {
               if (snapshot.hasData) {
                 final allPets = snapshot.data!;
                 filteredPets = allPets.where((pet) {
-                  if (pet.postType.toLowerCase() != 'adoption')
-                    return false; // تأكد من الـ Case sensitivity
+                  if (pet.postType.toLowerCase() != 'adoption') {
+                    return false;
+                  }
                   final matchesSearch = _searchQuery.isEmpty ||
                       pet.name
                           .toLowerCase()
@@ -230,6 +231,7 @@ class _AdoptionScreenState extends State<AdoptionScreen> {
                     (context, index) {
                       final pet = filteredPets[index];
                       return AdoptionPetCard(
+                        ownerId: pet.ownerId,
                         name: pet.name,
                         age: pet.age,
                         gender: pet.gender,

@@ -145,11 +145,12 @@ class HomeScreen extends StatelessWidget {
 
             return Column(
               children: featuredPets.map((pet) => PetCard(
+                ownerId: pet.ownerId, // <--- [مهم] تمرير معرف المالك هنا
                 name: pet.name,
                 breed: pet.breed,
                 age: pet.age,
-                gender: pet.gender, // تمرير الجنس للبوكس
-                description: pet.description, // تمرير الوصف
+                gender: pet.gender, 
+                description: pet.description, 
                 imageUrl: pet.imageUrl,
                 onTap: () {
                   Navigator.push(

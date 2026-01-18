@@ -19,7 +19,8 @@ class FavoritesScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text("My Favorites", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: const Text("My Favorites",
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
@@ -39,9 +40,11 @@ class FavoritesScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.favorite_border, size: 64, color: Colors.grey[300]),
+                  Icon(Icons.favorite_border,
+                      size: 64, color: Colors.grey[300]),
                   const SizedBox(height: 16),
-                  Text("No favorites yet", style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                  Text("No favorites yet",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16)),
                 ],
               ),
             );
@@ -56,6 +59,7 @@ class FavoritesScreen extends StatelessWidget {
               final pet = pets[index];
 
               return AdoptionPetCard(
+                ownerId: pet.ownerId,
                 name: pet.name,
                 age: pet.age,
                 gender: pet.gender,

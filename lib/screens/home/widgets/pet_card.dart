@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // [جديد]
 import '../../../core/constants/app_colors.dart';
+import '../../../services/database_service.dart'; // [جديد]
 
 class PetCard extends StatelessWidget {
+  final String ownerId; // <--- [جديد]
   final String name;
   final String breed;
   final String gender;
@@ -12,6 +15,7 @@ class PetCard extends StatelessWidget {
 
   const PetCard({
     super.key,
+    required this.ownerId, // <--- [جديد]
     required this.name,
     required this.breed,
     required this.gender,
@@ -20,6 +24,133 @@ class PetCard extends StatelessWidget {
     required this.imageUrl,
     required this.onTap,
   });
+
+  // [جديد] دالة عرض بروفايل المالك (نفس المنطق المستخدم سابقاً)
+  void _showOwnerProfile(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: FutureBuilder<List<dynamic>>(
+              future: Future.wait([
+                DatabaseService().getUser(ownerId),
+                DatabaseService().getUserRatingStats(ownerId),
+                DatabaseService().getUserPostCount(ownerId),
+              ]),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 150,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                if (snapshot.hasError || !snapshot.hasData) {
+                  return const SizedBox(
+                    height: 100,
+                    child: Center(child: Text("Unable to load user info")),
+                  );
+                }
+
+                final userDoc = snapshot.data![0] as DocumentSnapshot;
+                final ratingData = snapshot.data![1] as Map<String, dynamic>;
+                final postCount = snapshot.data![2] as int;
+
+                final userData = userDoc.data() as Map<String, dynamic>?;
+                final String userName = userData?['name'] ?? 'Unknown User';
+                final String? userImage =
+                    userData?['photoUrl'] ?? userData?['image'];
+
+                final double rating = ratingData['average'] ?? 0.0;
+                final int reviewCount = ratingData['count'] ?? 0;
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: userImage != null && userImage.isNotEmpty
+                          ? NetworkImage(userImage)
+                          : null,
+                      child: (userImage == null || userImage.isEmpty)
+                          ? const Icon(Icons.person,
+                              size: 40, color: Colors.grey)
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      userName,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.star_rounded,
+                            color: Colors.amber, size: 20),
+                        const SizedBox(width: 4),
+                        Text(
+                          "${rating.toStringAsFixed(1)} ($reviewCount reviews)",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            "$postCount",
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const Text(
+                            "Posts Published",
+                            style: TextStyle(
+                                fontSize: 12, color: AppColors.primary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("Close"),
+                      ),
+                    )
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,8 +174,44 @@ class PetCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // --- [جديد] البار العلوي (Adoption + Owner Button) ---
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                InkWell(
+                  onTap: () => _showOwnerProfile(context),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.person_outline,
+                            size: 16, color: Colors.black87),
+                        SizedBox(width: 4),
+                        Text(
+                          "Owner",
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // --- الصورة (تم تعديل الحواف لتلتصق بالبار) ---
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: BorderRadius.zero, // جعلناها مربعة لأن فوقها البار
             child: AspectRatio(
               aspectRatio: 1.5,
               child: Image.network(
@@ -57,6 +224,8 @@ class PetCard extends StatelessWidget {
               ),
             ),
           ),
+
+          // --- باقي التفاصيل ---
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(

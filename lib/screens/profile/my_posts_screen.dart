@@ -10,7 +10,6 @@ import '../adoption/pet_details_screen.dart';
 import '../lost_found/lost_found_details_screen.dart';
 import '../hotel/hotel_details_screen.dart';
 
-// استيراد الكاردات الأصلية
 import '../adoption/widgets/adoption_pet_card.dart';
 import '../lost_found/widgets/lost_found_card.dart';
 import '../hotel/widgets/hotel_card.dart';
@@ -142,21 +141,16 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
     );
   }
 
-  // --- Wrapper Card ---
   Widget _buildWrapperCard(Pet pet) {
-    // استخدمنا Container لإضافة مسافة خارجية (Margin) من الأسفل تفصل كل عنصر عن الآخر
     return Container(
-      margin: const EdgeInsets.only(
-          bottom: 32), // <--- هنا زدنا المسافة لتكون واضحة جداً
+      margin: const EdgeInsets.only(bottom: 32),
       child: Column(
         children: [
-          // 1. الشريط العلوي (البار)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // اليسار: نوع البوست
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -174,8 +168,6 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                     ),
                   ),
                 ),
-
-                // اليمين: القائمة (3 نقاط)
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.more_horiz,
                       color: Colors.grey, size: 28),
@@ -215,8 +207,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
               ],
             ),
           ),
-
-          // 3. الكارد الأصلي
+          const SizedBox(height: 10),
           _getOriginalCardWidget(pet),
         ],
       ),
@@ -226,6 +217,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
   Widget _getOriginalCardWidget(Pet pet) {
     if (pet.postType == 'Adoption') {
       return AdoptionPetCard(
+        ownerId: pet.ownerId,
         name: pet.name,
         age: pet.age,
         gender: pet.gender,
@@ -242,6 +234,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
 
       return LostFoundCard(
         name: pet.name,
+        ownerId: pet.ownerId,
         date: formattedDate,
         location: pet.location,
         imageUrl: pet.imageUrl,

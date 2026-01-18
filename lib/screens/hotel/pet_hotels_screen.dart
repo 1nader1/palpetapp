@@ -222,7 +222,7 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                   pet.type.split(',').map((e) => e.trim()).toList();
 
               return HotelCard(
-                petId: pet.id, // تم التعديل
+                petId: pet.id,
                 name: pet.name,
                 address: pet.location,
                 ownerId: pet.ownerId,
@@ -230,8 +230,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                 description: pet.description,
                 supportedPets: supported,
                 onTap: () {
-                  // تحضير البيانات مع التأكد من إضافة ID
-                  // هذا هو الجزء الذي كان يسبب فقدان الآيدي في الصفحة التالية
                   Map<String, dynamic> hotelData = pet.toMap();
                   hotelData['id'] = pet.id;
 

@@ -1,13 +1,14 @@
-import 'dart:io'; 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart'; 
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/clinic.dart';
 import '../../services/database_service.dart';
-import 'clinic_details_screen.dart'; // تأكد من استيراد صفحة التفاصيل إذا كانت موجودة للتنقل
+import 'clinic_details_screen.dart';
 import 'widgets/clinic_card.dart';
-import 'widgets/clinic_card_skeleton.dart'; // [مهم] تأكد من وجود ملف السكيلتون الذي أنشأناه سابقاً
+import 'widgets/clinic_card_skeleton.dart';
 
 class ClinicsScreen extends StatefulWidget {
   const ClinicsScreen({super.key});
@@ -21,10 +22,52 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   final DatabaseService _dbService = DatabaseService();
   String _searchKeyword = "";
 
+  bool _isClinicOpen(String workingHours) {
+    try {
+      if (workingHours.isEmpty) return false;
+
+      final parts = workingHours.contains(' - ')
+          ? workingHours.split(' - ')
+          : workingHours.split('-');
+
+      if (parts.length != 2) return false;
+
+      final startStr = parts[0].trim();
+      final endStr = parts[1].trim();
+
+      final format = DateFormat.jm();
+      final now = DateTime.now();
+
+      final startTimeRef = format.parse(startStr);
+      final endTimeRef = format.parse(endStr);
+
+      final openTime = DateTime(
+          now.year, now.month, now.day, startTimeRef.hour, startTimeRef.minute);
+      var closeTime = DateTime(
+          now.year, now.month, now.day, endTimeRef.hour, endTimeRef.minute);
+
+      if (closeTime.isBefore(openTime)) {
+        closeTime = closeTime.add(const Duration(days: 1));
+        if (now.hour < 12 && now.isBefore(closeTime)) {
+          return true;
+        }
+        if (now.isAfter(openTime) ||
+            now.isBefore(DateTime(now.year, now.month, now.day, endTimeRef.hour,
+                endTimeRef.minute))) {
+          return true;
+        }
+      }
+
+      return now.isAfter(openTime) && now.isBefore(closeTime);
+    } catch (e) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50], // تعديل لون الخلفية ليكون أفتح قليلاً ومناسب للتصميم الجديد
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -54,9 +97,9 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
       ),
       body: Column(
         children: [
-          // --- شريط البحث ---
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
             child: TextField(
               controller: _searchController,
               onChanged: (val) {
@@ -69,10 +112,10 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                 hintStyle: const TextStyle(color: Colors.grey),
                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 filled: true,
-                fillColor: Colors.white, // تعديل للون الأبيض ليتناسب مع الخلفية الرمادية
+                fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15), // تقليل نصف القطر قليلاً ليتناسب مع التصميم الحديث
+                  borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
@@ -81,23 +124,21 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                  borderSide:
+                      const BorderSide(color: AppColors.primary, width: 1.5),
                 ),
               ),
             ),
           ),
-
-          // --- القائمة ---
           Expanded(
             child: StreamBuilder<List<Clinic>>(
               stream: _dbService.getClinics(),
               builder: (context, snapshot) {
-                
-                // 1. حالة التحميل (Shimmer Effect)
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    itemCount: 5, // عدد عناصر وهمية
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    itemCount: 5,
                     itemBuilder: (context, index) => const ClinicCardSkeleton(),
                   );
                 }
@@ -107,11 +148,12 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                 }
 
                 final clinics = snapshot.data ?? [];
-                final filteredClinics = clinics.where((clinic) =>
-                    clinic.name.toLowerCase().contains(_searchKeyword.toLowerCase())
-                ).toList();
+                final filteredClinics = clinics
+                    .where((clinic) => clinic.name
+                        .toLowerCase()
+                        .contains(_searchKeyword.toLowerCase()))
+                    .toList();
 
-                // 2. حالة عدم وجود بيانات (Empty State Illustration)
                 if (filteredClinics.isEmpty) {
                   return Center(
                     child: SingleChildScrollView(
@@ -136,7 +178,10 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                               child: Image.network(
                                 'https://i.pinimg.com/1200x/85/d6/fe/85d6fe2e402686d661019df7e4c09a30.jpg',
                                 fit: BoxFit.cover,
-                                errorBuilder: (ctx, _, __) => const Icon(Icons.local_hospital, size: 60, color: Colors.grey),
+                                errorBuilder: (ctx, _, __) => const Icon(
+                                    Icons.local_hospital,
+                                    size: 60,
+                                    color: Colors.grey),
                               ),
                             ),
                           ),
@@ -164,22 +209,32 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                   );
                 }
 
-                // 3. عرض القائمة الفعلية
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   itemCount: filteredClinics.length,
                   itemBuilder: (context, index) {
                     final clinic = filteredClinics[index];
-                    return GestureDetector(
+
+                    final bool isCurrentlyOpen =
+                        _isClinicOpen(clinic.workingHours);
+
+                    return ClinicCard(
+                      clinicId: clinic.id,
+                      ownerId: clinic.ownerId,
+                      name: clinic.name,
+                      address: clinic.address,
+                      imageUrl: clinic.imageUrl,
+                      isOpen: isCurrentlyOpen,
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => ClinicDetailsScreen(clinic: clinic)),
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                ClinicDetailsScreen(clinic: clinic),
+                          ),
                         );
                       },
-                      child: ClinicCard(
-                        clinic: clinic,
-                      ),
                     );
                   },
                 );
@@ -206,7 +261,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
     final descController = TextEditingController();
     final hoursController = TextEditingController(text: "09:00 AM - 05:00 PM");
     final servicesController = TextEditingController();
-    
+
     File? selectedImage;
     bool isUploading = false;
 
@@ -223,7 +278,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                   GestureDetector(
                     onTap: () async {
                       final picker = ImagePicker();
-                      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                      final pickedFile =
+                          await picker.pickImage(source: ImageSource.gallery);
                       if (pickedFile != null) {
                         setState(() {
                           selectedImage = File(pickedFile.path);
@@ -237,40 +293,54 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                         color: Colors.grey[200],
                         borderRadius: BorderRadius.circular(12),
                         image: selectedImage != null
-                            ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover)
+                            ? DecorationImage(
+                                image: FileImage(selectedImage!),
+                                fit: BoxFit.cover)
                             : null,
                       ),
                       child: selectedImage == null
                           ? const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.add_a_photo, color: Colors.grey, size: 40),
+                                Icon(Icons.add_a_photo,
+                                    color: Colors.grey, size: 40),
                                 SizedBox(height: 8),
-                                Text("Tap to add photo", style: TextStyle(color: Colors.grey)),
+                                Text("Tap to add photo",
+                                    style: TextStyle(color: Colors.grey)),
                               ],
                             )
                           : null,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  TextField(controller: nameController, decoration: const InputDecoration(labelText: "Clinic Name")),
-                  TextField(controller: addressController, decoration: const InputDecoration(labelText: "Address")),
-                  TextField(controller: phoneController, decoration: const InputDecoration(labelText: "Phone Number"), keyboardType: TextInputType.phone),
                   TextField(
-                    controller: hoursController, 
-                    decoration: const InputDecoration(
-                      labelText: "Working Hours",
-                      hintText: "e.g. 9 AM - 6 PM"
-                    )
-                  ),
+                      controller: nameController,
+                      decoration:
+                          const InputDecoration(labelText: "Clinic Name")),
+                  TextField(
+                      controller: addressController,
+                      decoration: const InputDecoration(labelText: "Address")),
+                  TextField(
+                      controller: phoneController,
+                      decoration:
+                          const InputDecoration(labelText: "Phone Number"),
+                      keyboardType: TextInputType.phone),
+                  TextField(
+                      controller: hoursController,
+                      decoration: const InputDecoration(
+                          labelText: "Working Hours",
+                          hintText: "e.g. 9 AM - 6 PM")),
                   TextField(
                     controller: servicesController,
                     decoration: const InputDecoration(
-                      labelText: "Services",
-                      hintText: "Separate by comma (e.g. Surgery, Grooming)"
-                    ),
+                        labelText: "Services",
+                        hintText: "Separate by comma (e.g. Surgery, Grooming)"),
                   ),
-                  TextField(controller: descController, decoration: const InputDecoration(labelText: "Description"), maxLines: 3),
+                  TextField(
+                      controller: descController,
+                      decoration:
+                          const InputDecoration(labelText: "Description"),
+                      maxLines: 3),
                 ],
               ),
             ),
@@ -282,25 +352,33 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
               isUploading
                   ? const CircularProgressIndicator()
                   : ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary),
                       onPressed: () async {
-                        if (nameController.text.isEmpty || addressController.text.isEmpty) return;
+                        if (nameController.text.isEmpty ||
+                            addressController.text.isEmpty) return;
 
                         setState(() => isUploading = true);
 
-                        String imageUrl = 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?q=80&w=2070';
-                        
+                        String imageUrl =
+                            'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?q=80&w=2070';
+
                         if (selectedImage != null) {
                           try {
-                            imageUrl = await _dbService.uploadImage(selectedImage!);
+                            imageUrl =
+                                await _dbService.uploadImage(selectedImage!);
                           } catch (e) {
                             print("Error uploading image: $e");
                           }
                         }
 
-                        List<String> servicesList = servicesController.text.isNotEmpty
-                            ? servicesController.text.split(',').map((e) => e.trim()).toList()
-                            : ['General Checkup'];
+                        List<String> servicesList =
+                            servicesController.text.isNotEmpty
+                                ? servicesController.text
+                                    .split(',')
+                                    .map((e) => e.trim())
+                                    .toList()
+                                : ['General Checkup'];
 
                         final newClinic = Clinic(
                           id: '',
@@ -317,10 +395,11 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                         );
 
                         await _dbService.addClinic(newClinic);
-                        
+
                         if (context.mounted) Navigator.pop(context);
                       },
-                      child: const Text("Add", style: TextStyle(color: Colors.white)),
+                      child: const Text("Add",
+                          style: TextStyle(color: Colors.white)),
                     ),
             ],
           );

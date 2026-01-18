@@ -5,7 +5,7 @@ import '../../services/database_service.dart';
 import '../add_post/add_post_screen.dart';
 import 'widgets/lost_found_card.dart';
 import 'lost_found_details_screen.dart';
-import 'widgets/lost_found_card_skeleton.dart'; 
+import 'widgets/lost_found_card_skeleton.dart';
 
 class LostFoundScreen extends StatefulWidget {
   const LostFoundScreen({super.key});
@@ -15,13 +15,11 @@ class LostFoundScreen extends StatefulWidget {
 }
 
 class _LostFoundScreenState extends State<LostFoundScreen> {
-  // متغيرات الحالة
-  int _selectedFilterIndex = 0; // 0=All, 1=Lost, 2=Found
+  int _selectedFilterIndex = 0;
   String? _selectedPetType;
   String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
 
-  // تيار البيانات من الفايربيس
   late Stream<List<Pet>> _petsStream;
 
   @override
@@ -48,13 +46,8 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. Header Section
             _buildHeader(),
-
-            // 2. Filters & Search
             _buildFilters(),
-
-            // 3. List Data
             _buildListStream(),
           ],
         ),
@@ -62,17 +55,13 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
     );
   }
 
-  // --- Header Widget ---
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppColors.bannerGradientStart,
-            AppColors.bannerGradientEnd
-          ],
+          colors: [AppColors.bannerGradientStart, AppColors.bannerGradientEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -104,7 +93,7 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
                   "Report Lost Pet",
                   AppColors.lostRed,
                   Icons.warning_amber_rounded,
-                  'Lost', // 1. تمرير نوع Lost
+                  'Lost',
                 ),
               ),
               const SizedBox(width: 12),
@@ -114,7 +103,7 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
                   "Report Found Pet",
                   AppColors.foundGreen,
                   Icons.check_circle_outline,
-                  'Found', // 2. تمرير نوع Found
+                  'Found',
                 ),
               ),
             ],
@@ -124,13 +113,11 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
     );
   }
 
-  // --- Filters Widget ---
   Widget _buildFilters() {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // Tabs
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
@@ -142,13 +129,12 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
               children: [
                 _buildTabItem("All Alerts", 0),
                 _buildTabItem("Lost Pets", 1, activeColor: AppColors.lostRed),
-                _buildTabItem("Found Pets", 2, activeColor: AppColors.foundGreen),
+                _buildTabItem("Found Pets", 2,
+                    activeColor: AppColors.foundGreen),
               ],
             ),
           ),
           const SizedBox(height: 16),
-
-          // Dropdown Type
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
@@ -169,7 +155,9 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
                   "Bird",
                   "Rabbit",
                   "Other"
-                ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                ]
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
                 onChanged: (val) {
                   setState(() => _selectedPetType = val);
                 },
@@ -177,8 +165,6 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Search Field
           TextField(
             controller: _searchController,
             onChanged: (val) {
@@ -192,7 +178,8 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
               filled: true,
               fillColor: Colors.white,
               prefixIcon: const Icon(Icons.search, color: Colors.grey),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey[200]!),
@@ -212,35 +199,32 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
     );
   }
 
-  // --- List Stream Widget ---
   Widget _buildListStream() {
     return StreamBuilder<List<Pet>>(
       stream: _petsStream,
       builder: (context, snapshot) {
-        
-        // 1. حالة التحميل
         if (snapshot.connectionState == ConnectionState.waiting) {
           return ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: 3, 
+            itemCount: 3,
             itemBuilder: (context, index) => const LostFoundCardSkeleton(),
           );
         }
 
-        // 2. معالجة البيانات
         List<Pet> displayList = [];
         if (snapshot.hasData) {
           final allPets = snapshot.data!;
           displayList = allPets.where((pet) {
-            
             if (!['Lost', 'Found', 'lost', 'found'].contains(pet.postType)) {
               return false;
             }
 
-            if (_selectedFilterIndex == 1 && pet.postType.toLowerCase() != 'lost') return false;
-            if (_selectedFilterIndex == 2 && pet.postType.toLowerCase() != 'found') return false;
+            if (_selectedFilterIndex == 1 &&
+                pet.postType.toLowerCase() != 'lost') return false;
+            if (_selectedFilterIndex == 2 &&
+                pet.postType.toLowerCase() != 'found') return false;
 
             if (_selectedPetType != null &&
                 _selectedPetType != "All Pet Types" &&
@@ -258,7 +242,6 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
           }).toList();
         }
 
-        // 3. حالة عدم وجود بيانات
         if (displayList.isEmpty) {
           return Padding(
             padding: const EdgeInsets.only(top: 40, bottom: 40),
@@ -283,7 +266,8 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
                     child: Image.network(
                       'https://i.pinimg.com/1200x/85/d6/fe/85d6fe2e402686d661019df7e4c09a30.jpg',
                       fit: BoxFit.cover,
-                      errorBuilder: (ctx, _, __) => const Icon(Icons.search_off, size: 60, color: Colors.grey),
+                      errorBuilder: (ctx, _, __) => const Icon(Icons.search_off,
+                          size: 60, color: Colors.grey),
                     ),
                   ),
                 ),
@@ -307,7 +291,6 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
           );
         }
 
-        // 4. عرض القائمة الحقيقية
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: ListView.builder(
@@ -321,6 +304,7 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
 
               return LostFoundCard(
                 name: pet.name,
+                ownerId: pet.ownerId,
                 date: formattedDate,
                 location: pet.location,
                 imageUrl: pet.imageUrl,
@@ -341,14 +325,13 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
     );
   }
 
-  // 3. تعديل الدالة لاستقبال الـ type
-  Widget _buildActionButton(BuildContext context, String label, Color color, IconData icon, String postType) {
+  Widget _buildActionButton(BuildContext context, String label, Color color,
+      IconData icon, String postType) {
     return ElevatedButton(
       onPressed: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            // 4. تمرير الـ type للصفحة
             builder: (context) => AddPostScreen(initialPostType: postType),
           ),
         );
@@ -365,13 +348,16 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
         children: [
           Icon(icon, size: 18),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          Text(label,
+              style:
+                  const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 
-  Widget _buildTabItem(String label, int index, {Color activeColor = AppColors.textDark}) {
+  Widget _buildTabItem(String label, int index,
+      {Color activeColor = AppColors.textDark}) {
     final bool isSelected = _selectedFilterIndex == index;
     return Expanded(
       child: GestureDetector(
@@ -382,7 +368,10 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             boxShadow: isSelected
-                ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)]
+                ? [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.05), blurRadius: 4)
+                  ]
                 : [],
           ),
           child: Text(

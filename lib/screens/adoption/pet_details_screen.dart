@@ -14,9 +14,10 @@ class PetDetailsScreen extends StatefulWidget {
   State<PetDetailsScreen> createState() => _PetDetailsScreenState();
 }
 
-class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBindingObserver {
+class _PetDetailsScreenState extends State<PetDetailsScreen>
+    with WidgetsBindingObserver {
   bool _isCallClicked = false;
-  bool _isFavorite = false; 
+  bool _isFavorite = false;
 
   @override
   void initState() {
@@ -82,9 +83,16 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
-    setState(() { _isCallClicked = true; });
-    try { await launchUrl(launchUri); } 
-    catch (e) { setState(() { _isCallClicked = false; }); }
+    setState(() {
+      _isCallClicked = true;
+    });
+    try {
+      await launchUrl(launchUri);
+    } catch (e) {
+      setState(() {
+        _isCallClicked = false;
+      });
+    }
   }
 
   Future<void> _checkAndShowRatingDialog() async {
@@ -92,30 +100,29 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
     final String targetUserId = widget.pet.ownerId;
 
     if (currentUser == null) return;
-    
-    // منع المالك من تقييم نفسه
+
     if (currentUser.uid == targetUserId) return;
 
-    // فحص التكرار
-    bool alreadyReviewed = await DatabaseService().hasUserReviewed(currentUser.uid, targetUserId, 'adoption');
-    
+    bool alreadyReviewed = await DatabaseService()
+        .hasUserReviewed(currentUser.uid, targetUserId, 'adoption');
+
     if (!mounted) return;
 
     if (alreadyReviewed) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("You have already reviewed this owner."), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("You have already reviewed this owner."),
+          backgroundColor: Colors.orange));
       return;
     }
 
     _showRatingDialog(currentUser.uid, targetUserId);
   }
 
-  // --- تم تعديل هذه الدالة لتشمل سؤال التأكيد وتسجيل الحجز ---
   void _showRatingDialog(String currentUserId, String targetUserId) {
     double rating = 0;
     TextEditingController commentController = TextEditingController();
-    
-    // متغير للتحكم في مرحلة الحوار
-    bool isTransactionConfirmed = false; 
+
+    bool isTransactionConfirmed = false;
 
     showDialog(
       context: context,
@@ -124,39 +131,45 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               title: Row(
                 children: [
-                   Icon(
-                     isTransactionConfirmed ? Icons.star : Icons.check_circle_outline, 
-                     color: isTransactionConfirmed ? Colors.amber : AppColors.primary
-                   ),
-                   const SizedBox(width: 8),
-                   Text(isTransactionConfirmed ? "Rate Owner" : "Adoption Status"),
+                  Icon(
+                      isTransactionConfirmed
+                          ? Icons.star
+                          : Icons.check_circle_outline,
+                      color: isTransactionConfirmed
+                          ? Colors.amber
+                          : AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(isTransactionConfirmed
+                      ? "Rate Owner"
+                      : "Adoption Status"),
                 ],
               ),
               content: Column(
-                mainAxisSize: MainAxisSize.min, 
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // --- المرحلة الأولى: هل تمت عملية التبني؟ ---
                   if (!isTransactionConfirmed) ...[
                     const Text(
                       "Did you adopt this pet successfully?",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // زر لا
                         TextButton(
                           onPressed: () {
-                             Navigator.pop(context); 
+                            Navigator.pop(context);
                           },
-                          child: const Text("No", style: TextStyle(color: Colors.grey, fontSize: 16)),
+                          child: const Text("No",
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 16)),
                         ),
-                        // زر نعم
                         ElevatedButton(
                           onPressed: () {
                             setStateDialog(() {
@@ -171,73 +184,93 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
                         ),
                       ],
                     ),
-                  ] 
-                  // --- المرحلة الثانية: التقييم ---
-                  else ...[
-                    const Text("How was your experience dealing with this owner?"),
+                  ] else ...[
+                    const Text(
+                        "How was your experience dealing with this owner?"),
                     const SizedBox(height: 20),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center, 
-                      children: List.generate(5, (index) { 
-                        return IconButton(
-                          icon: Icon(index < rating ? Icons.star : Icons.star_border, color: Colors.amber, size: 32), 
-                          onPressed: () { setStateDialog(() { rating = index + 1.0; }); }
-                        ); 
-                      })
-                    ),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(5, (index) {
+                          return IconButton(
+                              icon: Icon(
+                                  index < rating
+                                      ? Icons.star
+                                      : Icons.star_border,
+                                  color: Colors.amber,
+                                  size: 32),
+                              onPressed: () {
+                                setStateDialog(() {
+                                  rating = index + 1.0;
+                                });
+                              });
+                        })),
                     const SizedBox(height: 10),
                     TextField(
-                      controller: commentController, 
-                      decoration: InputDecoration(
-                        hintText: "Write a comment (optional)", 
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), 
-                        filled: true, 
-                        fillColor: Colors.grey[50]
-                      ), 
-                      maxLines: 2
-                    ),
+                        controller: commentController,
+                        decoration: InputDecoration(
+                            hintText: "Write a comment (optional)",
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            filled: true,
+                            fillColor: Colors.grey[50]),
+                        maxLines: 2),
                   ],
                 ],
               ),
-              actions: isTransactionConfirmed ? [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text("Skip", style: TextStyle(color: Colors.grey))),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (rating > 0) {
-                      // 1. إضافة التقييم
-                      await DatabaseService().addReview(
-                        targetUserId: targetUserId,
-                        reviewerId: currentUserId,
-                        rating: rating,
-                        comment: commentController.text,
-                        reviewType: 'adoption', 
-                      );
+              actions: isTransactionConfirmed
+                  ? [
+                      TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("Skip",
+                              style: TextStyle(color: Colors.grey))),
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (rating > 0) {
+                            await DatabaseService().addReview(
+                              targetUserId: targetUserId,
+                              reviewerId: currentUserId,
+                              rating: rating,
+                              comment: commentController.text,
+                              reviewType: 'adoption',
+                            );
 
-                      // 2. تسجيل العملية في سجل الحجوزات/العمليات [جديد]
-                      await DatabaseService().addBooking(
-                        userId: currentUserId,
-                        providerId: targetUserId,
-                        serviceType: 'Adoption', // نوع الخدمة
-                        itemName: "${widget.pet.type} - ${widget.pet.breed}", // اسم العنصر
-                        details: {
-                           'petAge': widget.pet.age,
-                           'location': widget.pet.location,
-                           'ratingGiven': rating,
+                            await DatabaseService().addBooking(
+                              userId: currentUserId,
+                              providerId: targetUserId,
+                              serviceType: 'Adoption', // نوع الخدمة
+                              itemName:
+                                  "${widget.pet.type} - ${widget.pet.breed}", // اسم العنصر
+                              details: {
+                                'petAge': widget.pet.age,
+                                'location': widget.pet.location,
+                                'ratingGiven': rating,
+                              },
+                            );
+
+                            if (mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          "Adoption recorded & Feedback sent!"),
+                                      backgroundColor: Colors.green));
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text("Please select a star rating")));
+                          }
                         },
-                      );
-
-                      if (mounted) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Adoption recorded & Feedback sent!"), backgroundColor: Colors.green));
-                      }
-                    } else {
-                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select a star rating")));
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                  child: const Text("Submit"),
-                ),
-              ] : null,
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10))),
+                        child: const Text("Submit"),
+                      ),
+                    ]
+                  : null,
             );
           },
         );
@@ -260,14 +293,16 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textDark, size: 20),
+            icon: const Icon(Icons.arrow_back,
+                color: AppColors.textDark, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
         ),
         actions: [
           Container(
             margin: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+                color: Colors.white, shape: BoxShape.circle),
             child: IconButton(
               icon: Icon(
                 _isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -361,9 +396,12 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
                               fontWeight: FontWeight.w500)),
                     ],
                   ),
-                  
                   const SizedBox(height: 24),
-                  const Text("Contact Info", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  const Text("Contact Info",
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark)),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -371,24 +409,37 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.grey[200]!),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4))
+                      ],
                     ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-                          child: const Icon(Icons.phone, color: AppColors.primary, size: 24),
+                          decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.1),
+                              shape: BoxShape.circle),
+                          child: const Icon(Icons.phone,
+                              color: AppColors.primary, size: 24),
                         ),
                         const SizedBox(width: 16),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Phone Number", style: TextStyle(fontSize: 13, color: Colors.grey)),
+                            const Text("Phone Number",
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.grey)),
                             const SizedBox(height: 4),
                             Text(
                               pet.contactPhone,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textDark),
                             ),
                           ],
                         ),
@@ -400,10 +451,13 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> with WidgetsBinding
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
                           ),
-                          child: const Text("Call", style: TextStyle(fontWeight: FontWeight.bold)),
+                          child: const Text("Call",
+                              style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),

@@ -8,7 +8,6 @@ class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // --- 1. User Profile Functions ---
   Future<void> updateUserProfile({
     required String uid,
     required String name,
@@ -27,7 +26,24 @@ class DatabaseService {
     }
   }
 
-  // --- 2. Image Upload ---
+  Future<DocumentSnapshot> getUser(String uid) async {
+    return await _db.collection('users').doc(uid).get();
+  }
+
+  Future<int> getUserPostCount(String uid) async {
+    try {
+      AggregateQuerySnapshot query = await _db
+          .collection('pets')
+          .where('ownerId', isEqualTo: uid)
+          .count()
+          .get();
+      return query.count ?? 0;
+    } catch (e) {
+      print("Error counting posts: $e");
+      return 0;
+    }
+  }
+
   Future<String> uploadImage(File imageFile) async {
     try {
       String fileName = DateTime.now().millisecondsSinceEpoch.toString();
@@ -41,7 +57,6 @@ class DatabaseService {
     }
   }
 
-  // --- 3. Pet Functions (CRUD) ---
   Stream<List<Pet>> getPets() {
     return _db
         .collection('pets')
@@ -224,9 +239,6 @@ class DatabaseService {
     });
   }
 
-  // --- 5. Reviews System (تم التعديل) ---
-
-  // دالة جديدة لجلب تقييم عنصر محدد (مثل فندق)
   Future<Map<String, dynamic>> getItemRatingStats(String itemId) async {
     try {
       QuerySnapshot snapshot = await _db
@@ -258,13 +270,13 @@ class DatabaseService {
     required double rating,
     required String comment,
     required String reviewType,
-    String? petId, // إضافة اختيارية
+    String? petId,
   }) async {
     try {
       await _db.collection('reviews').add({
         'targetUserId': targetUserId,
         'reviewerId': reviewerId,
-        'petId': petId, // تخزين معرف العنصر
+        'petId': petId,
         'rating': rating,
         'comment': comment,
         'reviewType': reviewType,
@@ -285,7 +297,6 @@ class DatabaseService {
           .where('reviewerId', isEqualTo: reviewerId)
           .where('reviewType', isEqualTo: reviewType);
 
-      // إذا تم تمرير petId، نتحقق منه بدلاً من المستخدم المستهدف فقط
       if (petId != null) {
         query = query.where('petId', isEqualTo: petId);
       } else {
@@ -327,8 +338,6 @@ class DatabaseService {
       return {'average': 0.0, 'count': 0};
     }
   }
-
-  // --- 6. Favorites System ---
 
   Future<void> toggleFavorite(String userId, String petId) async {
     final docRef =
@@ -379,8 +388,6 @@ class DatabaseService {
       return favoritePets;
     });
   }
-
-  // --- 7. Bookings & Transactions System ---
 
   Future<void> addBooking({
     required String userId,
