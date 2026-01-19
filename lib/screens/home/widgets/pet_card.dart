@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../services/database_service.dart';
 
 class PetCard extends StatelessWidget {
-  final String ownerId; 
+  final String ownerId;
   final String name;
   final String breed;
   final String gender;
@@ -15,7 +15,7 @@ class PetCard extends StatelessWidget {
 
   const PetCard({
     super.key,
-    required this.ownerId, 
+    required this.ownerId,
     required this.name,
     required this.breed,
     required this.gender,
@@ -24,6 +24,12 @@ class PetCard extends StatelessWidget {
     required this.imageUrl,
     required this.onTap,
   });
+
+  bool get _isDefaultIcon {
+    return imageUrl.contains('flaticon') ||
+        imageUrl.contains('discordapp') ||
+        imageUrl.contains('placeholder');
+  }
 
   void _showOwnerProfile(BuildContext context) {
     showDialog(
@@ -157,6 +163,8 @@ class PetCard extends StatelessWidget {
     final genderBgColor = isMale ? Colors.blue[50] : Colors.pink[50];
     final genderTextColor = isMale ? Colors.blue : Colors.pink;
 
+    final bool isIcon = _isDefaultIcon;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -173,7 +181,6 @@ class PetCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
@@ -207,24 +214,36 @@ class PetCard extends StatelessWidget {
               ],
             ),
           ),
-
-
           ClipRRect(
             borderRadius: BorderRadius.zero,
             child: AspectRatio(
               aspectRatio: 1.5,
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (ctx, _, __) => Container(
-                  color: Colors.grey[100],
-                  child: const Icon(Icons.pets, size: 50, color: Colors.grey),
-                ),
+              child: Container(
+                color: isIcon
+                    ? AppColors.primary.withOpacity(0.05)
+                    : Colors.grey[100],
+                child: isIcon
+                    ? Padding(
+                        padding: const EdgeInsets.all(30.0),
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.contain,
+                          errorBuilder: (ctx, _, __) => const Icon(Icons.pets,
+                              size: 50, color: Colors.grey),
+                        ),
+                      )
+                    : Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, _, __) => Container(
+                          color: Colors.grey[100],
+                          child: const Icon(Icons.pets,
+                              size: 50, color: Colors.grey),
+                        ),
+                      ),
               ),
             ),
           ),
-
-
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(

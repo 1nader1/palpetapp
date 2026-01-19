@@ -30,6 +30,12 @@ class AdoptionPetCard extends StatelessWidget {
     this.header,
   });
 
+  bool get _isDefaultIcon {
+    return imageUrl.contains('flaticon') || 
+           imageUrl.contains('discordapp') || 
+           imageUrl.contains('placeholder');
+  }
+
   void _showOwnerProfile(BuildContext context) {
     showDialog(
       context: context,
@@ -158,6 +164,9 @@ class AdoptionPetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+  
+    final bool isIcon = _isDefaultIcon;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
@@ -209,21 +218,39 @@ class AdoptionPetCard extends StatelessWidget {
                 ],
               ),
             ),
+          
+         
           ClipRRect(
             borderRadius:
-                header != null ? BorderRadius.zero : BorderRadius.zero,
-            child: Image.network(
-              imageUrl,
+                header != null ? BorderRadius.zero : BorderRadius.zero, 
+            child: Container(
               height: 200,
               width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (ctx, _, __) => Container(
-                height: 200,
-                color: Colors.grey[200],
-                child: const Icon(Icons.pets, size: 50, color: Colors.grey),
-              ),
+              color: isIcon ? AppColors.primary.withOpacity(0.05) : Colors.grey[100], 
+              child: isIcon 
+              ? Padding(
+                  padding: const EdgeInsets.all(20.0), 
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain, 
+                    errorBuilder: (ctx, _, __) => const Icon(Icons.pets, size: 50, color: Colors.grey),
+                  ),
+                )
+              : Image.network(
+                  imageUrl,
+                  height: 200,
+                  width: double.infinity,
+                  fit: BoxFit.cover, 
+                  errorBuilder: (ctx, _, __) => Container(
+                    height: 200,
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.pets, size: 50, color: Colors.grey),
+                  ),
+                ),
             ),
           ),
+          
+
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(

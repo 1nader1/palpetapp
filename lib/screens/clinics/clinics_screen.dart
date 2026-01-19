@@ -22,6 +22,9 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   final DatabaseService _dbService = DatabaseService();
   String _searchKeyword = "";
 
+  final String _defaultClinicImage =
+      'https://cdn.discordapp.com/attachments/1362894534291361873/1462913715597869098/veterinary.png?ex=696fec11&is=696e9a91&hm=a04762807434d0ed43a86d5ea677a4a6d44930118d90cffbd2102eea75c9bc77';
+
   bool _isClinicOpen(String workingHours) {
     try {
       if (workingHours.isEmpty) return false;
@@ -50,7 +53,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
 
       final startStr = normalizeTime(parts[0]);
       final endStr = normalizeTime(parts[1]);
-      final format = DateFormat('h:mm a'); 
+      final format = DateFormat('h:mm a');
       final now = DateTime.now();
 
       DateTime startTimeRef;
@@ -92,7 +95,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -120,67 +123,52 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
           const SizedBox(width: 12),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (val) {
-                setState(() {
-                  _searchKeyword = val;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: "Search for a clinic...",
-                hintStyle: const TextStyle(color: Colors.grey),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide:
-                      const BorderSide(color: AppColors.primary, width: 1.5),
-                ),
-              ),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                _buildIntroHeader(),
+                _buildSearchBar(),
+              ],
             ),
           ),
-          Expanded(
-            child: StreamBuilder<List<Clinic>>(
-              stream: _dbService.getClinics(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                    itemCount: 5,
-                    itemBuilder: (context, index) => const ClinicCardSkeleton(),
-                  );
-                }
+          StreamBuilder<List<Clinic>>(
+            stream: _dbService.getClinics(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => const Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      child: ClinicCardSkeleton(),
+                    ),
+                    childCount: 3,
+                  ),
+                );
+              }
 
-                if (snapshot.hasError) {
-                  return const Center(child: Text("Error loading clinics"));
-                }
+              if (snapshot.hasError) {
+                return const SliverToBoxAdapter(
+                  child: Center(child: Text("Error loading clinics")),
+                );
+              }
 
-                final clinics = snapshot.data ?? [];
-                final filteredClinics = clinics
-                    .where((clinic) => clinic.name
-                        .toLowerCase()
-                        .contains(_searchKeyword.toLowerCase()))
-                    .toList();
+              final clinics = snapshot.data ?? [];
 
-                if (filteredClinics.isEmpty) {
-                  return Center(
+              final filteredClinics = clinics.where((clinic) {
+                final searchLower = _searchKeyword.toLowerCase();
+                final nameLower = clinic.name.toLowerCase();
+                final addressLower = clinic.address.toLowerCase();
+
+                return nameLower.contains(searchLower) ||
+                    addressLower.contains(searchLower);
+              }).toList();
+
+              if (filteredClinics.isEmpty) {
+                return SliverFillRemaining(
+                  child: Center(
                     child: SingleChildScrollView(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -199,10 +187,11 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                 ),
                               ],
                             ),
-                            child: ClipOval(
+                            child: Padding(
+                              padding: const EdgeInsets.all(40.0),
                               child: Image.network(
-                                'https://img.freepik.com/free-vector/cute-dog-cat-friendship-cartoon-vector-icon-illustration-animal-nature-icon-concept-isolated_138676-5626.jpg',
-                                fit: BoxFit.cover,
+                                _defaultClinicImage,
+                                fit: BoxFit.contain,
                                 errorBuilder: (ctx, _, __) => const Icon(
                                     Icons.local_hospital,
                                     size: 60,
@@ -231,41 +220,138 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                         ],
                       ),
                     ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  itemCount: filteredClinics.length,
-                  itemBuilder: (context, index) {
-                    final clinic = filteredClinics[index];
-                    final bool isCurrentlyOpen =
-                        _isClinicOpen(clinic.workingHours);
-
-                    return ClinicCard(
-                      clinicId: clinic.id,
-                      ownerId: clinic.ownerId,
-                      name: clinic.name,
-                      address: clinic.address,
-                      imageUrl: clinic.imageUrl,
-                      isOpen: isCurrentlyOpen,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ClinicDetailsScreen(clinic: clinic),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                  ),
                 );
-              },
+              }
+
+              return SliverPadding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final clinic = filteredClinics[index];
+                      final bool isCurrentlyOpen =
+                          _isClinicOpen(clinic.workingHours);
+
+                      return ClinicCard(
+                        clinicId: clinic.id,
+                        ownerId: clinic.ownerId,
+                        name: clinic.name,
+                        address: clinic.address,
+                        imageUrl: clinic.imageUrl,
+                        isOpen: isCurrentlyOpen,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ClinicDetailsScreen(clinic: clinic),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    childCount: filteredClinics.length,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIntroHeader() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+      padding: const EdgeInsets.all(24),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Expert Vet Care",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  "Find trusted clinics for your\nbest friend's health.",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.medical_services_outlined,
+              color: Colors.white,
+              size: 32,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (val) {
+          setState(() {
+            _searchKeyword = val;
+          });
+        },
+        decoration: InputDecoration(
+          hintText: "Search for a clinic or location...",
+          hintStyle: const TextStyle(color: Colors.grey),
+          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          filled: true,
+          fillColor: Colors.grey[50],
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.grey[200]!),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          ),
+        ),
       ),
     );
   }
@@ -284,7 +370,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
     final phoneController = TextEditingController();
     final descController = TextEditingController();
     final serviceInputController = TextEditingController();
-    List<String> servicesList = []; 
+    List<String> servicesList = [];
 
     final openHourController = TextEditingController(text: "9");
     final openMinuteController = TextEditingController(text: "00");
@@ -298,16 +384,15 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
     bool isUploading = false;
     bool showErrors = false;
 
-    // --- التغيير هنا: استخدام DraggableScrollableSheet ---
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85, // الارتفاع المبدئي
-        maxChildSize: 0.95, // أقصى ارتفاع
-        minChildSize: 0.5, // أدنى ارتفاع قبل الإغلاق
-        expand: false, // مهم جداً لجعل الزوايا تظهر والخلفية شفافة
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        expand: false,
         builder: (context, scrollController) {
           return StatefulBuilder(
             builder: (context, setState) {
@@ -339,7 +424,6 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                 ),
                 child: Column(
                   children: [
-                    // الهيدر ثابت (لا يتحرك مع السكرول ولكن يمكن سحبه لإغلاق النافذة)
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
@@ -360,13 +444,11 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                         ),
                       ),
                     ),
-                    
                     Expanded(
                       child: SingleChildScrollView(
-                        // ربط السكرول كونترولر الخاص بالنافذة هنا
-                        controller: scrollController, 
-                        // الحشوة للكيبورد
-                        padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomInset),
+                        controller: scrollController,
+                        padding:
+                            EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomInset),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -386,87 +468,85 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                   height: 160,
                                   width: double.infinity,
                                   decoration: BoxDecoration(
-                                    color: Colors.grey[100],
+                                    color: AppColors.primary.withOpacity(0.05),
                                     borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Colors.grey[300]!),
+                                    border:
+                                        Border.all(color: Colors.grey[300]!),
                                     image: selectedImage != null
                                         ? DecorationImage(
                                             image: FileImage(selectedImage!),
                                             fit: BoxFit.cover)
                                         : null,
                                   ),
-                                  child: selectedImage == null
-                                      ? Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.all(12),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                shape: BoxShape.circle,
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                      color: AppColors.primary
-                                                          .withOpacity(0.1),
-                                                      blurRadius: 8)
-                                                ],
-                                              ),
-                                              child: const Icon(Icons.add_a_photo,
-                                                  color: AppColors.primary,
-                                                  size: 32),
-                                            ),
-                                            const SizedBox(height: 12),
-                                            const Text(
-                                              "Upload Clinic Photo",
-                                              style: TextStyle(
-                                                  color: Colors.grey,
-                                                  fontWeight: FontWeight.w600),
-                                            ),
-                                          ],
-                                        )
-                                      : Container(
-                                          alignment: Alignment.topRight,
-                                          padding: const EdgeInsets.all(8),
-                                          child: CircleAvatar(
-                                            backgroundColor: Colors.white,
-                                            radius: 16,
-                                            child: Icon(Icons.edit, size: 18, color: AppColors.primary),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      if (selectedImage == null)
+                                        Image.network(
+                                          _defaultClinicImage,
+                                          height: 100,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      Positioned(
+                                        bottom: 10,
+                                        right: 10,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Colors.white.withOpacity(0.9),
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.1),
+                                                  blurRadius: 4)
+                                            ],
+                                          ),
+                                          child: Icon(
+                                            selectedImage == null
+                                                ? Icons.add_a_photo
+                                                : Icons.edit,
+                                            color: AppColors.primary,
+                                            size: 20,
                                           ),
                                         ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 24),
-                            
                             _buildInputField(
-                                label: "Clinic Name",
-                                controller: nameController,
-                                icon: Icons.local_hospital,
-                                isRequired: true,
-                                showErrors: showErrors,
+                              label: "Clinic Name",
+                              controller: nameController,
+                              icon: Icons.local_hospital,
+                              isRequired: true,
+                              showErrors: showErrors,
                             ),
                             const SizedBox(height: 16),
                             _buildInputField(
-                                label: "Address",
-                                controller: addressController,
-                                icon: Icons.location_on,
-                                isRequired: true,
-                                showErrors: showErrors,
+                              label: "Address",
+                              controller: addressController,
+                              icon: Icons.location_on,
+                              isRequired: true,
+                              showErrors: showErrors,
                             ),
                             const SizedBox(height: 16),
                             _buildInputField(
-                                label: "Phone Number",
-                                controller: phoneController,
-                                icon: Icons.phone,
-                                inputType: TextInputType.phone,
-                                isRequired: true,
-                                showErrors: showErrors,
+                              label: "Phone Number",
+                              controller: phoneController,
+                              icon: Icons.phone,
+                              inputType: TextInputType.phone,
+                              isRequired: true,
+                              showErrors: showErrors,
                             ),
-                            
                             const SizedBox(height: 24),
-                            const Text("Working Hours", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            const Text("Working Hours",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16)),
                             const SizedBox(height: 12),
-                            
                             Row(
                               children: [
                                 Expanded(
@@ -475,7 +555,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                     hourController: openHourController,
                                     minuteController: openMinuteController,
                                     period: openPeriod,
-                                    onPeriodChanged: (val) => setState(() => openPeriod = val!),
+                                    onPeriodChanged: (val) =>
+                                        setState(() => openPeriod = val!),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -485,14 +566,16 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                     hourController: closeHourController,
                                     minuteController: closeMinuteController,
                                     period: closePeriod,
-                                    onPeriodChanged: (val) => setState(() => closePeriod = val!),
+                                    onPeriodChanged: (val) =>
+                                        setState(() => closePeriod = val!),
                                   ),
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 24),
-                            const Text("Services", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            const Text("Services",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16)),
                             const SizedBox(height: 8),
                             Row(
                               children: [
@@ -504,9 +587,12 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                       filled: true,
                                       fillColor: const Color(0xFFF9FAFB),
                                       border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(15),
+                                          borderRadius:
+                                              BorderRadius.circular(15),
                                           borderSide: BorderSide.none),
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 12),
                                     ),
                                   ),
                                 ),
@@ -519,7 +605,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                       color: AppColors.primary,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: const Icon(Icons.add, color: Colors.white),
+                                    child: const Icon(Icons.add,
+                                        color: Colors.white),
                                   ),
                                 ),
                               ],
@@ -532,37 +619,35 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                 children: servicesList.map((service) {
                                   return Chip(
                                     label: Text(service),
-                                    backgroundColor: AppColors.primary.withOpacity(0.1),
-                                    deleteIcon: const Icon(Icons.close, size: 18),
+                                    backgroundColor:
+                                        AppColors.primary.withOpacity(0.1),
+                                    deleteIcon:
+                                        const Icon(Icons.close, size: 18),
                                     onDeleted: () => removeService(service),
                                   );
                                 }).toList(),
                               ),
-
                             const SizedBox(height: 24),
-                            
-                            // الوصف مع خاصية الرفع التلقائي
                             _buildInputField(
-                                label: "Description",
-                                controller: descController,
-                                icon: Icons.description,
-                                maxLines: 3,
-                                onTap: () {
-                                  // تأخير بسيط لضمان فتح الكيبورد
-                                  Future.delayed(const Duration(milliseconds: 300), () {
-                                    if (scrollController.hasClients) {
-                                      // التمرير لأسفل لضمان ظهور الحقل
-                                      scrollController.animateTo(
-                                        scrollController.position.maxScrollExtent,
-                                        duration: const Duration(milliseconds: 300),
-                                        curve: Curves.easeOut,
-                                      );
-                                    }
-                                  });
-                                },
+                              label: "Description",
+                              controller: descController,
+                              icon: Icons.description,
+                              maxLines: 3,
+                              onTap: () {
+                                Future.delayed(
+                                    const Duration(milliseconds: 300), () {
+                                  if (scrollController.hasClients) {
+                                    scrollController.animateTo(
+                                      scrollController.position.maxScrollExtent,
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      curve: Curves.easeOut,
+                                    );
+                                  }
+                                });
+                              },
                             ),
                             const SizedBox(height: 32),
-                            
                             SizedBox(
                               width: double.infinity,
                               height: 55,
@@ -582,34 +667,36 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                         if (nameController.text.isEmpty ||
                                             addressController.text.isEmpty ||
                                             phoneController.text.isEmpty) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                  content: Text(
-                                                      "Please fill in all required fields marked in red"),
-                                                  backgroundColor: Colors.red,
-                                              ));
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(const SnackBar(
+                                            content: Text(
+                                                "Please fill in all required fields marked in red"),
+                                            backgroundColor: Colors.red,
+                                          ));
                                           return;
                                         }
 
                                         setState(() => isUploading = true);
 
-                                        String imageUrl =
-                                            'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?q=80&w=2070';
-
+                                        String imageUrl;
                                         if (selectedImage != null) {
                                           try {
                                             imageUrl = await _dbService
                                                 .uploadImage(selectedImage!);
                                           } catch (e) {
                                             print("Error uploading image: $e");
+                                            imageUrl = _defaultClinicImage;
                                           }
+                                        } else {
+                                          imageUrl = _defaultClinicImage;
                                         }
 
-                                        final finalServices = servicesList.isNotEmpty 
-                                            ? servicesList 
-                                            : ['General Checkup'];
-                                        
-                                        final String finalWorkingHours = 
+                                        final finalServices =
+                                            servicesList.isNotEmpty
+                                                ? servicesList
+                                                : ['General Checkup'];
+
+                                        final String finalWorkingHours =
                                             "${openHourController.text}:${openMinuteController.text} $openPeriod - ${closeHourController.text}:${closeMinuteController.text} $closePeriod";
 
                                         final newClinic = Clinic(
@@ -628,10 +715,12 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
 
                                         await _dbService.addClinic(newClinic);
 
-                                        if (context.mounted) Navigator.pop(context);
+                                        if (context.mounted)
+                                          Navigator.pop(context);
                                       },
                                 child: isUploading
-                                    ? const CircularProgressIndicator(color: Colors.white)
+                                    ? const CircularProgressIndicator(
+                                        color: Colors.white)
                                     : const Text(
                                         "Save Clinic",
                                         style: TextStyle(
@@ -666,7 +755,9 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
@@ -690,7 +781,11 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                   ),
                 ),
               ),
-              const Text(":", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.grey)),
+              const Text(":",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.grey)),
               Expanded(
                 child: TextField(
                   controller: minuteController,
@@ -714,11 +809,14 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                     items: ["AM", "PM"].map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
-                        child: Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                        child: Text(value,
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold)),
                       );
                     }).toList(),
                     onChanged: onPeriodChanged,
-                    icon: const Icon(Icons.arrow_drop_down, color: AppColors.primary),
+                    icon: const Icon(Icons.arrow_drop_down,
+                        color: AppColors.primary),
                   ),
                 ),
               ),
@@ -762,8 +860,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(15),
-              borderSide: isError 
-                  ? const BorderSide(color: Colors.red) 
+              borderSide: isError
+                  ? const BorderSide(color: Colors.red)
                   : BorderSide(color: Colors.grey[200]!),
             ),
             focusedBorder: OutlineInputBorder(

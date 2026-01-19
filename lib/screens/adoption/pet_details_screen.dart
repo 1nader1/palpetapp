@@ -49,7 +49,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
     }
   }
 
-  // --- REVIEWS MODAL START ---
   void _showReviewsModal() {
     showModalBottomSheet(
       context: context,
@@ -212,7 +211,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
       ),
     );
   }
-  // --- REVIEWS MODAL END ---
 
   Future<void> _checkIfFavorite() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -499,7 +497,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- CLICKABLE RATING ADDED HERE ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -556,7 +553,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
                     ],
                   ),
                   const SizedBox(height: 20),
-                  // --- END RATING ---
 
                   const Text("About",
                       style: TextStyle(

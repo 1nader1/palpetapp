@@ -28,7 +28,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
   bool _isLoading = false;
   bool _isGettingLocation = false;
 
-  // للتحكم في ظهور أخطاء الحقول الإجبارية
   bool _showErrors = false;
 
   bool _isEditing = false;
@@ -47,6 +46,25 @@ class _AddPostScreenState extends State<AddPostScreen> {
     'Other'
   ];
   final List<String> _genderList = ['Male', 'Female'];
+
+  final Map<String, String> _defaultSpeciesImages = {
+    'Dog':
+        'https://cdn.discordapp.com/attachments/1362894534291361873/1462911483909374034/dog.png?ex=696fe9fd&is=696e987d&hm=8c20121e074b3926db70bedf3658334dca13f5d9226e397c0ba564e45ab90725&',
+    'Cat':
+        'https://cdn.discordapp.com/attachments/1362894534291361873/1462911483452198922/black.png?ex=696fe9fd&is=696e987d&hm=e5c3f02422eb4d1428c0c7eb706bc154c83092adc56b8e13efad3613dcd3b2db&',
+    'Bird':
+        'https://cdn.discordapp.com/attachments/1362894534291361873/1462913007343501332/hummingbird.png?ex=696feb68&is=696e99e8&hm=7854bdb6ba0996fd86d161cc0e3095061c164bd6fe8f5d69e78b1cbf40513ba7',
+    'Rabbit':
+        'https://cdn.discordapp.com/attachments/1362894534291361873/1462911482994888804/rabbit.png?ex=696fe9fd&is=696e987d&hm=fb1afbdeb338002b87ea4e2bf8f714ec1da5a3d7ffd39d8a0a9161518463fb63&',
+    'Hamster':
+        'https://cdn.discordapp.com/attachments/1362894534291361873/1462911482714001611/hamster.png?ex=696fe9fd&is=696e987d&hm=d22762007b52350e31aaa859b10df5822cd53d09f23d4ae3de802980749fcfa2&',
+    'Turtle':
+        'https://cdn.discordapp.com/attachments/1362894534291361873/1462911482382520524/turtle.png?ex=696fe9fc&is=696e987c&hm=4eea356b8bdca92ed6293e4622c3374e3b4a6cf9b78140b0dbf9326be3b0bae9&',
+    'Other': 'https://cdn-icons-png.flaticon.com/512/12/12638.png',
+  };
+
+  final String _defaultHotelImage =
+      'https://cdn.discordapp.com/attachments/1362894534291361873/1462913428564873297/dog-house.png?ex=696febcc&is=696e9a4c&hm=7fb46ed9eed7259d39a3ee1b5cbaaccc579bc1d1b3392374d4a4ac62a0e944a1';
 
   final List<String> _jordanAreas = [
     'Amman',
@@ -93,7 +111,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
   final _amenitiesInputController = TextEditingController();
   List<String> _amenities = [];
 
-  final String _defaultImageUrl =
+  final String _genericFallbackImage =
       'https://via.placeholder.com/300?text=No+Image';
 
   @override
@@ -304,37 +322,27 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
   Future<void> _submitPost() async {
     FocusScope.of(context).unfocus();
-
-    // تفعيل ظهور الأخطاء عند الضغط
     setState(() => _showErrors = true);
 
-    // 1. فحص الحقول الأساسية
     bool isNameValid = _nameController.text.trim().isNotEmpty;
     bool isLocationValid =
         _selectedArea != null || _locationController.text.trim().isNotEmpty;
     bool isPhoneValid = _phoneController.text.trim().isNotEmpty;
-
-    // متغيرات خاصة بالأصناف
     bool isSpeciesValid = _selectedSpecies != null;
     bool isHotelSpeciesValid = _selectedHotelSpecies.isNotEmpty;
-
-    // متغيرات التبني
     bool isBreedValid = _breedController.text.trim().isNotEmpty;
     bool isAgeValid = _ageController.text.trim().isNotEmpty;
     bool isGenderValid = _selectedGender != null;
     bool isDescriptionValid = _descriptionController.text.trim().isNotEmpty;
     bool isHealthInfoValid = _healthTags.isNotEmpty;
-
-    // متغيرات الفندق
     bool isPriceValid = _priceController.text.trim().isNotEmpty;
     bool isCapacityValid = _capacityController.text.trim().isNotEmpty;
     bool isAmenitiesValid = _amenities.isNotEmpty;
 
     bool isValid = false;
 
-    // 2. تطبيق الشروط حسب نوع البوست
     switch (_selectedType) {
-      case 'Adoption': // تبني: كل الحقول إجبارية + Health Info
+      case 'Adoption':
         isValid = isNameValid &&
             isSpeciesValid &&
             isBreedValid &&
@@ -345,17 +353,14 @@ class _AddPostScreenState extends State<AddPostScreen> {
             isDescriptionValid &&
             isHealthInfoValid;
         break;
-
-      case 'Lost': // مفقودات: الاسم، النوع، الهاتف، الموقع
+      case 'Lost':
         isValid =
             isNameValid && isSpeciesValid && isPhoneValid && isLocationValid;
         break;
-
-      case 'Found': // موجودات: النوع، الهاتف، الموقع (الاسم غير إجباري)
+      case 'Found':
         isValid = isSpeciesValid && isPhoneValid && isLocationValid;
         break;
-
-      case 'Hotel': // فندق: الجميع إجباري + Amenities + Description
+      case 'Hotel':
         isValid = isNameValid &&
             isHotelSpeciesValid &&
             isLocationValid &&
@@ -367,7 +372,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
         break;
     }
 
-    // 3. إذا لم تتحقق الشروط
     if (!isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -384,10 +388,20 @@ class _AddPostScreenState extends State<AddPostScreen> {
       final user = AuthService().currentUser;
       if (user == null) throw Exception("User not logged in");
 
-      String imageUrl = _existingImageUrl ?? _defaultImageUrl;
+      String imageUrl;
 
       if (_selectedImage != null) {
         imageUrl = await DatabaseService().uploadImage(_selectedImage!);
+      } else if (_existingImageUrl != null && _existingImageUrl!.isNotEmpty) {
+        imageUrl = _existingImageUrl!;
+      } else {
+        if (_selectedType == 'Hotel') {
+          imageUrl = _defaultHotelImage;
+        } else {
+          String species = _selectedSpecies ?? 'Other';
+          imageUrl =
+              _defaultSpeciesImages[species] ?? _defaultSpeciesImages['Other']!;
+        }
       }
 
       String? amenitiesString;
@@ -404,18 +418,16 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
       String finalLocation = _selectedArea ?? _locationController.text;
 
-      // معالجة الاسم في حالة "موجودات" إذا كان فارغاً
       String finalName = _nameController.text;
       if (_selectedType == 'Found' && finalName.isEmpty) {
         finalName = 'Found Pet';
       }
 
-      // تجهيز المكافأة: فقط إذا كان مفقوداً
       String? finalReward;
       if (_selectedType == 'Lost' && _rewardController.text.isNotEmpty) {
         finalReward = _rewardController.text;
       } else {
-        finalReward = null; // للموجودات وغيرها
+        finalReward = null;
       }
 
       Pet petData = Pet(
@@ -432,7 +444,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         location: finalLocation,
         contactPhone: _phoneController.text,
         healthTags: _healthTags,
-        reward: finalReward, // تم التعديل
+        reward: finalReward,
         price: _priceController.text.isNotEmpty ? _priceController.text : null,
         capacity: _capacityController.text.isNotEmpty
             ? _capacityController.text
@@ -529,8 +541,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-
-                  // الاسم (إجباري للكل ما عدا الموجودات)
                   _buildTextField(
                     label: "Name (Pet/Hotel)",
                     controller: _nameController,
@@ -548,8 +558,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
                                 value: _selectedSpecies,
                                 items: _speciesList,
                                 icon: Icons.category,
-                                onChanged: (val) =>
-                                    setState(() => _selectedSpecies = val),
+                                onChanged: (val) {
+                                  setState(() => _selectedSpecies = val);
+                                },
                                 isRequired: true,
                               ),
                       ),
@@ -559,7 +570,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
                         label: "Breed/Details",
                         controller: _breedController,
                         icon: Icons.style,
-                        // إجباري فقط للتبني
                         isRequired: _selectedType == 'Adoption',
                       )),
                     ],
@@ -576,8 +586,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
                   const SizedBox(height: 12),
                   _buildLocationSection(),
                   const SizedBox(height: 12),
-
-                  // الوصف (إجباري للتبني والفندق)
                   _buildTextField(
                     label: "Description / Caption",
                     controller: _descriptionController,
@@ -763,11 +771,24 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
   Widget _buildImagePicker() {
     ImageProvider? imageProvider;
+    bool isDefault = false;
+
     if (_selectedImage != null) {
       imageProvider = FileImage(_selectedImage!);
     } else if (_existingImageUrl != null &&
-        _existingImageUrl != _defaultImageUrl) {
+        _existingImageUrl != _genericFallbackImage) {
       imageProvider = NetworkImage(_existingImageUrl!);
+    } else {
+      isDefault = true;
+      String placeholderUrl;
+      if (_selectedType == 'Hotel') {
+        placeholderUrl = _defaultHotelImage;
+      } else {
+        String species = _selectedSpecies ?? 'Other';
+        placeholderUrl =
+            _defaultSpeciesImages[species] ?? _defaultSpeciesImages['Other']!;
+      }
+      imageProvider = NetworkImage(placeholderUrl);
     }
 
     return Container(
@@ -778,36 +799,46 @@ class _AddPostScreenState extends State<AddPostScreen> {
         borderRadius: BorderRadius.circular(20),
         border:
             Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.5),
-        image: imageProvider != null
-            ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
+        image: (imageProvider != null && !isDefault)
+            ? DecorationImage(
+                image: imageProvider,
+                fit: BoxFit.cover,
+              )
             : null,
       ),
-      child: imageProvider == null
-          ? Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                          color: AppColors.primary.withOpacity(0.1),
-                          blurRadius: 10)
-                    ],
-                  ),
-                  child:
-                      const Icon(Icons.add, size: 32, color: AppColors.primary),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (isDefault && imageProvider != null)
+            Image(
+              image: imageProvider,
+              height: 120,
+              width: 120,
+              fit: BoxFit.contain,
+            ),
+          if (_selectedImage == null &&
+              (_existingImageUrl == null ||
+                  _existingImageUrl == _genericFallbackImage ||
+                  isDefault))
+            Positioned(
+              bottom: 10,
+              right: 10,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.1), blurRadius: 4)
+                  ],
                 ),
-                const SizedBox(height: 12),
-                const Text("Add Photo (Optional)",
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textDark)),
-              ],
-            )
-          : null,
+                child: const Icon(Icons.add_a_photo,
+                    size: 20, color: AppColors.primary),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -891,7 +922,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
         );
       case 'Lost':
       case 'Found':
-        // تحديد العنوان حسب النوع
         bool isLost = _selectedType == 'Lost';
         return Column(
           key: const ValueKey('LostFound'),
@@ -907,7 +937,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
                 isRequired: true),
-            // إخفاء حقل المكافأة إذا كان البوست من نوع Found
             if (isLost) ...[
               const SizedBox(height: 12),
               _buildTextField(
@@ -960,7 +989,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
   }
 
   Widget _buildHealthTagsInput() {
-    // التحقق من الخطأ: مطلوب في التبني والقائمة فارغة وتم طلب الحفظ
     bool hasError =
         _showErrors && _selectedType == 'Adoption' && _healthTags.isEmpty;
 
@@ -986,14 +1014,12 @@ class _AddPostScreenState extends State<AddPostScreen> {
             ),
           ],
         ),
-        // عرض رسالة الخطأ
         if (hasError)
           const Padding(
             padding: EdgeInsets.only(top: 6, left: 12),
             child: Text("Required: Add at least one health tag",
                 style: TextStyle(color: Colors.red, fontSize: 12)),
           ),
-
         const SizedBox(height: 8),
         if (_healthTags.isNotEmpty)
           Wrap(
@@ -1010,7 +1036,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
   }
 
   Widget _buildAmenitiesInput() {
-    // التحقق من الخطأ: مطلوب في الفندق والقائمة فارغة وتم طلب الحفظ
     bool hasError =
         _showErrors && _selectedType == 'Hotel' && _amenities.isEmpty;
 
@@ -1036,14 +1061,12 @@ class _AddPostScreenState extends State<AddPostScreen> {
             ),
           ],
         ),
-        // عرض رسالة الخطأ
         if (hasError)
           const Padding(
             padding: EdgeInsets.only(top: 6, left: 12),
             child: Text("Required: Add at least one amenity",
                 style: TextStyle(color: Colors.red, fontSize: 12)),
           ),
-
         const SizedBox(height: 8),
         if (_amenities.isNotEmpty)
           Wrap(

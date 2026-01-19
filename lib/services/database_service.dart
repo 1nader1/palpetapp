@@ -8,20 +8,32 @@ class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-
-
   Future<void> updateUserProfile({
     required String uid,
     required String name,
     required String username,
     required String location,
+    File? imageFile,
   }) async {
     try {
-      await _db.collection('users').doc(uid).update({
+      Map<String, dynamic> dataToUpdate = {
         'name': name,
         'username': username.toLowerCase(),
         'location': location,
-      });
+      };
+
+      if (imageFile != null) {
+        String fileName = '${uid}_profile.jpg';
+        Reference ref = _storage.ref().child('profile_images/$fileName');
+
+        await ref.putFile(imageFile);
+
+        String photoUrl = await ref.getDownloadURL();
+
+        dataToUpdate['photoUrl'] = photoUrl;
+      }
+
+      await _db.collection('users').doc(uid).update(dataToUpdate);
     } catch (e) {
       print("Error updating profile: $e");
       throw Exception("Failed to update profile information.");
@@ -39,7 +51,6 @@ class DatabaseService {
   Future<DocumentSnapshot> getUser(String uid) async {
     return await _db.collection('users').doc(uid).get();
   }
-
 
   Future<String> getUserName(String uid) async {
     try {
@@ -68,8 +79,6 @@ class DatabaseService {
     }
   }
 
-
-
   Future<String> uploadImage(File imageFile) async {
     try {
       String fileName = DateTime.now().millisecondsSinceEpoch.toString();
@@ -82,8 +91,6 @@ class DatabaseService {
       throw Exception("Failed to upload image.");
     }
   }
-
-
 
   Stream<List<Pet>> getPets() {
     return _db
@@ -145,8 +152,6 @@ class DatabaseService {
     return null;
   }
 
-
-
   Future<void> addClinic(Clinic clinic) async {
     try {
       await _db.collection('clinics').add(clinic.toMap());
@@ -197,8 +202,6 @@ class DatabaseService {
               );
             }).toList());
   }
-
-
 
   Future<void> checkAndSendNotifications(Pet newPet, String petId) async {
     try {
@@ -269,9 +272,6 @@ class DatabaseService {
     });
   }
 
-
-
-
   Stream<QuerySnapshot> getReviews(String itemId) {
     return _db
         .collection('reviews')
@@ -280,7 +280,6 @@ class DatabaseService {
         .snapshots();
   }
 
-
   Stream<QuerySnapshot> getUserReviews(String userId) {
     return _db
         .collection('reviews')
@@ -288,7 +287,6 @@ class DatabaseService {
         .orderBy('createdAt', descending: true)
         .snapshots();
   }
-
 
   Future<Map<String, dynamic>> getItemRatingStats(String itemId) async {
     try {
@@ -314,7 +312,6 @@ class DatabaseService {
       return {'average': 0.0, 'count': 0};
     }
   }
-
 
   Future<Map<String, dynamic>> getUserRatingStats(String userId,
       {String? reviewType}) async {
@@ -391,8 +388,6 @@ class DatabaseService {
     }
   }
 
-
-
   Future<void> toggleFavorite(String userId, String petId) async {
     final docRef =
         _db.collection('users').doc(userId).collection('favorites').doc(petId);
@@ -442,8 +437,6 @@ class DatabaseService {
       return favoritePets;
     });
   }
-
-
 
   Future<void> addBooking({
     required String userId,

@@ -23,6 +23,12 @@ class ClinicCard extends StatelessWidget {
     required this.onTap,
   });
 
+  bool get _isDefaultIcon {
+    return imageUrl.contains('flaticon') ||
+        imageUrl.contains('discordapp') ||
+        imageUrl.contains('placeholder');
+  }
+
   void _showOwnerProfile(BuildContext context) {
     showDialog(
       context: context,
@@ -135,6 +141,8 @@ class ClinicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isIcon = _isDefaultIcon;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
@@ -221,13 +229,32 @@ class ClinicCard extends StatelessWidget {
           ),
           ClipRRect(
             borderRadius: BorderRadius.zero,
-            child: Image.network(
-              imageUrl,
+            child: Container(
               height: 180,
               width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (c, e, s) =>
-                  Container(height: 180, color: Colors.grey[200]),
+              color: isIcon
+                  ? AppColors.primary.withOpacity(0.05)
+                  : Colors.grey[100],
+              child: isIcon
+                  ? Padding(
+                      padding: const EdgeInsets.all(30.0),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (c, e, s) => const Icon(
+                            Icons.local_hospital,
+                            size: 50,
+                            color: Colors.grey),
+                      ),
+                    )
+                  : Image.network(
+                      imageUrl,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) =>
+                          Container(height: 180, color: Colors.grey[200]),
+                    ),
             ),
           ),
           Padding(

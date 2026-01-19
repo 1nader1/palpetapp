@@ -25,6 +25,12 @@ class LostFoundCard extends StatelessWidget {
     this.header,
   });
 
+  bool get _isDefaultIcon {
+    return imageUrl.contains('flaticon') ||
+        imageUrl.contains('discordapp') ||
+        imageUrl.contains('placeholder');
+  }
+
   void _showOwnerProfile(BuildContext context) {
     showDialog(
       context: context,
@@ -137,6 +143,8 @@ class LostFoundCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isIcon = _isDefaultIcon;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -204,13 +212,32 @@ class LostFoundCard extends StatelessWidget {
             ),
           ClipRRect(
             borderRadius: BorderRadius.zero,
-            child: Image.network(
-              imageUrl,
+            child: Container(
               height: 180,
               width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (c, e, s) =>
-                  Container(height: 180, color: Colors.grey[200]),
+              color: isIcon
+                  ? (isLost
+                      ? AppColors.lostRed.withOpacity(0.05)
+                      : AppColors.foundGreen.withOpacity(0.05))
+                  : Colors.grey[100],
+              child: isIcon
+                  ? Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (c, e, s) => const Icon(Icons.pets,
+                            size: 50, color: Colors.grey),
+                      ),
+                    )
+                  : Image.network(
+                      imageUrl,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) =>
+                          Container(height: 180, color: Colors.grey[200]),
+                    ),
             ),
           ),
           Padding(

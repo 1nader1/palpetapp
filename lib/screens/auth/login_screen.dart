@@ -15,7 +15,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
   bool _isLoading = false;
+
+  bool _isPasswordVisible = false;
 
   void _login() async {
     if (_formKey.currentState!.validate()) {
@@ -58,27 +61,27 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-
-                const Icon(Icons.pets, size: 80, color: AppColors.primary),
+                Icon(
+                  Icons.pets,
+                  size: 80,
+                  color: AppColors.primary.withOpacity(0.8),
+                ),
                 const SizedBox(height: 20),
                 const Text(
-                  'Hello Again!',
+                  'Welcome Back!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
-                  ),
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark),
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'sign in to continue',
+                  'Login to continue',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: AppColors.textGrey),
                 ),
                 const SizedBox(height: 40),
-
-
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -87,51 +90,68 @@ class _LoginScreenState extends State<LoginScreen> {
                       value!.isEmpty ? 'Please enter your email' : null,
                 ),
                 const SizedBox(height: 16),
-
-
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: true,
-                  decoration: _inputDecoration('Password', Icons.lock_outline),
+                  obscureText: !_isPasswordVisible,
+                  decoration:
+                      _inputDecoration('Password', Icons.lock_outline).copyWith(
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: AppColors.textGrey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
+                  ),
                   validator: (value) =>
-                      value!.length < 6 ? 'Password must be at least 6 characters' : null,
+                      value!.isEmpty ? 'Please enter your password' : null,
                 ),
                 const SizedBox(height: 24),
-
-
                 _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                    ? const Center(
+                        child:
+                            CircularProgressIndicator(color: AppColors.primary))
                     : ElevatedButton(
                         onPressed: _login,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                         child: const Text(
-                          'Sign In',
-                          style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                          'Login',
+                          style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                 const SizedBox(height: 20),
-
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Not have an account?', style: TextStyle(color: AppColors.textGrey)),
+                    const Text("Don't have an account? ",
+                        style: TextStyle(color: AppColors.textGrey)),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => const RegisterScreen()),
                         );
                       },
                       child: const Text(
-                        'Create an account now',
-                        style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                        'Register',
+                        style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],

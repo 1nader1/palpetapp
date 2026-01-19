@@ -12,7 +12,7 @@ android {
     namespace = "com.example.palpet"
     compileSdk = 34 
     
-    // حل مشكلة الـ NDK
+   
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -26,7 +26,6 @@ android {
 
  defaultConfig {
         applicationId = "com.example.palpet"
-        // حل مشكلة cloud_firestore لنظام أندرويد
         minSdk = 23
         targetSdk = 34
         versionCode = 1
@@ -34,7 +33,6 @@ android {
     }
     buildTypes {
         release {
-            // استخدام مفاتيح الديباج للتشغيل المؤقت بصيغة ريليس
             signingConfig = signingConfigs.getByName("debug")
         }
     }

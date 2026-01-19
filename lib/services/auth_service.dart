@@ -1,14 +1,19 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   User? get currentUser => _auth.currentUser;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
+  final String _defaultUserProfileImage =
+      'https://cdn-icons-png.flaticon.com/512/847/847969.png';
 
   Future<bool> isUsernameUnique(String username) async {
     final result = await _firestore
@@ -24,15 +29,31 @@ class AuthService {
     required String name,
     required String username,
     required String location,
+    File? imageFile,
   }) async {
     try {
       bool unique = await isUsernameUnique(username);
       if (!unique) throw 'Username is already taken. Please choose another.';
 
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      String photoUrl = _defaultUserProfileImage;
+
+      if (imageFile != null) {
+        try {
+          String fileName = '${userCredential.user!.uid}_profile.jpg';
+          Reference ref = _storage.ref().child('profile_images/$fileName');
+          UploadTask uploadTask = ref.putFile(imageFile);
+          TaskSnapshot snapshot = await uploadTask;
+          photoUrl = await snapshot.ref.getDownloadURL();
+        } catch (e) {
+          print("Error uploading profile image: $e");
+        }
+      }
 
       await _firestore.collection('users').doc(userCredential.user!.uid).set({
         'uid': userCredential.user!.uid,
@@ -40,6 +61,7 @@ class AuthService {
         'name': name,
         'username': username.toLowerCase(),
         'location': location,
+        'photoUrl': photoUrl,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -93,7 +115,7 @@ class AuthService {
         return 'كلمة المرور غير صحيحة.';
       case 'network-request-failed':
         return 'تأكد من اتصالك بالإنترنت.';
-      case 'requires-recent-login': 
+      case 'requires-recent-login':
         return 'لأسباب أمنية، يرجى تسجيل الخروج وتسجيل الدخول مرة أخرى لحذف الحساب.';
       default:
         return 'حدث خطأ: ${e.message}';

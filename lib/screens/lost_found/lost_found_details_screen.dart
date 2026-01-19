@@ -67,7 +67,6 @@ class _LostFoundDetailsScreenState extends State<LostFoundDetailsScreen>
     }
   }
 
-  // --- REVIEWS MODAL START ---
   void _showReviewsModal() {
     showModalBottomSheet(
       context: context,
@@ -126,7 +125,8 @@ class _LostFoundDetailsScreenState extends State<LostFoundDetailsScreen>
                     stream: _dbService.getUserReviews(widget.pet.ownerId),
                     builder: (context, snapshot) {
                       if (snapshot.hasError)
-                        return const Center(child: Text("Something went wrong"));
+                        return const Center(
+                            child: Text("Something went wrong"));
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
@@ -473,7 +473,6 @@ class _LostFoundDetailsScreenState extends State<LostFoundDetailsScreen>
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textDark),
                           ),
-
                           const SizedBox(height: 4),
                           GestureDetector(
                             onTap: _showReviewsModal,
@@ -520,7 +519,6 @@ class _LostFoundDetailsScreenState extends State<LostFoundDetailsScreen>
                               ),
                             ),
                           ),
-
                         ],
                       ),
                       Container(

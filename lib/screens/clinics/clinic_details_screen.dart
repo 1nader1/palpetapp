@@ -63,7 +63,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
     }
   }
 
-  // --- REVIEWS MODAL START ---
   void _showReviewsModal() {
     showModalBottomSheet(
       context: context,
@@ -227,7 +226,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
       ),
     );
   }
-  // --- REVIEWS MODAL END ---
 
   Future<void> _checkAndShowRatingDialog() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -611,7 +609,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
     );
   }
 
-  // --- START: UPDATED EDIT SHEET (Draggable) ---
   void _showEditDialog() {
     final nameController = TextEditingController(text: _clinic.name);
     final phoneController = TextEditingController(text: _clinic.phoneNumber);
@@ -661,7 +658,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
     bool isUpdating = false;
     bool showErrors = false;
 
-    // --- التغيير هنا: استخدام DraggableScrollableSheet ---
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -724,7 +720,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                     ),
                     Expanded(
                       child: SingleChildScrollView(
-                        // ربط السكرول كونترولر
                         controller: scrollController,
                         padding:
                             EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomInset),
@@ -992,7 +987,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
     );
   }
 
-  // --- دوال مساعدة لتوحيد التصميم ---
   Widget _buildStyledInputField(String label, TextEditingController controller,
       IconData icon, bool showErrors, bool isRequired,
       {TextInputType inputType = TextInputType.text,
@@ -1118,7 +1112,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
       ],
     );
   }
-  // --- END: UPDATED EDIT SHEET ---
 
   @override
   Widget build(BuildContext context) {
@@ -1224,7 +1217,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                           ),
                         ),
                       ),
-                      // --- CLICKABLE RATING START ---
                       GestureDetector(
                         onTap: _showReviewsModal,
                         child: Container(
@@ -1269,7 +1261,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                           ),
                         ),
                       ),
-                      // --- CLICKABLE RATING END ---
                     ],
                   ),
                   const SizedBox(height: 24),

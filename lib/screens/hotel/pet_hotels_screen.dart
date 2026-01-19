@@ -220,7 +220,6 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
               final pet = displayList[index];
               List<String> supported =
                   pet.type.split(',').map((e) => e.trim()).toList();
-
               return HotelCard(
                 petId: pet.id,
                 name: pet.name,
