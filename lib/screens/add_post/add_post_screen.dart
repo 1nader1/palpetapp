@@ -14,8 +14,8 @@ class AddPostScreen extends StatefulWidget {
   final String? initialPostType;
 
   const AddPostScreen({
-    super.key, 
-    this.onNavigate, 
+    super.key,
+    this.onNavigate,
     this.petToEdit,
     this.initialPostType,
   });
@@ -27,8 +27,8 @@ class AddPostScreen extends StatefulWidget {
 class _AddPostScreenState extends State<AddPostScreen> {
   bool _isLoading = false;
   bool _isGettingLocation = false;
-  
 
+  // للتحكم في ظهور أخطاء الحقول الإجبارية
   bool _showErrors = false;
 
   bool _isEditing = false;
@@ -101,8 +101,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
     super.initState();
     if (widget.petToEdit != null) {
       _loadPetData(widget.petToEdit!);
-    } 
-    else if (widget.initialPostType != null) {
+    } else if (widget.initialPostType != null) {
       _selectedType = widget.initialPostType!;
     }
   }
@@ -305,34 +304,77 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
   Future<void> _submitPost() async {
     FocusScope.of(context).unfocus();
-    
 
+    // تفعيل ظهور الأخطاء عند الضغط
     setState(() => _showErrors = true);
 
+    // 1. فحص الحقول الأساسية
+    bool isNameValid = _nameController.text.trim().isNotEmpty;
+    bool isLocationValid =
+        _selectedArea != null || _locationController.text.trim().isNotEmpty;
+    bool isPhoneValid = _phoneController.text.trim().isNotEmpty;
 
-    bool nameFilled = _nameController.text.isNotEmpty;
+    // متغيرات خاصة بالأصناف
+    bool isSpeciesValid = _selectedSpecies != null;
+    bool isHotelSpeciesValid = _selectedHotelSpecies.isNotEmpty;
 
-    bool locationFilled = _selectedArea != null || _locationController.text.isNotEmpty;
+    // متغيرات التبني
+    bool isBreedValid = _breedController.text.trim().isNotEmpty;
+    bool isAgeValid = _ageController.text.trim().isNotEmpty;
+    bool isGenderValid = _selectedGender != null;
+    bool isDescriptionValid = _descriptionController.text.trim().isNotEmpty;
+    bool isHealthInfoValid = _healthTags.isNotEmpty;
 
-    bool speciesSelected = false;
-    if (_selectedType == 'Hotel') {
-      speciesSelected = _selectedHotelSpecies.isNotEmpty;
-    } else {
-      speciesSelected = _selectedSpecies != null;
+    // متغيرات الفندق
+    bool isPriceValid = _priceController.text.trim().isNotEmpty;
+    bool isCapacityValid = _capacityController.text.trim().isNotEmpty;
+    bool isAmenitiesValid = _amenities.isNotEmpty;
+
+    bool isValid = false;
+
+    // 2. تطبيق الشروط حسب نوع البوست
+    switch (_selectedType) {
+      case 'Adoption': // تبني: كل الحقول إجبارية + Health Info
+        isValid = isNameValid &&
+            isSpeciesValid &&
+            isBreedValid &&
+            isLocationValid &&
+            isPhoneValid &&
+            isAgeValid &&
+            isGenderValid &&
+            isDescriptionValid &&
+            isHealthInfoValid;
+        break;
+
+      case 'Lost': // مفقودات: الاسم، النوع، الهاتف، الموقع
+        isValid =
+            isNameValid && isSpeciesValid && isPhoneValid && isLocationValid;
+        break;
+
+      case 'Found': // موجودات: النوع، الهاتف، الموقع (الاسم غير إجباري)
+        isValid = isSpeciesValid && isPhoneValid && isLocationValid;
+        break;
+
+      case 'Hotel': // فندق: الجميع إجباري + Amenities + Description
+        isValid = isNameValid &&
+            isHotelSpeciesValid &&
+            isLocationValid &&
+            isPhoneValid &&
+            isPriceValid &&
+            isCapacityValid &&
+            isAmenitiesValid &&
+            isDescriptionValid;
+        break;
     }
 
-    bool phoneFilled = _phoneController.text.isNotEmpty;
-
-
-    bool adoptionRequirementsMet = true;
-    if (_selectedType == 'Adoption') {
-
-      adoptionRequirementsMet = (_selectedGender != null) && (_descriptionController.text.isNotEmpty);
-    }
-
-
-    if (!nameFilled || !locationFilled || !speciesSelected || !phoneFilled || !adoptionRequirementsMet) {
-
+    // 3. إذا لم تتحقق الشروط
+    if (!isValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all required fields marked in red.'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -362,11 +404,25 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
       String finalLocation = _selectedArea ?? _locationController.text;
 
+      // معالجة الاسم في حالة "موجودات" إذا كان فارغاً
+      String finalName = _nameController.text;
+      if (_selectedType == 'Found' && finalName.isEmpty) {
+        finalName = 'Found Pet';
+      }
+
+      // تجهيز المكافأة: فقط إذا كان مفقوداً
+      String? finalReward;
+      if (_selectedType == 'Lost' && _rewardController.text.isNotEmpty) {
+        finalReward = _rewardController.text;
+      } else {
+        finalReward = null; // للموجودات وغيرها
+      }
+
       Pet petData = Pet(
         id: widget.petToEdit?.id ?? '',
         ownerId: user.uid,
         postType: _selectedType,
-        name: _nameController.text,
+        name: finalName,
         type: finalTypeValue,
         breed: _breedController.text,
         gender: _selectedGender ?? '',
@@ -376,8 +432,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         location: finalLocation,
         contactPhone: _phoneController.text,
         healthTags: _healthTags,
-        reward:
-            _rewardController.text.isNotEmpty ? _rewardController.text : null,
+        reward: finalReward, // تم التعديل
         price: _priceController.text.isNotEmpty ? _priceController.text : null,
         capacity: _capacityController.text.isNotEmpty
             ? _capacityController.text
@@ -474,13 +529,13 @@ class _AddPostScreenState extends State<AddPostScreen> {
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  
 
+                  // الاسم (إجباري للكل ما عدا الموجودات)
                   _buildTextField(
-                      label: "Name (Pet/Hotel)",
-                      controller: _nameController,
-                      icon: Icons.pets,
-                      isRequired: true,
+                    label: "Name (Pet/Hotel)",
+                    controller: _nameController,
+                    icon: Icons.pets,
+                    isRequired: _selectedType != 'Found',
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -495,15 +550,18 @@ class _AddPostScreenState extends State<AddPostScreen> {
                                 icon: Icons.category,
                                 onChanged: (val) =>
                                     setState(() => _selectedSpecies = val),
-                                isRequired: true, 
+                                isRequired: true,
                               ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                           child: _buildTextField(
-                              label: "Breed/Details",
-                              controller: _breedController,
-                              icon: Icons.style)),
+                        label: "Breed/Details",
+                        controller: _breedController,
+                        icon: Icons.style,
+                        // إجباري فقط للتبني
+                        isRequired: _selectedType == 'Adoption',
+                      )),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -518,14 +576,15 @@ class _AddPostScreenState extends State<AddPostScreen> {
                   const SizedBox(height: 12),
                   _buildLocationSection(),
                   const SizedBox(height: 12),
-                  
 
+                  // الوصف (إجباري للتبني والفندق)
                   _buildTextField(
                     label: "Description / Caption",
                     controller: _descriptionController,
                     icon: Icons.description,
                     maxLines: 4,
-                    isRequired: _selectedType == 'Adoption', 
+                    isRequired:
+                        _selectedType == 'Adoption' || _selectedType == 'Hotel',
                   ),
                   const SizedBox(height: 30),
                   SizedBox(
@@ -629,7 +688,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
           label: "Selected Location (Editable)",
           controller: _locationController,
           icon: Icons.pin_drop,
-          isRequired: true, 
+          isRequired: true,
         ),
       ],
     );
@@ -639,10 +698,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
     String displayText = _selectedHotelSpecies.isEmpty
         ? "Select Species"
         : _selectedHotelSpecies.join(", ");
-    
 
-    Color borderColor = (_showErrors && _selectedHotelSpecies.isEmpty) 
-        ? Colors.red 
+    Color borderColor = (_showErrors && _selectedHotelSpecies.isEmpty)
+        ? Colors.red
         : Colors.grey[200]!;
 
     return InkWell(
@@ -653,10 +711,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
           prefixIcon: const Icon(Icons.category, color: Colors.grey, size: 22),
           filled: true,
           fillColor: const Color(0xFFF9FAFB),
-
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: borderColor)), 
+              borderSide: BorderSide(color: borderColor)),
           focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: AppColors.primary)),
@@ -664,8 +721,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none),
           suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-
-          errorText: (_showErrors && _selectedHotelSpecies.isEmpty) ? "Required" : null,
+          errorText: (_showErrors && _selectedHotelSpecies.isEmpty)
+              ? "Required"
+              : null,
         ),
         child: Text(displayText,
             style: const TextStyle(fontSize: 16, color: Colors.black87),
@@ -697,8 +755,8 @@ class _AddPostScreenState extends State<AddPostScreen> {
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none),
-
-        errorText: (_showErrors && isRequired && value == null) ? "Required" : null,
+        errorText:
+            (_showErrors && isRequired && value == null) ? "Required" : null,
       ),
     );
   }
@@ -739,8 +797,8 @@ class _AddPostScreenState extends State<AddPostScreen> {
                           blurRadius: 10)
                     ],
                   ),
-                  child: const Icon(Icons.add_a_photo,
-                      size: 32, color: AppColors.primary),
+                  child:
+                      const Icon(Icons.add, size: 32, color: AppColors.primary),
                 ),
                 const SizedBox(height: 12),
                 const Text("Add Photo (Optional)",
@@ -806,18 +864,18 @@ class _AddPostScreenState extends State<AddPostScreen> {
                     child: _buildTextField(
                         label: "Age",
                         controller: _ageController,
-                        icon: Icons.cake)),
+                        icon: Icons.cake,
+                        isRequired: true)),
                 const SizedBox(width: 12),
                 Expanded(
                     child: _buildDropdownField(
-                        label: "Gender",
-                        value: _selectedGender,
-                        items: _genderList,
-                        icon: Icons.male,
-                        onChanged: (val) =>
-                            setState(() => _selectedGender = val),
-                        isRequired: true, 
-                    )),
+                  label: "Gender",
+                  value: _selectedGender,
+                  items: _genderList,
+                  icon: Icons.male,
+                  onChanged: (val) => setState(() => _selectedGender = val),
+                  isRequired: true,
+                )),
               ],
             ),
             const SizedBox(height: 12),
@@ -826,33 +884,37 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 controller: _phoneController,
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
-                isRequired: true 
-            ),
+                isRequired: true),
             const SizedBox(height: 12),
             _buildHealthTagsInput(),
           ],
         );
       case 'Lost':
       case 'Found':
+        // تحديد العنوان حسب النوع
+        bool isLost = _selectedType == 'Lost';
         return Column(
           key: const ValueKey('LostFound'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Contact & Reward",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(isLost ? "Contact & Reward" : "Contact Details",
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             _buildTextField(
                 label: "Contact Phone Number",
                 controller: _phoneController,
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
-                isRequired: true 
-            ),
-            const SizedBox(height: 12),
-            _buildTextField(
-                label: "Reward (Optional)",
-                controller: _rewardController,
-                icon: Icons.monetization_on_outlined),
+                isRequired: true),
+            // إخفاء حقل المكافأة إذا كان البوست من نوع Found
+            if (isLost) ...[
+              const SizedBox(height: 12),
+              _buildTextField(
+                  label: "Reward (Optional)",
+                  controller: _rewardController,
+                  icon: Icons.monetization_on_outlined),
+            ],
           ],
         );
       case 'Hotel':
@@ -870,13 +932,15 @@ class _AddPostScreenState extends State<AddPostScreen> {
                         label: "Price / Night",
                         controller: _priceController,
                         icon: Icons.attach_money,
-                        keyboardType: TextInputType.number)),
+                        keyboardType: TextInputType.number,
+                        isRequired: true)),
                 const SizedBox(width: 12),
                 Expanded(
                     child: _buildTextField(
                         label: "Capacity",
                         controller: _capacityController,
-                        icon: Icons.home_work)),
+                        icon: Icons.home_work,
+                        isRequired: true)),
               ],
             ),
             const SizedBox(height: 12),
@@ -887,8 +951,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 controller: _phoneController,
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
-                isRequired: true 
-            ),
+                isRequired: true),
           ],
         );
       default:
@@ -897,6 +960,10 @@ class _AddPostScreenState extends State<AddPostScreen> {
   }
 
   Widget _buildHealthTagsInput() {
+    // التحقق من الخطأ: مطلوب في التبني والقائمة فارغة وتم طلب الحفظ
+    bool hasError =
+        _showErrors && _selectedType == 'Adoption' && _healthTags.isEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -919,6 +986,14 @@ class _AddPostScreenState extends State<AddPostScreen> {
             ),
           ],
         ),
+        // عرض رسالة الخطأ
+        if (hasError)
+          const Padding(
+            padding: EdgeInsets.only(top: 6, left: 12),
+            child: Text("Required: Add at least one health tag",
+                style: TextStyle(color: Colors.red, fontSize: 12)),
+          ),
+
         const SizedBox(height: 8),
         if (_healthTags.isNotEmpty)
           Wrap(
@@ -935,6 +1010,10 @@ class _AddPostScreenState extends State<AddPostScreen> {
   }
 
   Widget _buildAmenitiesInput() {
+    // التحقق من الخطأ: مطلوب في الفندق والقائمة فارغة وتم طلب الحفظ
+    bool hasError =
+        _showErrors && _selectedType == 'Hotel' && _amenities.isEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -957,6 +1036,14 @@ class _AddPostScreenState extends State<AddPostScreen> {
             ),
           ],
         ),
+        // عرض رسالة الخطأ
+        if (hasError)
+          const Padding(
+            padding: EdgeInsets.only(top: 6, left: 12),
+            child: Text("Required: Add at least one amenity",
+                style: TextStyle(color: Colors.red, fontSize: 12)),
+          ),
+
         const SizedBox(height: 8),
         if (_amenities.isNotEmpty)
           Wrap(
@@ -993,8 +1080,10 @@ class _AddPostScreenState extends State<AddPostScreen> {
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none),
-
-        errorText: (_showErrors && isRequired && (controller?.text.isEmpty ?? true)) ? "Required" : null,
+        errorText:
+            (_showErrors && isRequired && (controller?.text.isEmpty ?? true))
+                ? "Required"
+                : null,
       ),
     );
   }

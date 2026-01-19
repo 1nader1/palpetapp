@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Added for Timestamp
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/clinic.dart';
@@ -82,7 +82,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // Handle bar
                 Center(
                   child: Container(
                     width: 40,
@@ -94,8 +93,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
-                
-                // Header with "Write Review" button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -114,18 +111,19 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                       },
                       icon: const Icon(Icons.edit, size: 18),
                       label: const Text("Write a Review"),
-                      style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                      style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary),
                     ),
                   ],
                 ),
                 const Divider(),
-                
-                // Reviews List
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: _dbService.getReviews(_clinic.id),
                     builder: (context, snapshot) {
-                      if (snapshot.hasError) return const Center(child: Text("Something went wrong"));
+                      if (snapshot.hasError)
+                        return const Center(
+                            child: Text("Something went wrong"));
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
@@ -135,10 +133,11 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                         return Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.rate_review_outlined, size: 60, color: Colors.grey[300]),
+                            Icon(Icons.rate_review_outlined,
+                                size: 60, color: Colors.grey[300]),
                             const SizedBox(height: 10),
-                            Text("No reviews yet. Be the first!", 
-                              style: TextStyle(color: Colors.grey[500])),
+                            Text("No reviews yet. Be the first!",
+                                style: TextStyle(color: Colors.grey[500])),
                           ],
                         );
                       }
@@ -147,8 +146,10 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                         controller: controller,
                         itemCount: docs.length,
                         itemBuilder: (context, index) {
-                          final data = docs[index].data() as Map<String, dynamic>;
-                          final double rating = (data['rating'] ?? 0.0).toDouble();
+                          final data =
+                              docs[index].data() as Map<String, dynamic>;
+                          final double rating =
+                              (data['rating'] ?? 0.0).toDouble();
                           final String comment = data['comment'] ?? '';
                           final String reviewerId = data['reviewerId'] ?? '';
                           final Timestamp? createdAt = data['createdAt'];
@@ -164,11 +165,12 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    // Fetch Reviewer Name
                                     FutureBuilder<String>(
-                                      future: _dbService.getUserName(reviewerId),
+                                      future:
+                                          _dbService.getUserName(reviewerId),
                                       builder: (context, nameSnapshot) {
                                         return Text(
                                           nameSnapshot.data ?? "Loading...",
@@ -180,10 +182,13 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                                       },
                                     ),
                                     Text(
-                                      createdAt != null 
-                                        ? DateFormat.yMMMd().format(createdAt.toDate())
-                                        : '',
-                                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                                      createdAt != null
+                                          ? DateFormat.yMMMd()
+                                              .format(createdAt.toDate())
+                                          : '',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[500]),
                                     ),
                                   ],
                                 ),
@@ -191,7 +196,9 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                                 Row(
                                   children: List.generate(5, (starIndex) {
                                     return Icon(
-                                      starIndex < rating ? Icons.star : Icons.star_border,
+                                      starIndex < rating
+                                          ? Icons.star
+                                          : Icons.star_border,
                                       color: Colors.amber,
                                       size: 16,
                                     );
@@ -201,7 +208,8 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                                   const SizedBox(height: 8),
                                   Text(
                                     comment,
-                                    style: const TextStyle(color: AppColors.textDark, height: 1.4),
+                                    style: const TextStyle(
+                                        color: AppColors.textDark, height: 1.4),
                                   ),
                                 ],
                               ],
@@ -415,13 +423,40 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
           : workingHours.split('-');
       if (parts.length != 2) return false;
 
-      final startStr = parts[0].trim();
-      final endStr = parts[1].trim();
-      final format = DateFormat.jm();
+      String normalizeTime(String rawTime) {
+        String clean = rawTime.trim().toUpperCase();
+        String period = "";
+        if (clean.contains("AM")) {
+          period = "AM";
+          clean = clean.replaceAll("AM", "").trim();
+        } else if (clean.contains("PM")) {
+          period = "PM";
+          clean = clean.replaceAll("PM", "").trim();
+        }
+        if (!clean.contains(":")) {
+          clean = "$clean:00";
+        }
+        return "$clean $period".trim();
+      }
+
+      final startStr = normalizeTime(parts[0]);
+      final endStr = normalizeTime(parts[1]);
+      final format = DateFormat('h:mm a');
       final now = DateTime.now();
 
-      final startTimeRef = format.parse(startStr);
-      final endTimeRef = format.parse(endStr);
+      DateTime startTimeRef;
+      DateTime endTimeRef;
+
+      DateTime parseFlexible(String timeStr) {
+        try {
+          return format.parse(timeStr);
+        } catch (_) {
+          return DateFormat('h:mma').parse(timeStr.replaceAll(' ', ''));
+        }
+      }
+
+      startTimeRef = parseFlexible(startStr);
+      endTimeRef = parseFlexible(endStr);
 
       final openTime = DateTime(
           now.year, now.month, now.day, startTimeRef.hour, startTimeRef.minute);
@@ -466,177 +501,624 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
   void _confirmDelete() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Delete Clinic"),
-        content: const Text("Are you sure you want to delete this clinic?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              await _dbService.deleteClinic(_clinic.id);
-              if (mounted) {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.delete_forever_rounded,
+                    color: Colors.red, size: 36),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Delete Clinic?",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Are you sure you want to remove \"${_clinic.name}\"?\nThis action cannot be undone.",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 30),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        backgroundColor: Colors.white,
+                      ),
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(
+                          color: AppColors.textDark,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await _dbService.deleteClinic(_clinic.id);
+                        if (mounted) {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Delete",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
+  // --- START: UPDATED EDIT SHEET (Draggable) ---
   void _showEditDialog() {
     final nameController = TextEditingController(text: _clinic.name);
     final phoneController = TextEditingController(text: _clinic.phoneNumber);
     final addressController = TextEditingController(text: _clinic.address);
     final descController = TextEditingController(text: _clinic.description);
-    final hoursController = TextEditingController(text: _clinic.workingHours);
-    final servicesController =
-        TextEditingController(text: _clinic.services.join(', '));
+
+    final serviceInputController = TextEditingController();
+    List<String> servicesList = List.from(_clinic.services);
+
+    final openHourController = TextEditingController();
+    final openMinuteController = TextEditingController();
+    final closeHourController = TextEditingController();
+    final closeMinuteController = TextEditingController();
+
+    String openPeriod = "AM";
+    String closePeriod = "PM";
+
+    try {
+      final parts = _clinic.workingHours.split(' - ');
+      if (parts.length == 2) {
+        final startParts = parts[0].trim().split(' ');
+        final endParts = parts[1].trim().split(' ');
+
+        if (startParts.length >= 2) {
+          openPeriod = startParts[1];
+          final timeParts = startParts[0].split(':');
+          if (timeParts.length >= 1) openHourController.text = timeParts[0];
+          if (timeParts.length >= 2) openMinuteController.text = timeParts[1];
+        }
+
+        if (endParts.length >= 2) {
+          closePeriod = endParts[1];
+          final timeParts = endParts[0].split(':');
+          if (timeParts.length >= 1) closeHourController.text = timeParts[0];
+          if (timeParts.length >= 2) closeMinuteController.text = timeParts[1];
+        }
+      }
+    } catch (_) {
+      openHourController.text = "9";
+      openMinuteController.text = "00";
+      closeHourController.text = "5";
+      closeMinuteController.text = "00";
+    }
 
     File? newImageFile;
     bool isOpen = _clinic.isOpen;
     bool isUpdating = false;
+    bool showErrors = false;
 
-    showDialog(
+    // --- التغيير هنا: استخدام DraggableScrollableSheet ---
+    showModalBottomSheet(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            title: const Text("Edit Clinic"),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () async {
-                      final picker = ImagePicker();
-                      final pickedFile =
-                          await picker.pickImage(source: ImageSource.gallery);
-                      if (pickedFile != null) {
-                        setDialogState(() {
-                          newImageFile = File(pickedFile.path);
-                        });
-                      }
-                    },
-                    child: Container(
-                      height: 150,
-                      width: double.infinity,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        expand: false,
+        builder: (context, scrollController) {
+          return StatefulBuilder(
+            builder: (context, setSheetState) {
+              final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+              void addService() {
+                final text = serviceInputController.text.trim();
+                if (text.isNotEmpty) {
+                  setSheetState(() {
+                    servicesList.add(text);
+                    serviceInputController.clear();
+                  });
+                }
+              }
+
+              void removeService(String item) {
+                setSheetState(() {
+                  servicesList.remove(item);
+                });
+              }
+
+              return Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(25),
+                    topRight: Radius.circular(25),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(12),
-                        image: DecorationImage(
-                          image: newImageFile != null
-                              ? FileImage(newImageFile!)
-                              : NetworkImage(_clinic.imageUrl) as ImageProvider,
-                          fit: BoxFit.cover,
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(25),
+                          topRight: Radius.circular(25),
                         ),
                       ),
-                      child: Stack(
-                        children: [
-                          Container(color: Colors.black26),
-                          const Center(
-                              child: Icon(Icons.edit,
-                                  color: Colors.white, size: 40)),
-                        ],
+                      child: const Center(
+                        child: Text(
+                          "Edit Clinic",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                      controller: nameController,
-                      decoration:
-                          const InputDecoration(labelText: "Clinic Name")),
-                  TextField(
-                      controller: phoneController,
-                      decoration:
-                          const InputDecoration(labelText: "Phone Number")),
-                  TextField(
-                      controller: addressController,
-                      decoration: const InputDecoration(labelText: "Address")),
-                  TextField(
-                      controller: hoursController,
-                      decoration:
-                          const InputDecoration(labelText: "Working Hours")),
-                  TextField(
-                      controller: servicesController,
-                      decoration: const InputDecoration(
-                          labelText: "Services (comma separated)")),
-                  TextField(
-                      controller: descController,
-                      decoration:
-                          const InputDecoration(labelText: "Description"),
-                      maxLines: 3),
-                  const SizedBox(height: 10),
-                  SwitchListTile(
-                    title: const Text("Is Open? (Manual Override)"),
-                    value: isOpen,
-                    onChanged: (val) {
-                      setDialogState(() => isOpen = val);
-                    },
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancel")),
-              isUpdating
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: () async {
-                        setDialogState(() => isUpdating = true);
-                        String finalImageUrl = _clinic.imageUrl;
-                        if (newImageFile != null) {
-                          try {
-                            finalImageUrl =
-                                await _dbService.uploadImage(newImageFile!);
-                          } catch (e) {
-                            print("Error updating image: $e");
-                          }
-                        }
-                        List<String> updatedServices = servicesController.text
-                            .split(',')
-                            .map((e) => e.trim())
-                            .where((e) => e.isNotEmpty)
-                            .toList();
+                    Expanded(
+                      child: SingleChildScrollView(
+                        // ربط السكرول كونترولر
+                        controller: scrollController,
+                        padding:
+                            EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomInset),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Center(
+                              child: GestureDetector(
+                                onTap: () async {
+                                  final picker = ImagePicker();
+                                  final pickedFile = await picker.pickImage(
+                                      source: ImageSource.gallery);
+                                  if (pickedFile != null) {
+                                    setSheetState(() {
+                                      newImageFile = File(pickedFile.path);
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  height: 160,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(20),
+                                    border:
+                                        Border.all(color: Colors.grey[300]!),
+                                    image: DecorationImage(
+                                      image: newImageFile != null
+                                          ? FileImage(newImageFile!)
+                                          : NetworkImage(_clinic.imageUrl)
+                                              as ImageProvider,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black26,
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                        ),
+                                      ),
+                                      const Center(
+                                          child: Icon(Icons.edit,
+                                              color: Colors.white, size: 40)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            _buildStyledInputField(
+                                "Clinic Name",
+                                nameController,
+                                Icons.local_hospital,
+                                showErrors,
+                                true),
+                            const SizedBox(height: 16),
+                            _buildStyledInputField("Address", addressController,
+                                Icons.location_on, showErrors, true),
+                            const SizedBox(height: 16),
+                            _buildStyledInputField("Phone Number",
+                                phoneController, Icons.phone, showErrors, true,
+                                inputType: TextInputType.phone),
+                            const SizedBox(height: 24),
+                            const Text("Working Hours",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildSplitTimeInput(
+                                    label: "Opens At",
+                                    hourController: openHourController,
+                                    minuteController: openMinuteController,
+                                    period: openPeriod,
+                                    onPeriodChanged: (val) =>
+                                        setSheetState(() => openPeriod = val!),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _buildSplitTimeInput(
+                                    label: "Closes At",
+                                    hourController: closeHourController,
+                                    minuteController: closeMinuteController,
+                                    period: closePeriod,
+                                    onPeriodChanged: (val) =>
+                                        setSheetState(() => closePeriod = val!),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            const Text("Services",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: serviceInputController,
+                                    decoration: InputDecoration(
+                                      hintText: "e.g. Surgery, Vaccination",
+                                      filled: true,
+                                      fillColor: const Color(0xFFF9FAFB),
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                          borderSide: BorderSide.none),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 12),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  onTap: addService,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(Icons.add,
+                                        color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: servicesList.map((service) {
+                                return Chip(
+                                  label: Text(service),
+                                  backgroundColor:
+                                      AppColors.primary.withOpacity(0.1),
+                                  deleteIcon: const Icon(Icons.close, size: 18),
+                                  onDeleted: () => removeService(service),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 24),
+                            _buildStyledInputField(
+                              "Description",
+                              descController,
+                              Icons.description,
+                              false,
+                              false,
+                              maxLines: 3,
+                              onTap: () {
+                                Future.delayed(
+                                    const Duration(milliseconds: 300), () {
+                                  if (scrollController.hasClients) {
+                                    scrollController.animateTo(
+                                      scrollController.position.maxScrollExtent,
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      curve: Curves.easeOut,
+                                    );
+                                  }
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            const SizedBox(height: 32),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 55,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  elevation: 2,
+                                ),
+                                onPressed: isUpdating
+                                    ? null
+                                    : () async {
+                                        setSheetState(() => showErrors = true);
+                                        if (nameController.text.isEmpty ||
+                                            phoneController.text.isEmpty ||
+                                            addressController.text.isEmpty) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(const SnackBar(
+                                            content: Text(
+                                                "Please fill in all required fields marked in red"),
+                                            backgroundColor: Colors.red,
+                                          ));
+                                          return;
+                                        }
 
-                        final updatedClinic = Clinic(
-                          id: _clinic.id,
-                          ownerId: _clinic.ownerId,
-                          name: nameController.text,
-                          address: addressController.text,
-                          description: descController.text,
-                          imageUrl: finalImageUrl,
-                          rating: _clinic.rating,
-                          phoneNumber: phoneController.text,
-                          isOpen: isOpen,
-                          workingHours: hoursController.text,
-                          services: updatedServices,
-                        );
+                                        setSheetState(() => isUpdating = true);
 
-                        await _dbService.updateClinic(updatedClinic);
+                                        String finalImageUrl = _clinic.imageUrl;
+                                        if (newImageFile != null) {
+                                          try {
+                                            finalImageUrl = await _dbService
+                                                .uploadImage(newImageFile!);
+                                          } catch (e) {
+                                            print("Error updating image: $e");
+                                          }
+                                        }
 
-                        if (mounted) {
-                          setState(() {
-                            _clinic = updatedClinic;
-                          });
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: const Text("Save"),
+                                        final String finalWorkingHours =
+                                            "${openHourController.text}:${openMinuteController.text} $openPeriod - ${closeHourController.text}:${closeMinuteController.text} $closePeriod";
+
+                                        final updatedClinic = Clinic(
+                                          id: _clinic.id,
+                                          ownerId: _clinic.ownerId,
+                                          name: nameController.text,
+                                          address: addressController.text,
+                                          description: descController.text,
+                                          imageUrl: finalImageUrl,
+                                          rating: _clinic.rating,
+                                          phoneNumber: phoneController.text,
+                                          isOpen: isOpen,
+                                          workingHours: finalWorkingHours,
+                                          services: servicesList.isNotEmpty
+                                              ? servicesList
+                                              : ['General Checkup'],
+                                        );
+
+                                        await _dbService
+                                            .updateClinic(updatedClinic);
+
+                                        if (mounted) {
+                                          setState(() {
+                                            _clinic = updatedClinic;
+                                          });
+                                          Navigator.pop(context);
+                                        }
+                                      },
+                                child: isUpdating
+                                    ? const CircularProgressIndicator(
+                                        color: Colors.white)
+                                    : const Text(
+                                        "Save Changes",
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white),
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
+                      ),
                     ),
-            ],
+                  ],
+                ),
+              );
+            },
           );
         },
       ),
     );
   }
+
+  // --- دوال مساعدة لتوحيد التصميم ---
+  Widget _buildStyledInputField(String label, TextEditingController controller,
+      IconData icon, bool showErrors, bool isRequired,
+      {TextInputType inputType = TextInputType.text,
+      int maxLines = 1,
+      VoidCallback? onTap}) {
+    bool isError = showErrors && isRequired && controller.text.isEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          keyboardType: inputType,
+          maxLines: maxLines,
+          onTap: onTap,
+          decoration: InputDecoration(
+            labelText: label,
+            prefixIcon: Icon(icon, color: Colors.grey),
+            filled: true,
+            fillColor: const Color(0xFFF9FAFB),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: isError
+                  ? const BorderSide(color: Colors.red)
+                  : BorderSide(color: Colors.grey[200]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: AppColors.primary),
+            ),
+          ),
+        ),
+        if (isError)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 12),
+            child: Text("Required",
+                style: TextStyle(color: Colors.red[700], fontSize: 12)),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSplitTimeInput({
+    required String label,
+    required TextEditingController hourController,
+    required TextEditingController minuteController,
+    required String period,
+    required Function(String?) onPeriodChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: Colors.grey[200]!),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: hourController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 2,
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(
+                    counterText: "",
+                    border: InputBorder.none,
+                    hintText: "HH",
+                    contentPadding: EdgeInsets.symmetric(horizontal: 4),
+                  ),
+                ),
+              ),
+              const Text(":",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.grey)),
+              Expanded(
+                child: TextField(
+                  controller: minuteController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 2,
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(
+                    counterText: "",
+                    border: InputBorder.none,
+                    hintText: "MM",
+                    contentPadding: EdgeInsets.symmetric(horizontal: 4),
+                  ),
+                ),
+              ),
+              Container(height: 30, width: 1, color: Colors.grey[300]),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: period,
+                    items: ["AM", "PM"]
+                        .map((e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(e,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold))))
+                        .toList(),
+                    onChanged: onPeriodChanged,
+                    icon: const Icon(Icons.arrow_drop_down,
+                        color: AppColors.primary),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  // --- END: UPDATED EDIT SHEET ---
 
   @override
   Widget build(BuildContext context) {
@@ -751,7 +1233,8 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                           decoration: BoxDecoration(
                             color: AppColors.serviceVetBg,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                            border: Border.all(
+                                color: Colors.amber.withOpacity(0.3)),
                           ),
                           child: FutureBuilder<Map<String, dynamic>>(
                             future: _dbService.getItemRatingStats(_clinic.id),
@@ -778,7 +1261,8 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                                         fontSize: 14),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+                                  const Icon(Icons.chevron_right,
+                                      size: 16, color: Colors.grey),
                                 ],
                               );
                             },
@@ -1008,11 +1492,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                "You can visit us now",
-                style: TextStyle(
-                    color: isOpenNow ? Colors.green[600] : Colors.red[600]),
-              ),
             ],
           ),
         ),

@@ -33,7 +33,6 @@ class _MainShellState extends State<MainShell> {
       const LostFoundScreen(),
       const PetHotelsScreen(),
       const ClinicsScreen(),
-
       HomeScreen(onNavigate: _onItemTapped),
       AddPostScreen(onNavigate: _onItemTapped),
       const ProfileScreen(),
@@ -52,24 +51,16 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-
     return PopScope(
-
       canPop: false,
-      
-
-      onPopInvokedWithResult: (bool didPop, dynamic result) {
+      onPopInvoked: (bool didPop) {
         if (didPop) {
           return;
         }
 
-
         if (_selectedIndex != 0) {
           _onItemTapped(0);
         }
-        
-
-
       },
       child: Scaffold(
         appBar: AppBar(
