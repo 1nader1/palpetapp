@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/pet.dart';
 import '../../services/database_service.dart';
@@ -16,6 +18,7 @@ class PetDetailsScreen extends StatefulWidget {
 
 class _PetDetailsScreenState extends State<PetDetailsScreen>
     with WidgetsBindingObserver {
+  final DatabaseService _dbService = DatabaseService();
   bool _isCallClicked = false;
   bool _isFavorite = false;
 
@@ -46,10 +49,175 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
     }
   }
 
+  // --- REVIEWS MODAL START ---
+  void _showReviewsModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Owner Reviews",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _checkAndShowRatingDialog();
+                      },
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text("Write a Review"),
+                      style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: _dbService.getUserReviews(widget.pet.ownerId),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError)
+                        return const Center(child: Text("Something went wrong"));
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final docs = snapshot.data?.docs ?? [];
+                      if (docs.isEmpty) {
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.rate_review_outlined,
+                                size: 60, color: Colors.grey[300]),
+                            const SizedBox(height: 10),
+                            Text("No reviews for this owner yet.",
+                                style: TextStyle(color: Colors.grey[500])),
+                          ],
+                        );
+                      }
+
+                      return ListView.builder(
+                        controller: controller,
+                        itemCount: docs.length,
+                        itemBuilder: (context, index) {
+                          final data =
+                              docs[index].data() as Map<String, dynamic>;
+                          final double rating =
+                              (data['rating'] ?? 0.0).toDouble();
+                          final String comment = data['comment'] ?? '';
+                          final String reviewerId = data['reviewerId'] ?? '';
+                          final Timestamp? createdAt = data['createdAt'];
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    FutureBuilder<String>(
+                                      future:
+                                          _dbService.getUserName(reviewerId),
+                                      builder: (context, nameSnapshot) {
+                                        return Text(
+                                          nameSnapshot.data ?? "Loading...",
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    Text(
+                                      createdAt != null
+                                          ? DateFormat.yMMMd()
+                                              .format(createdAt.toDate())
+                                          : '',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[500]),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: List.generate(5, (starIndex) {
+                                    return Icon(
+                                      starIndex < rating
+                                          ? Icons.star
+                                          : Icons.star_border,
+                                      color: Colors.amber,
+                                      size: 16,
+                                    );
+                                  }),
+                                ),
+                                if (comment.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    comment,
+                                    style: const TextStyle(
+                                        color: AppColors.textDark, height: 1.4),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+  // --- REVIEWS MODAL END ---
+
   Future<void> _checkIfFavorite() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      bool isFav = await DatabaseService().isFavorite(user.uid, widget.pet.id);
+      bool isFav = await _dbService.isFavorite(user.uid, widget.pet.id);
       if (mounted) {
         setState(() {
           _isFavorite = isFav;
@@ -72,7 +240,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
     });
 
     try {
-      await DatabaseService().toggleFavorite(user.uid, widget.pet.id);
+      await _dbService.toggleFavorite(user.uid, widget.pet.id);
     } catch (e) {
       setState(() {
         _isFavorite = !_isFavorite;
@@ -100,10 +268,9 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
     final String targetUserId = widget.pet.ownerId;
 
     if (currentUser == null) return;
-
     if (currentUser.uid == targetUserId) return;
 
-    bool alreadyReviewed = await DatabaseService()
+    bool alreadyReviewed = await _dbService
         .hasUserReviewed(currentUser.uid, targetUserId, 'adoption');
 
     if (!mounted) return;
@@ -121,7 +288,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
   void _showRatingDialog(String currentUserId, String targetUserId) {
     double rating = 0;
     TextEditingController commentController = TextEditingController();
-
     bool isTransactionConfirmed = false;
 
     showDialog(
@@ -226,7 +392,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
                       ElevatedButton(
                         onPressed: () async {
                           if (rating > 0) {
-                            await DatabaseService().addReview(
+                            await _dbService.addReview(
                               targetUserId: targetUserId,
                               reviewerId: currentUserId,
                               rating: rating,
@@ -234,12 +400,12 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
                               reviewType: 'adoption',
                             );
 
-                            await DatabaseService().addBooking(
+                            await _dbService.addBooking(
                               userId: currentUserId,
                               providerId: targetUserId,
-                              serviceType: 'Adoption', 
+                              serviceType: 'Adoption',
                               itemName:
-                                  "${widget.pet.type} - ${widget.pet.breed}", 
+                                  "${widget.pet.type} - ${widget.pet.breed}",
                               details: {
                                 'petAge': widget.pet.age,
                                 'location': widget.pet.location,
@@ -333,6 +499,65 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // --- CLICKABLE RATING ADDED HERE ---
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        pet.name,
+                        style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textDark),
+                      ),
+                      GestureDetector(
+                        onTap: _showReviewsModal,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: FutureBuilder<Map<String, dynamic>>(
+                            future: _dbService.getUserRatingStats(pet.ownerId),
+                            builder: (context, snapshot) {
+                              String ratingText = "New";
+                              String countText = "";
+                              if (snapshot.hasData) {
+                                double avg = snapshot.data!['average'] ?? 0.0;
+                                int count = snapshot.data!['count'] ?? 0;
+                                if (count > 0) {
+                                  ratingText = avg.toStringAsFixed(1);
+                                  countText = " ($count)";
+                                }
+                              }
+                              return Row(
+                                children: [
+                                  const Icon(Icons.star_rounded,
+                                      color: Colors.amber, size: 20),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    "$ratingText$countText",
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.chevron_right,
+                                      size: 16, color: Colors.grey),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // --- END RATING ---
+
                   const Text("About",
                       style: TextStyle(
                           fontSize: 18,

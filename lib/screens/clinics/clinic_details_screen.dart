@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Added for Timestamp
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/clinic.dart';
@@ -61,6 +62,164 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
       });
     }
   }
+
+  // --- REVIEWS MODAL START ---
+  void _showReviewsModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // Header with "Write Review" button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Reviews",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _checkAndShowRatingDialog();
+                      },
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text("Write a Review"),
+                      style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                
+                // Reviews List
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: _dbService.getReviews(_clinic.id),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) return const Center(child: Text("Something went wrong"));
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final docs = snapshot.data?.docs ?? [];
+                      if (docs.isEmpty) {
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.rate_review_outlined, size: 60, color: Colors.grey[300]),
+                            const SizedBox(height: 10),
+                            Text("No reviews yet. Be the first!", 
+                              style: TextStyle(color: Colors.grey[500])),
+                          ],
+                        );
+                      }
+
+                      return ListView.builder(
+                        controller: controller,
+                        itemCount: docs.length,
+                        itemBuilder: (context, index) {
+                          final data = docs[index].data() as Map<String, dynamic>;
+                          final double rating = (data['rating'] ?? 0.0).toDouble();
+                          final String comment = data['comment'] ?? '';
+                          final String reviewerId = data['reviewerId'] ?? '';
+                          final Timestamp? createdAt = data['createdAt'];
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    // Fetch Reviewer Name
+                                    FutureBuilder<String>(
+                                      future: _dbService.getUserName(reviewerId),
+                                      builder: (context, nameSnapshot) {
+                                        return Text(
+                                          nameSnapshot.data ?? "Loading...",
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    Text(
+                                      createdAt != null 
+                                        ? DateFormat.yMMMd().format(createdAt.toDate())
+                                        : '',
+                                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: List.generate(5, (starIndex) {
+                                    return Icon(
+                                      starIndex < rating ? Icons.star : Icons.star_border,
+                                      color: Colors.amber,
+                                      size: 16,
+                                    );
+                                  }),
+                                ),
+                                if (comment.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    comment,
+                                    style: const TextStyle(color: AppColors.textDark, height: 1.4),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+  // --- REVIEWS MODAL END ---
 
   Future<void> _checkAndShowRatingDialog() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -583,39 +742,50 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                           ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.serviceVetBg,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: FutureBuilder<Map<String, dynamic>>(
-                          future: _dbService.getItemRatingStats(_clinic.id),
-                          builder: (context, snapshot) {
-                            String ratingText = "New";
-                            if (snapshot.hasData) {
-                              double avg = snapshot.data!['average'] ?? 0.0;
-                              int count = snapshot.data!['count'] ?? 0;
-                              if (count > 0)
-                                ratingText = avg.toStringAsFixed(1);
-                            }
-                            return Row(
-                              children: [
-                                const Icon(Icons.star_rounded,
-                                    color: Colors.amber, size: 20),
-                                const SizedBox(width: 4),
-                                Text(
-                                  ratingText,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14),
-                                ),
-                              ],
-                            );
-                          },
+                      // --- CLICKABLE RATING START ---
+                      GestureDetector(
+                        onTap: _showReviewsModal,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.serviceVetBg,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                          ),
+                          child: FutureBuilder<Map<String, dynamic>>(
+                            future: _dbService.getItemRatingStats(_clinic.id),
+                            builder: (context, snapshot) {
+                              String ratingText = "New";
+                              String countText = "";
+                              if (snapshot.hasData) {
+                                double avg = snapshot.data!['average'] ?? 0.0;
+                                int count = snapshot.data!['count'] ?? 0;
+                                if (count > 0) {
+                                  ratingText = avg.toStringAsFixed(1);
+                                  countText = " ($count)";
+                                }
+                              }
+                              return Row(
+                                children: [
+                                  const Icon(Icons.star_rounded,
+                                      color: Colors.amber, size: 20),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    "$ratingText$countText",
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+                                ],
+                              );
+                            },
+                          ),
                         ),
                       ),
+                      // --- CLICKABLE RATING END ---
                     ],
                   ),
                   const SizedBox(height: 24),
