@@ -48,23 +48,16 @@ class _AddPostScreenState extends State<AddPostScreen> {
   final List<String> _genderList = ['Male', 'Female'];
 
   final Map<String, String> _defaultSpeciesImages = {
-    'Dog':
-        'https://cdn.discordapp.com/attachments/1362894534291361873/1462911483909374034/dog.png?ex=696fe9fd&is=696e987d&hm=8c20121e074b3926db70bedf3658334dca13f5d9226e397c0ba564e45ab90725&',
-    'Cat':
-        'https://cdn.discordapp.com/attachments/1362894534291361873/1462911483452198922/black.png?ex=696fe9fd&is=696e987d&hm=e5c3f02422eb4d1428c0c7eb706bc154c83092adc56b8e13efad3613dcd3b2db&',
-    'Bird':
-        'https://cdn.discordapp.com/attachments/1362894534291361873/1462913007343501332/hummingbird.png?ex=696feb68&is=696e99e8&hm=7854bdb6ba0996fd86d161cc0e3095061c164bd6fe8f5d69e78b1cbf40513ba7',
-    'Rabbit':
-        'https://cdn.discordapp.com/attachments/1362894534291361873/1462911482994888804/rabbit.png?ex=696fe9fd&is=696e987d&hm=fb1afbdeb338002b87ea4e2bf8f714ec1da5a3d7ffd39d8a0a9161518463fb63&',
-    'Hamster':
-        'https://cdn.discordapp.com/attachments/1362894534291361873/1462911482714001611/hamster.png?ex=696fe9fd&is=696e987d&hm=d22762007b52350e31aaa859b10df5822cd53d09f23d4ae3de802980749fcfa2&',
-    'Turtle':
-        'https://cdn.discordapp.com/attachments/1362894534291361873/1462911482382520524/turtle.png?ex=696fe9fc&is=696e987c&hm=4eea356b8bdca92ed6293e4622c3374e3b4a6cf9b78140b0dbf9326be3b0bae9&',
+    'Dog': 'lib/assets/imgs/dog.png',
+    'Cat': 'lib/assets/imgs/cat.png',
+    'Bird': 'lib/assets/imgs/bird.png',
+    'Rabbit': 'lib/assets/imgs/rabbit.png',
+    'Hamster': 'lib/assets/imgs/hamster.png',
+    'Turtle': 'lib/assets/imgs/turtle.png',
     'Other': 'https://cdn-icons-png.flaticon.com/512/12/12638.png',
   };
 
-  final String _defaultHotelImage =
-      'https://cdn.discordapp.com/attachments/1362894534291361873/1462913428564873297/dog-house.png?ex=696febcc&is=696e9a4c&hm=7fb46ed9eed7259d39a3ee1b5cbaaccc579bc1d1b3392374d4a4ac62a0e944a1';
+  final String _defaultHotelImage = 'lib/assets/imgs/dog-house.png';
 
   final List<String> _jordanAreas = [
     'Amman',

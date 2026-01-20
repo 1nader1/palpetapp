@@ -25,8 +25,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
 
   int _selectedFilterIndex = 0;
 
-  final String _defaultClinicImage =
-      'https://cdn.discordapp.com/attachments/1362894534291361873/1462913715597869098/veterinary.png?ex=696fec11&is=696e9a91&hm=a04762807434d0ed43a86d5ea677a4a6d44930118d90cffbd2102eea75c9bc77';
+  final String _defaultClinicImage = 'lib/assets/imgs/veterinary.png';
 
   bool _isClinicOpen(String workingHours) {
     try {
