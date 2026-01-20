@@ -20,7 +20,9 @@ class ClinicsScreen extends StatefulWidget {
 class _ClinicsScreenState extends State<ClinicsScreen> {
   final TextEditingController _searchController = TextEditingController();
   final DatabaseService _dbService = DatabaseService();
+
   String _searchKeyword = "";
+  bool _showOpenOnly = false;
 
   final String _defaultClinicImage =
       'https://cdn.discordapp.com/attachments/1362894534291361873/1462913715597869098/veterinary.png?ex=696fec11&is=696e9a91&hm=a04762807434d0ed43a86d5ea677a4a6d44930118d90cffbd2102eea75c9bc77';
@@ -130,6 +132,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
               children: [
                 _buildIntroHeader(),
                 _buildSearchBar(),
+                _buildFilterSection(),
               ],
             ),
           ),
@@ -161,9 +164,15 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                 final searchLower = _searchKeyword.toLowerCase();
                 final nameLower = clinic.name.toLowerCase();
                 final addressLower = clinic.address.toLowerCase();
-
-                return nameLower.contains(searchLower) ||
+                final bool matchesSearch = nameLower.contains(searchLower) ||
                     addressLower.contains(searchLower);
+
+                if (_showOpenOnly) {
+                  final bool isOpen = _isClinicOpen(clinic.workingHours);
+                  return matchesSearch && isOpen;
+                }
+
+                return matchesSearch;
               }).toList();
 
               if (filteredClinics.isEmpty) {
@@ -200,9 +209,11 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          const Text(
-                            "No Clinics Found",
-                            style: TextStyle(
+                          Text(
+                            _showOpenOnly
+                                ? "No Open Clinics"
+                                : "No Clinics Found",
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textDark,
@@ -210,7 +221,9 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            "We couldn't find any clinics matching\nyour search.",
+                            _showOpenOnly
+                                ? "There are no clinics open right now."
+                                : "We couldn't find any clinics matching\nyour search.",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 14,
@@ -259,6 +272,71 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  // [جديد] ويدجت تصميم الفلتر
+  Widget _buildFilterSection() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            _buildFilterTab("All Clinics", !_showOpenOnly),
+            _buildFilterTab("Open Now", _showOpenOnly),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterTab(String text, bool isSelected) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _showOpenOnly = (text == "Open Now");
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.05), blurRadius: 4)
+                  ]
+                : [],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (text == "Open Now" && isSelected)
+                const Padding(
+                  padding: EdgeInsets.only(right: 6),
+                  child: Icon(Icons.circle, size: 8, color: Colors.green),
+                ),
+              Text(
+                text,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: isSelected ? AppColors.primary : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
