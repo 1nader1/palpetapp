@@ -25,7 +25,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
 
   int _selectedFilterIndex = 0;
 
-  final String _defaultClinicImage = 'lib/assets/imgs/veterinary.png';
+  // This is a local asset path
+  final String _defaultClinicImage = 'assets/imgs/veterinary.png';
 
   bool _isClinicOpen(String workingHours) {
     try {
@@ -197,7 +198,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(40.0),
-                              child: Image.network(
+                              // FIX 1: Use Image.asset for local file
+                              child: Image.asset(
                                 _defaultClinicImage,
                                 fit: BoxFit.contain,
                                 errorBuilder: (ctx, _, __) => const Icon(
@@ -546,7 +548,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                     alignment: Alignment.center,
                                     children: [
                                       if (selectedImage == null)
-                                        Image.network(
+                                        // FIX 2: Use Image.asset for local file
+                                        Image.asset(
                                           _defaultClinicImage,
                                           height: 100,
                                           fit: BoxFit.contain,
