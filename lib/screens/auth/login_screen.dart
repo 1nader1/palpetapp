@@ -17,7 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
 
   bool _isLoading = false;
-
   bool _isPasswordVisible = false;
 
   void _login() async {
@@ -44,6 +43,109 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // --- دالة عرض نافذة نسيان كلمة المرور ---
+  void _showForgotPasswordDialog() {
+    final resetEmailController = TextEditingController();
+    final resetFormKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Reset Password',
+            style: TextStyle(
+                color: AppColors.textDark, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Enter your email address and we will send you a link to reset your password.',
+                style: TextStyle(color: AppColors.textGrey, fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+              Form(
+                key: resetFormKey,
+                child: TextFormField(
+                  controller: resetEmailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: _inputDecoration('Email', Icons.email_outlined),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(value)) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () async {
+                if (resetFormKey.currentState!.validate()) {
+                  Navigator.pop(context); // إغلاق النافذة وبدء التحميل
+                  _sendResetEmail(resetEmailController.text.trim());
+                }
+              },
+              child: const Text('Send Link', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- منطق إرسال الإيميل ---
+  void _sendResetEmail(String email) async {
+    // إظهار مؤشر تحميل
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+          child: CircularProgressIndicator(color: AppColors.primary)),
+    );
+
+    try {
+      await AuthService().sendPasswordResetEmail(email);
+      
+      if (mounted) {
+        Navigator.pop(context); // إخفاء مؤشر التحميل
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password reset link sent! Check your email.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // إخفاء مؤشر التحميل
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -115,7 +217,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    // تم ربط الزر بالدالة الجديدة هنا
+                    onPressed: _showForgotPasswordDialog,
                     child: const Text(
                       'Forgot Password?',
                       style: TextStyle(color: AppColors.primary),

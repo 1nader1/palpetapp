@@ -22,7 +22,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
-  
+
   // [NEW] Variables for Notifications
   int _unreadNotifications = 0;
   StreamSubscription<int>? _notificationSubscription;
@@ -61,11 +61,10 @@ class _MainShellState extends State<MainShell> {
       _notificationSubscription = DatabaseService()
           .getUnreadNotificationsCount(_currentUserId!)
           .listen((newCount) {
-        
         // If the new count is higher than before, play a sound ("Ring")
         if (newCount > _unreadNotifications && _unreadNotifications != 0) {
-           // This plays the default system alert sound (Ping/Click)
-           SystemSound.play(SystemSoundType.alert);
+          // This plays the default system alert sound (Ping/Click)
+          SystemSound.play(SystemSoundType.alert);
         }
 
         if (mounted) {
@@ -93,12 +92,17 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (bool didPop, dynamic result) {
-        if (didPop) return;
+      // في نسخة 3.22.1، المعامل هو onPopInvoked ويستقبل bool فقط
+      onPopInvoked: (bool didPop) {
+        if (didPop) {
+          return;
+        }
+
         if (_selectedIndex != 0) {
           _onItemTapped(0);
         }
       },
+
       child: Scaffold(
         appBar: AppBar(
           leading: const Padding(

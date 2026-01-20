@@ -26,7 +26,8 @@ android {
 
  defaultConfig {
         applicationId = "com.example.palpet"
-        minSdk = flutter.minSdkVersion
+        
+        minSdk = 23
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
