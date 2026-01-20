@@ -30,10 +30,33 @@ class AdoptionPetCard extends StatelessWidget {
     this.header,
   });
 
+  bool get _isLocalAsset =>
+      imageUrl.startsWith('assets/') || imageUrl.startsWith('lib/');
+
   bool get _isDefaultIcon {
-    return imageUrl.contains('flaticon') || 
-           imageUrl.contains('discordapp') || 
-           imageUrl.contains('placeholder');
+    return _isLocalAsset ||
+        imageUrl.contains('flaticon') ||
+        imageUrl.contains('discordapp') ||
+        imageUrl.contains('placeholder');
+  }
+
+  Widget _buildImage(String path, BoxFit fit) {
+    if (_isLocalAsset) {
+      return Image.asset(
+        path,
+        fit: fit,
+        errorBuilder: (ctx, _, __) =>
+            const Icon(Icons.pets, size: 50, color: Colors.grey),
+      );
+    }
+    return Image.network(
+      path,
+      fit: fit,
+      errorBuilder: (ctx, _, __) => Container(
+        color: Colors.grey[200],
+        child: const Icon(Icons.pets, size: 50, color: Colors.grey),
+      ),
+    );
   }
 
   void _showOwnerProfile(BuildContext context) {
@@ -164,7 +187,6 @@ class AdoptionPetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  
     final bool isIcon = _isDefaultIcon;
 
     return Container(
@@ -218,39 +240,23 @@ class AdoptionPetCard extends StatelessWidget {
                 ],
               ),
             ),
-          
-         
           ClipRRect(
             borderRadius:
-                header != null ? BorderRadius.zero : BorderRadius.zero, 
+                header != null ? BorderRadius.zero : BorderRadius.zero,
             child: Container(
               height: 200,
               width: double.infinity,
-              color: isIcon ? AppColors.primary.withOpacity(0.05) : Colors.grey[100], 
-              child: isIcon 
-              ? Padding(
-                  padding: const EdgeInsets.all(20.0), 
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.contain, 
-                    errorBuilder: (ctx, _, __) => const Icon(Icons.pets, size: 50, color: Colors.grey),
-                  ),
-                )
-              : Image.network(
-                  imageUrl,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover, 
-                  errorBuilder: (ctx, _, __) => Container(
-                    height: 200,
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.pets, size: 50, color: Colors.grey),
-                  ),
-                ),
+              color: isIcon
+                  ? AppColors.primary.withOpacity(0.05)
+                  : Colors.grey[100],
+              child: isIcon
+                  ? Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: _buildImage(imageUrl, BoxFit.contain),
+                    )
+                  : _buildImage(imageUrl, BoxFit.cover),
             ),
           ),
-          
-
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(

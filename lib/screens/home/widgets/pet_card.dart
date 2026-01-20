@@ -25,10 +25,43 @@ class PetCard extends StatelessWidget {
     required this.onTap,
   });
 
+  // HELPER: Check if the image is a local asset
+  bool get _isLocalAsset {
+    return imageUrl.startsWith('assets/') || imageUrl.startsWith('lib/');
+  }
+
+  // HELPER: Check if it's a default icon (to determine background color)
   bool get _isDefaultIcon {
-    return imageUrl.contains('flaticon') ||
+    return _isLocalAsset ||
+        imageUrl.contains('flaticon') ||
         imageUrl.contains('discordapp') ||
         imageUrl.contains('placeholder');
+  }
+
+  // HELPER: Build the correct image widget
+  Widget _buildImage() {
+    if (_isLocalAsset) {
+      return Image.asset(
+        imageUrl,
+        fit: _isDefaultIcon ? BoxFit.contain : BoxFit.cover,
+        errorBuilder: (ctx, error, stackTrace) {
+          return const Center(
+            child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
+          );
+        },
+      );
+    } else {
+      return Image.network(
+        imageUrl,
+        fit: _isDefaultIcon ? BoxFit.contain : BoxFit.cover,
+        errorBuilder: (ctx, error, stackTrace) {
+          return Container(
+            color: Colors.grey[100],
+            child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+          );
+        },
+      );
+    }
   }
 
   void _showOwnerProfile(BuildContext context) {
@@ -222,25 +255,13 @@ class PetCard extends StatelessWidget {
                 color: isIcon
                     ? AppColors.primary.withOpacity(0.05)
                     : Colors.grey[100],
+                // THIS IS THE FIXED PART
                 child: isIcon
                     ? Padding(
                         padding: const EdgeInsets.all(30.0),
-                        child: Image.network(
-                          imageUrl,
-                          fit: BoxFit.contain,
-                          errorBuilder: (ctx, _, __) => const Icon(Icons.pets,
-                              size: 50, color: Colors.grey),
-                        ),
+                        child: _buildImage(),
                       )
-                    : Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (ctx, _, __) => Container(
-                          color: Colors.grey[100],
-                          child: const Icon(Icons.pets,
-                              size: 50, color: Colors.grey),
-                        ),
-                      ),
+                    : _buildImage(),
               ),
             ),
           ),

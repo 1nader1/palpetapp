@@ -26,10 +26,34 @@ class HotelCard extends StatelessWidget {
     required this.onTap,
   });
 
+  bool get _isLocalAsset =>
+      imageUrl.startsWith('assets/') || imageUrl.startsWith('lib/');
+
   bool get _isDefaultIcon {
-    return imageUrl.contains('flaticon') ||
+    return _isLocalAsset ||
+        imageUrl.contains('flaticon') ||
         imageUrl.contains('discordapp') ||
         imageUrl.contains('placeholder');
+  }
+
+  Widget _buildImage(String path, BoxFit fit) {
+    if (_isLocalAsset) {
+      return Image.asset(
+        path,
+        fit: fit,
+        errorBuilder: (c, e, s) =>
+            const Icon(Icons.apartment, size: 50, color: Colors.grey),
+      );
+    }
+    return Image.network(
+      path,
+      fit: fit,
+      errorBuilder: (c, e, s) => Container(
+        height: 200,
+        color: Colors.grey[200],
+        child: const Icon(Icons.broken_image, color: Colors.grey),
+      ),
+    );
   }
 
   void _showOwnerProfile(BuildContext context) {
@@ -190,7 +214,6 @@ class HotelCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                
                 FutureBuilder<Map<String, dynamic>>(
                   future: DatabaseService().getItemRatingStats(petId),
                   builder: (context, snapshot) {
@@ -227,7 +250,6 @@ class HotelCard extends StatelessWidget {
               ],
             ),
           ),
-
           Stack(
             children: [
               ClipRRect(
@@ -241,28 +263,13 @@ class HotelCard extends StatelessWidget {
                   child: isIcon
                       ? Padding(
                           padding: const EdgeInsets.all(30.0),
-                          child: Image.network(
-                            imageUrl,
-                            fit: BoxFit.contain,
-                            errorBuilder: (c, e, s) => const Icon(
-                                Icons.apartment,
-                                size: 50,
-                                color: Colors.grey),
-                          ),
+                          child: _buildImage(imageUrl, BoxFit.contain),
                         )
-                      : Image.network(
-                          imageUrl,
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (c, e, s) =>
-                              Container(height: 200, color: Colors.grey[200]),
-                        ),
+                      : _buildImage(imageUrl, BoxFit.cover),
                 ),
               ),
             ],
           ),
-
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(

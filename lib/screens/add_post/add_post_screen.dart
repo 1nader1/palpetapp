@@ -47,17 +47,19 @@ class _AddPostScreenState extends State<AddPostScreen> {
   ];
   final List<String> _genderList = ['Male', 'Female'];
 
+  // UPDATED PATHS HERE: removed 'lib/' prefix
   final Map<String, String> _defaultSpeciesImages = {
-    'Dog': 'lib/assets/imgs/dog.png',
-    'Cat': 'lib/assets/imgs/cat.png',
-    'Bird': 'lib/assets/imgs/bird.png',
-    'Rabbit': 'lib/assets/imgs/rabbit.png',
-    'Hamster': 'lib/assets/imgs/hamster.png',
-    'Turtle': 'lib/assets/imgs/turtle.png',
+    'Dog': 'assets/imgs/dog.png',
+    'Cat': 'assets/imgs/cat.png',
+    'Bird': 'assets/imgs/bird.png',
+    'Rabbit': 'assets/imgs/rabbit.png',
+    'Hamster': 'assets/imgs/hamster.png',
+    'Turtle': 'assets/imgs/turtle.png',
     'Other': 'https://cdn-icons-png.flaticon.com/512/12/12638.png',
   };
 
-  final String _defaultHotelImage = 'lib/assets/imgs/dog-house.png';
+  // UPDATED PATH HERE: removed 'lib/' prefix
+  final String _defaultHotelImage = 'assets/imgs/dog-house.png';
 
   final List<String> _jordanAreas = [
     'Amman',
@@ -766,11 +768,24 @@ class _AddPostScreenState extends State<AddPostScreen> {
     ImageProvider? imageProvider;
     bool isDefault = false;
 
+    // Check if image is local asset
+    bool isLocalAsset = false;
+    if (_existingImageUrl != null) {
+      if (_existingImageUrl!.startsWith('assets/') ||
+          _existingImageUrl!.startsWith('lib/')) {
+        isLocalAsset = true;
+      }
+    }
+
     if (_selectedImage != null) {
       imageProvider = FileImage(_selectedImage!);
     } else if (_existingImageUrl != null &&
         _existingImageUrl != _genericFallbackImage) {
-      imageProvider = NetworkImage(_existingImageUrl!);
+      if (isLocalAsset) {
+        imageProvider = AssetImage(_existingImageUrl!);
+      } else {
+        imageProvider = NetworkImage(_existingImageUrl!);
+      }
     } else {
       isDefault = true;
       String placeholderUrl;
@@ -781,7 +796,13 @@ class _AddPostScreenState extends State<AddPostScreen> {
         placeholderUrl =
             _defaultSpeciesImages[species] ?? _defaultSpeciesImages['Other']!;
       }
-      imageProvider = NetworkImage(placeholderUrl);
+
+      // Check if placeholder is local or network
+      if (placeholderUrl.startsWith('assets/')) {
+        imageProvider = AssetImage(placeholderUrl);
+      } else {
+        imageProvider = NetworkImage(placeholderUrl);
+      }
     }
 
     return Container(

@@ -25,10 +25,31 @@ class LostFoundCard extends StatelessWidget {
     this.header,
   });
 
+  bool get _isLocalAsset =>
+      imageUrl.startsWith('assets/') || imageUrl.startsWith('lib/');
+
   bool get _isDefaultIcon {
-    return imageUrl.contains('flaticon') ||
+    return _isLocalAsset ||
+        imageUrl.contains('flaticon') ||
         imageUrl.contains('discordapp') ||
         imageUrl.contains('placeholder');
+  }
+
+  Widget _buildImage(String path, BoxFit fit) {
+    if (_isLocalAsset) {
+      return Image.asset(
+        path,
+        fit: fit,
+        errorBuilder: (c, e, s) =>
+            const Icon(Icons.pets, size: 50, color: Colors.grey),
+      );
+    }
+    return Image.network(
+      path,
+      fit: fit,
+      errorBuilder: (c, e, s) =>
+          Container(height: 180, color: Colors.grey[200]),
+    );
   }
 
   void _showOwnerProfile(BuildContext context) {
@@ -223,21 +244,9 @@ class LostFoundCard extends StatelessWidget {
               child: isIcon
                   ? Padding(
                       padding: const EdgeInsets.all(20.0),
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.contain,
-                        errorBuilder: (c, e, s) => const Icon(Icons.pets,
-                            size: 50, color: Colors.grey),
-                      ),
+                      child: _buildImage(imageUrl, BoxFit.contain),
                     )
-                  : Image.network(
-                      imageUrl,
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (c, e, s) =>
-                          Container(height: 180, color: Colors.grey[200]),
-                    ),
+                  : _buildImage(imageUrl, BoxFit.cover),
             ),
           ),
           Padding(
