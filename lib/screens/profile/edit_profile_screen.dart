@@ -16,8 +16,16 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+
   final _nameController = TextEditingController();
   final _usernameController = TextEditingController();
+
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+
+  bool _isCurrentPasswordVisible = false;
+  bool _isNewPasswordVisible = false;
+
   String? _selectedLocation;
   bool _isLoading = false;
   String _initialUsername = "";
@@ -52,6 +60,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _loadCurrentUserData();
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _usernameController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadCurrentUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -84,6 +101,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
+
     try {
       final uid = FirebaseAuth.instance.currentUser!.uid;
       final newUsername = _usernameController.text.trim().toLowerCase();
@@ -91,6 +109,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (newUsername != _initialUsername) {
         bool isUnique = await AuthService().isUsernameUnique(newUsername);
         if (!isUnique) throw 'Username is already taken';
+      }
+
+      if (_newPasswordController.text.isNotEmpty) {
+        if (_currentPasswordController.text.isEmpty) {
+          throw 'Please enter your current password to set a new one.';
+        }
+
+        await AuthService().changePassword(
+          currentPassword: _currentPasswordController.text,
+          newPassword: _newPasswordController.text,
+        );
       }
 
       await DatabaseService().updateUserProfile(
@@ -103,8 +132,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("Profile updated!")));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Profile updated successfully!")));
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -138,6 +167,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Form(
                 key: _formKey,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Center(
                       child: GestureDetector(
@@ -178,25 +208,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 30),
-                    TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                            labelText: "Full Name",
-                            border: OutlineInputBorder()),
-                        validator: (v) => v!.isEmpty ? "Enter name" : null),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                        controller: _usernameController,
-                        decoration: const InputDecoration(
-                            labelText: "Username",
-                            border: OutlineInputBorder(),
-                            prefixText: "@"),
-                        validator: (v) => v!.isEmpty ? "Enter username" : null),
-                    const SizedBox(height: 20),
+                    _buildTextField(
+                      label: "Full Name",
+                      controller: _nameController,
+                      icon: Icons.person_outline,
+                      validator: (v) => v!.isEmpty ? "Enter name" : null,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      label: "Username",
+                      controller: _usernameController,
+                      icon: Icons.alternate_email,
+                      validator: (v) => v!.isEmpty ? "Enter username" : null,
+                    ),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: _selectedLocation,
-                      decoration: const InputDecoration(
-                          labelText: "Location", border: OutlineInputBorder()),
+                      decoration: _inputDecoration(
+                          "Location", Icons.location_on_outlined),
                       items: _jordanAreas
                           .map(
                               (a) => DropdownMenuItem(value: a, child: Text(a)))
@@ -205,19 +234,122 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       validator: (v) => v == null ? 'Select area' : null,
                     ),
                     const SizedBox(height: 30),
+                    const Divider(),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Change Password (Optional)",
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _currentPasswordController,
+                      obscureText: !_isCurrentPasswordVisible,
+                      decoration: _inputDecoration(
+                              "Current Password", Icons.lock_outline)
+                          .copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                              _isCurrentPasswordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: Colors.grey),
+                          onPressed: () => setState(() =>
+                              _isCurrentPasswordVisible =
+                                  !_isCurrentPasswordVisible),
+                        ),
+                      ),
+                      validator: (val) {
+                        if (_newPasswordController.text.isNotEmpty &&
+                            (val == null || val.isEmpty)) {
+                          return 'Required to change password';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _newPasswordController,
+                      obscureText: !_isNewPasswordVisible,
+                      decoration:
+                          _inputDecoration("New Password", Icons.lock_reset)
+                              .copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                              _isNewPasswordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: Colors.grey),
+                          onPressed: () => setState(() =>
+                              _isNewPasswordVisible = !_isNewPasswordVisible),
+                        ),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return null;
+                        if (val.length < 8) return 'At least 8 characters';
+                        String pattern =
+                            r'^(?=.*?[A-Za-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$';
+                        if (!RegExp(pattern).hasMatch(val)) {
+                          return 'Must have letters, numbers & symbols';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 40),
                     SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                            onPressed: _saveProfile,
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary),
-                            child: const Text("Save Changes",
-                                style: TextStyle(color: Colors.white)))),
+                      width: double.infinity,
+                      height: 55,
+                      child: ElevatedButton(
+                        onPressed: _saveProfile,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15)),
+                          elevation: 2,
+                        ),
+                        child: const Text("Save Changes",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildTextField(
+      {required String label,
+      required TextEditingController controller,
+      required IconData icon,
+      String? Function(String?)? validator}) {
+    return TextFormField(
+      controller: controller,
+      decoration: _inputDecoration(label, icon),
+      validator: validator,
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: AppColors.textGrey),
+      filled: true,
+      fillColor: Colors.grey[50],
+      border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[200]!)),
+      focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary)),
     );
   }
 }

@@ -112,6 +112,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: (value) =>
                       value!.isEmpty ? 'Please enter your password' : null,
                 ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {},
+                    child: const Text(
+                      'Forgot Password?',
+                      style: TextStyle(color: AppColors.primary),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 24),
                 _isLoading
                     ? const Center(

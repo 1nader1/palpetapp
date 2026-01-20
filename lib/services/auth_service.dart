@@ -95,30 +95,58 @@ class AuthService {
     try {
       await _auth.currentUser?.delete();
     } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        throw 'For security, please log out and log in again to delete your account.';
+      }
       throw _handleAuthError(e);
     } catch (e) {
       rethrow;
     }
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw 'No user logged in';
+    if (user.email == null) throw 'User email not found';
+
+    try {
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password') {
+        throw 'Current password is incorrect';
+      }
+      throw _handleAuthError(e);
+    }
+  }
+
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'email-already-in-use':
-        return 'هذا البريد الإلكتروني مستخدم بالفعل.';
+        return 'Email already in use.';
       case 'invalid-email':
-        return 'البريد الإلكتروني غير صالح.';
+        return 'Invalid email address.';
       case 'weak-password':
-        return 'كلمة المرور ضعيفة جداً.';
+        return 'Password is too weak.';
       case 'user-not-found':
-        return 'لا يوجد حساب بهذا البريد الإلكتروني.';
+        return 'No user found with this email.';
       case 'wrong-password':
-        return 'كلمة المرور غير صحيحة.';
+        return 'Incorrect password.';
       case 'network-request-failed':
-        return 'تأكد من اتصالك بالإنترنت.';
+        return 'Check your internet connection.';
       case 'requires-recent-login':
-        return 'لأسباب أمنية، يرجى تسجيل الخروج وتسجيل الدخول مرة أخرى لحذف الحساب.';
+        return 'Please log out and log in again to perform this action.';
       default:
-        return 'حدث خطأ: ${e.message}';
+        return 'Error: ${e.message}';
     }
   }
 }
