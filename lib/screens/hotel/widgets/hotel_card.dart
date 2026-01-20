@@ -10,7 +10,7 @@ class HotelCard extends StatelessWidget {
   final String address;
   final String imageUrl;
   final String description;
-    final List<String> supportedPets;
+  final List<String> supportedPets;
 
   final VoidCallback onTap;
 
@@ -26,7 +26,7 @@ class HotelCard extends StatelessWidget {
     required this.onTap,
   });
 
-  // دالة التحقق من الأيقونة (لضبط حجم الصورة)
+  // Helper to check if it's a default icon/placeholder
   bool get _isDefaultIcon {
     return imageUrl.contains('flaticon') || 
            imageUrl.contains('discordapp') || 
@@ -145,10 +145,8 @@ class HotelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // استخدام المتغير لضبط العرض
     final bool isIcon = _isDefaultIcon;
 
-    // تم إزالة GestureDetector من هنا، الآن الحاوية (Container) هي الجذر
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
@@ -202,7 +200,7 @@ class HotelCard extends StatelessWidget {
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.star, size: 14, color: Colors.orange),
+                      Icon(Icons.hotel, size: 14, color: Colors.orange),
                       SizedBox(width: 4),
                       Text(
                         "Hotel",
@@ -219,32 +217,88 @@ class HotelCard extends StatelessWidget {
             ),
           ),
 
-          // --- عرض الصورة (Contain للأيقونات / Cover للصور) ---
-          ClipRRect(
-            borderRadius: BorderRadius.zero,
-            child: Container(
-              height: 200,
-              width: double.infinity,
-              color: isIcon ? Colors.orange.withOpacity(0.05) : Colors.grey[100],
-              child: isIcon
-                  ? Padding(
-                      padding: const EdgeInsets.all(30.0),
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.contain,
-                        errorBuilder: (c, e, s) =>
-                            const Icon(Icons.apartment, size: 50, color: Colors.grey),
+          // [UPDATED] Stack to overlay the rating on the image
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.zero,
+                child: Container(
+                  height: 200,
+                  width: double.infinity,
+                  color: isIcon
+                      ? Colors.orange.withOpacity(0.05)
+                      : Colors.grey[100],
+                  child: isIcon
+                      ? Padding(
+                          padding: const EdgeInsets.all(30.0),
+                          child: Image.network(
+                            imageUrl,
+                            fit: BoxFit.contain,
+                            errorBuilder: (c, e, s) => const Icon(
+                                Icons.apartment,
+                                size: 50,
+                                color: Colors.grey),
+                          ),
+                        )
+                      : Image.network(
+                          imageUrl,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) =>
+                              Container(height: 200, color: Colors.grey[200]),
+                        ),
+                ),
+              ),
+              
+              // [NEW] Positioned Rating Badge
+              Positioned(
+                top: 10,
+                right: 10,
+                child: FutureBuilder<Map<String, dynamic>>(
+                  future: DatabaseService().getItemRatingStats(petId),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const SizedBox();
+
+                    final double rating = snapshot.data!['average'] ?? 0.0;
+                    final int count = snapshot.data!['count'] ?? 0;
+
+                    if (count == 0) return const SizedBox();
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.95),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                          )
+                        ],
                       ),
-                    )
-                  : Image.network(
-                      imageUrl,
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (c, e, s) =>
-                          Container(height: 200, color: Colors.grey[200]),
-                    ),
-            ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.star_rounded,
+                              color: Colors.amber, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            rating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
           // ---------------------------------------------------
 
@@ -282,7 +336,7 @@ class HotelCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  "Supported: ${supportedPets.isEmpty ? 'All' : supportedPets}",
+                  "Supported: ${supportedPets.isEmpty ? 'All' : supportedPets.join(', ')}",
                   style: const TextStyle(
                       fontSize: 13,
                       color: AppColors.textGrey,
@@ -293,14 +347,14 @@ class HotelCard extends StatelessWidget {
                   description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 14, color: AppColors.textGrey),
+                  style:
+                      const TextStyle(fontSize: 14, color: AppColors.textGrey),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: onTap, // هنا فقط يتم استدعاء فتح التفاصيل
+                    onPressed: onTap,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
