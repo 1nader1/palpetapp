@@ -51,7 +51,7 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(40),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFFFFA726), Color(0xFFEF6C00)],
@@ -64,7 +64,7 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
           const Text(
             "Pet Hotels",
             style: TextStyle(
-              fontSize: 26,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -74,7 +74,7 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
             "Find the perfect stay for your furry friend",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               color: Colors.white.withOpacity(0.9),
             ),
           ),

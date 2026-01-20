@@ -38,8 +38,7 @@ class _AdoptionScreenState extends State<AdoptionScreen> {
                   top: 60, bottom: 30, left: 24, right: 24),
               decoration: const BoxDecoration(
                 color: AppColors.adoptionHeader,
-                borderRadius:
-                    BorderRadius.vertical(bottom: Radius.circular(30)),
+               
               ),
               child: Column(
                 children: [
