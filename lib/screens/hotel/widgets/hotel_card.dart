@@ -28,9 +28,9 @@ class HotelCard extends StatelessWidget {
 
   // Helper to check if it's a default icon/placeholder
   bool get _isDefaultIcon {
-    return imageUrl.contains('flaticon') || 
-           imageUrl.contains('discordapp') || 
-           imageUrl.contains('placeholder');
+    return imageUrl.contains('flaticon') ||
+        imageUrl.contains('discordapp') ||
+        imageUrl.contains('placeholder');
   }
 
   void _showOwnerProfile(BuildContext context) {
@@ -191,33 +191,47 @@ class HotelCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.hotel, size: 14, color: Colors.orange),
-                      SizedBox(width: 4),
-                      Text(
-                        "Hotel",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                        ),
+                
+                // [MOVED] Rating Widget (was "Hotel" label before)
+                FutureBuilder<Map<String, dynamic>>(
+                  future: DatabaseService().getItemRatingStats(petId),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const SizedBox();
+
+                    final double rating = snapshot.data!['average'] ?? 0.0;
+                    final int count = snapshot.data!['count'] ?? 0;
+
+                    // Style for the rating badge
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.star_rounded,
+                              color: Colors.amber, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            count > 0 ? rating.toStringAsFixed(1) : "New",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
           ),
 
-          // [UPDATED] Stack to overlay the rating on the image
+          // [UPDATED] Stack only handles the image now
           Stack(
             children: [
               ClipRRect(
@@ -248,54 +262,6 @@ class HotelCard extends StatelessWidget {
                           errorBuilder: (c, e, s) =>
                               Container(height: 200, color: Colors.grey[200]),
                         ),
-                ),
-              ),
-              
-              // [NEW] Positioned Rating Badge
-              Positioned(
-                top: 10,
-                right: 10,
-                child: FutureBuilder<Map<String, dynamic>>(
-                  future: DatabaseService().getItemRatingStats(petId),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) return const SizedBox();
-
-                    final double rating = snapshot.data!['average'] ?? 0.0;
-                    final int count = snapshot.data!['count'] ?? 0;
-
-                    if (count == 0) return const SizedBox();
-
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.95),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                          )
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.star_rounded,
-                              color: Colors.amber, size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            rating.toStringAsFixed(1),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
                 ),
               ),
             ],
