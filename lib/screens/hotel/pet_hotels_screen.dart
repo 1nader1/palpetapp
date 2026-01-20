@@ -100,7 +100,7 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
                 isExpanded: true,
                 value: _selectedPetType,
                 hint: const Text(" Pet Type"),
-                icon: const Icon(Icons.filter_list, color: AppColors.primary),
+                icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
                 items: ["All Types", "Dog", "Cat", "Bird", "Rabbit", "Other"]
                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                     .toList(),
@@ -120,11 +120,12 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
             },
             decoration: InputDecoration(
               hintText: "Search by name or location...",
-              hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+              hintStyle: const TextStyle(color: Colors.grey),
               prefixIcon: const Icon(Icons.search, color: Colors.grey),
               filled: true,
               fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey[200]!),

@@ -333,7 +333,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
           });
         },
         decoration: InputDecoration(
-          hintText: "Search for a clinic or location...",
+          hintText: "Search by name or location...",
           hintStyle: const TextStyle(color: Colors.grey),
           prefixIcon: const Icon(Icons.search, color: Colors.grey),
           filled: true,

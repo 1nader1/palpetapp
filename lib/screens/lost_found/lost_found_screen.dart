@@ -173,13 +173,13 @@ class _LostFoundScreenState extends State<LostFoundScreen> {
               });
             },
             decoration: InputDecoration(
-              hintText: "Search name, location...",
-              hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+              hintText: "Search by name or location...",
+              hintStyle: const TextStyle(color: Colors.grey),
               filled: true,
               fillColor: Colors.white,
               prefixIcon: const Icon(Icons.search, color: Colors.grey),
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey[200]!),

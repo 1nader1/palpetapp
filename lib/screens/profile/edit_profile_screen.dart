@@ -237,7 +237,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const Divider(),
                     const SizedBox(height: 10),
                     const Text(
-                      "Change Password (Optional)",
+                      "Change Password ",
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
