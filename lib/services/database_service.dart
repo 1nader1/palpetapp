@@ -8,6 +8,8 @@ class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
+  // --- Users & Profile ---
+
   Future<void> updateUserProfile({
     required String uid,
     required String name,
@@ -25,11 +27,8 @@ class DatabaseService {
       if (imageFile != null) {
         String fileName = '${uid}_profile.jpg';
         Reference ref = _storage.ref().child('profile_images/$fileName');
-
         await ref.putFile(imageFile);
-
         String photoUrl = await ref.getDownloadURL();
-
         dataToUpdate['photoUrl'] = photoUrl;
       }
 
@@ -64,6 +63,8 @@ class DatabaseService {
     }
     return 'Anonymous';
   }
+
+  // --- Pets (Posts) ---
 
   Future<int> getUserPostCount(String uid) async {
     try {
@@ -152,6 +153,8 @@ class DatabaseService {
     return null;
   }
 
+  // --- Clinics ---
+
   Future<void> addClinic(Clinic clinic) async {
     try {
       await _db.collection('clinics').add(clinic.toMap());
@@ -201,6 +204,18 @@ class DatabaseService {
                     : [],
               );
             }).toList());
+  }
+
+  // --- Notifications ---
+
+  // [IMPORTANT] This was missing and caused the error in MainShell
+  Stream<int> getUnreadNotificationsCount(String userId) {
+    return _db
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .where('isRead', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
   }
 
   Future<void> checkAndSendNotifications(Pet newPet, String petId) async {
@@ -271,6 +286,8 @@ class DatabaseService {
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
+
+  // --- Reviews & Favorites & Bookings ---
 
   Stream<QuerySnapshot> getReviews(String itemId) {
     return _db
