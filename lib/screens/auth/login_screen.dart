@@ -47,7 +47,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // --- دالة عرض نافذة نسيان كلمة المرور ---
   void _showForgotPasswordDialog() {
     final resetEmailController = TextEditingController();
     final resetFormKey = GlobalKey<FormState>();
@@ -56,7 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text(
             'Reset Password',
             style: TextStyle(
@@ -103,11 +103,12 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               onPressed: () async {
                 if (resetFormKey.currentState!.validate()) {
-                  Navigator.pop(context); // إغلاق النافذة وبدء التحميل
+                  Navigator.pop(context);
                   _sendResetEmail(resetEmailController.text.trim());
                 }
               },
-              child: const Text('Send Link', style: TextStyle(color: Colors.white)),
+              child: const Text('Send Link',
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -115,9 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // --- منطق إرسال الإيميل ---
   void _sendResetEmail(String email) async {
-    // إظهار مؤشر تحميل
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -127,9 +126,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       await AuthService().sendPasswordResetEmail(email);
-      
+
       if (mounted) {
-        Navigator.pop(context); // إخفاء مؤشر التحميل
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Password reset link sent! Check your email.'),
@@ -139,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // إخفاء مؤشر التحميل
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString()),
@@ -217,7 +216,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    // تم ربط الزر بالدالة الجديدة هنا
                     onPressed: _showForgotPasswordDialog,
                     child: const Text(
                       'Forgot Password?',

@@ -1,6 +1,6 @@
-import 'dart:async'; // [IMPORTANT] for StreamSubscription
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // [IMPORTANT] for SystemSound
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../core/constants/app_colors.dart';
 import '../services/database_service.dart';
@@ -23,7 +23,6 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
-  // [NEW] Variables for Notifications
   int _unreadNotifications = 0;
   StreamSubscription<int>? _notificationSubscription;
   final String? _currentUserId = FirebaseAuth.instance.currentUser?.uid;
@@ -34,7 +33,7 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
 
-    _setupNotificationListener(); // Start listening for "Ring" events
+    _setupNotificationListener();
 
     _screens = [
       HomeScreen(onNavigate: _onItemTapped),
@@ -55,15 +54,12 @@ class _MainShellState extends State<MainShell> {
     ];
   }
 
-  // [NEW] Logic to handle Ring/Badge
   void _setupNotificationListener() {
     if (_currentUserId != null) {
       _notificationSubscription = DatabaseService()
           .getUnreadNotificationsCount(_currentUserId!)
           .listen((newCount) {
-        // If the new count is higher than before, play a sound ("Ring")
         if (newCount > _unreadNotifications && _unreadNotifications != 0) {
-          // This plays the default system alert sound (Ping/Click)
           SystemSound.play(SystemSoundType.alert);
         }
 
@@ -92,7 +88,6 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      // في نسخة 3.22.1، المعامل هو onPopInvoked ويستقبل bool فقط
       onPopInvoked: (bool didPop) {
         if (didPop) {
           return;
@@ -102,7 +97,6 @@ class _MainShellState extends State<MainShell> {
           _onItemTapped(0);
         }
       },
-
       child: Scaffold(
         appBar: AppBar(
           leading: const Padding(
@@ -110,7 +104,6 @@ class _MainShellState extends State<MainShell> {
             child: Icon(Icons.pets, color: AppColors.primary, size: 32),
           ),
           actions: [
-            // [FIX] Notification Icon with Badge
             IconButton(
               onPressed: () {
                 Navigator.push(

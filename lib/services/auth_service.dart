@@ -87,7 +87,6 @@ class AuthService {
     }
   }
 
-  // --- دالة جديدة لإعادة تعيين كلمة المرور ---
   Future<void> sendPasswordResetEmail(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
@@ -146,7 +145,7 @@ class AuthService {
         return 'Invalid email address.';
       case 'weak-password':
         return 'Password is too weak.';
-      case 'user-not-found': // مهم جداً لاستعادة كلمة المرور
+      case 'user-not-found':
         return 'No user found with this email.';
       case 'wrong-password':
         return 'Incorrect password.';
