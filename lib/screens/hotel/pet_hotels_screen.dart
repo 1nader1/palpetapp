@@ -51,7 +51,7 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(40),
+      padding: const EdgeInsets.all(50),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFFFFA726), Color(0xFFEF6C00)],
@@ -99,7 +99,7 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
               child: DropdownButton<String>(
                 isExpanded: true,
                 value: _selectedPetType,
-                hint: const Text("Filter by Pet Type"),
+                hint: const Text(" Pet Type"),
                 icon: const Icon(Icons.filter_list, color: AppColors.primary),
                 items: ["All Types", "Dog", "Cat", "Bird", "Rabbit", "Other"]
                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -119,7 +119,7 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
               });
             },
             decoration: InputDecoration(
-              hintText: "Search hotels by name...",
+              hintText: "Search by name or location...",
               hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
               prefixIcon: const Icon(Icons.search, color: Colors.grey),
               filled: true,
@@ -173,9 +173,11 @@ class _PetHotelsScreenState extends State<PetHotelsScreen> {
             }
 
             if (_searchQuery.isNotEmpty) {
-              final name = pet.name.toLowerCase();
               final query = _searchQuery.toLowerCase();
-              if (!name.contains(query)) {
+              final name = pet.name.toLowerCase();
+              final location = pet.location.toLowerCase();
+
+              if (!name.contains(query) && !location.contains(query)) {
                 return false;
               }
             }
