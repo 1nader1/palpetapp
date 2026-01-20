@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart'; 
+import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/database_service.dart';
 
@@ -64,8 +64,9 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
     }
   }
 
-
   void _showReviewsModal() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -83,7 +84,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-
                 Center(
                   child: Container(
                     width: 40,
@@ -95,8 +95,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
-                
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -113,20 +111,20 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                         Navigator.pop(context);
                         _checkAndShowRatingDialog();
                       },
-                      icon: const Icon(Icons.edit, size: 18),
+                      icon: const Icon(Icons.add, size: 18),
                       label: const Text("Write a Review"),
-                      style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                      style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary),
                     ),
                   ],
                 ),
                 const Divider(),
-                
-
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: _dbService.getReviews(widget.data['id'] ?? ''),
                     builder: (context, snapshot) {
-                      if (snapshot.hasError) return const Center(child: Text("Something went wrong"));
+                      if (snapshot.hasError)
+                        return const Center(child: Text("Something went wrong"));
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
@@ -136,10 +134,11 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                         return Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.rate_review_outlined, size: 60, color: Colors.grey[300]),
+                            Icon(Icons.rate_review_outlined,
+                                size: 60, color: Colors.grey[300]),
                             const SizedBox(height: 10),
-                            Text("No reviews yet. Be the first!", 
-                              style: TextStyle(color: Colors.grey[500])),
+                            Text("No reviews yet. Be the first!",
+                                style: TextStyle(color: Colors.grey[500])),
                           ],
                         );
                       }
@@ -148,11 +147,16 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                         controller: controller,
                         itemCount: docs.length,
                         itemBuilder: (context, index) {
-                          final data = docs[index].data() as Map<String, dynamic>;
-                          final double rating = (data['rating'] ?? 0.0).toDouble();
+                          final doc = docs[index];
+                          final data = doc.data() as Map<String, dynamic>;
+                          final double rating =
+                              (data['rating'] ?? 0.0).toDouble();
                           final String comment = data['comment'] ?? '';
                           final String reviewerId = data['reviewerId'] ?? '';
                           final Timestamp? createdAt = data['createdAt'];
+
+                          final bool isMyReview = currentUser != null &&
+                              reviewerId == currentUser.uid;
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 16),
@@ -160,6 +164,10 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                             decoration: BoxDecoration(
                               color: Colors.grey[50],
                               borderRadius: BorderRadius.circular(12),
+                              border: isMyReview
+                                  ? Border.all(
+                                      color: AppColors.primary.withOpacity(0.3))
+                                  : null,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,10 +176,14 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     FutureBuilder<String>(
-                                      future: _dbService.getUserName(reviewerId),
+                                      future:
+                                          _dbService.getUserName(reviewerId),
                                       builder: (context, nameSnapshot) {
                                         return Text(
-                                          nameSnapshot.data ?? "Loading...",
+                                          isMyReview
+                                              ? "You"
+                                              : (nameSnapshot.data ??
+                                                  "Loading..."),
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 14,
@@ -179,11 +191,32 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                                         );
                                       },
                                     ),
-                                    Text(
-                                      createdAt != null 
-                                        ? DateFormat.yMMMd().format(createdAt.toDate())
-                                        : '',
-                                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          createdAt != null
+                                              ? DateFormat.yMMMd()
+                                                  .format(createdAt.toDate())
+                                              : '',
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[500]),
+                                        ),
+                                        if (isMyReview)
+                                          IconButton(
+                                            icon: const Icon(Icons.edit,
+                                                size: 16,
+                                                color: AppColors.primary),
+                                            constraints: const BoxConstraints(),
+                                            padding:
+                                                const EdgeInsets.only(left: 8),
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              _showEditReviewDialog(
+                                                  doc.id, rating, comment);
+                                            },
+                                          ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -191,7 +224,9 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                                 Row(
                                   children: List.generate(5, (starIndex) {
                                     return Icon(
-                                      starIndex < rating ? Icons.star : Icons.star_border,
+                                      starIndex < rating
+                                          ? Icons.star
+                                          : Icons.star_border,
                                       color: Colors.amber,
                                       size: 16,
                                     );
@@ -201,7 +236,8 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                                   const SizedBox(height: 8),
                                   Text(
                                     comment,
-                                    style: const TextStyle(color: AppColors.textDark, height: 1.4),
+                                    style: const TextStyle(
+                                        color: AppColors.textDark, height: 1.4),
                                   ),
                                 ],
                               ],
@@ -220,30 +256,121 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
     );
   }
 
+  void _showEditReviewDialog(
+      String reviewId, double currentRating, String currentComment) {
+    double rating = currentRating;
+    TextEditingController commentController =
+        TextEditingController(text: currentComment);
 
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Text("Edit Review"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("Update your rating"),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 32,
+                        ),
+                        onPressed: () {
+                          setStateDialog(() {
+                            rating = index + 1.0;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: commentController,
+                    decoration: InputDecoration(
+                      hintText: "Update comment (optional)",
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel",
+                      style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (rating > 0) {
+                      await _dbService.updateReview(
+                        reviewId: reviewId,
+                        rating: rating,
+                        comment: commentController.text,
+                      );
+                      if (mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                          content: Text("Review updated successfully!"),
+                          backgroundColor: Colors.green,
+                        ));
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text("Update"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // [UPDATED] Check for review and edit if exists
   Future<void> _checkAndShowRatingDialog() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final String? targetUserId = widget.data['ownerId'];
-    final String? petId = widget.data['id']; 
+    final String? petId = widget.data['id'];
 
     if (currentUser == null || targetUserId == null) return;
     if (currentUser.uid == targetUserId) return;
 
-
-    bool alreadyReviewed = await DatabaseService()
-        .hasUserReviewed(currentUser.uid, targetUserId, 'hotel', petId: petId);
+    DocumentSnapshot? existingReview = await DatabaseService().getUserReview(
+        currentUser.uid, targetUserId, 'hotel',
+        petId: petId);
 
     if (!mounted) return;
 
-    if (alreadyReviewed) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("You have already reviewed this hotel."),
-        backgroundColor: Colors.orange,
-      ));
-      return;
+    if (existingReview != null) {
+      final data = existingReview.data() as Map<String, dynamic>;
+      _showEditReviewDialog(
+        existingReview.id,
+        (data['rating'] ?? 0.0).toDouble(),
+        data['comment'] ?? '',
+      );
+    } else {
+      _showRatingDialog(currentUser.uid, targetUserId, petId);
     }
-
-    _showRatingDialog(currentUser.uid, targetUserId, petId);
   }
 
   void _showRatingDialog(
@@ -357,7 +484,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                       ElevatedButton(
                         onPressed: () async {
                           if (rating > 0) {
-
                             await DatabaseService().addReview(
                               targetUserId: targetUserId,
                               reviewerId: currentUserId,
@@ -366,7 +492,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                               reviewType: 'hotel',
                               petId: petId,
                             );
-
 
                             await DatabaseService().addBooking(
                               userId: currentUserId,
@@ -414,7 +539,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
 
   @override
   Widget build(BuildContext context) {
-
     final String imageUrl =
         widget.data['imageUrl'] ?? widget.data['image'] ?? '';
     final String name = widget.data['name'] ?? 'Hotel Name';
@@ -475,8 +599,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -500,7 +622,8 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                             border: Border.all(color: Colors.grey[300]!),
                           ),
                           child: FutureBuilder<Map<String, dynamic>>(
-                            future: _dbService.getItemRatingStats(widget.data['id'] ?? ''),
+                            future: _dbService
+                                .getItemRatingStats(widget.data['id'] ?? ''),
                             builder: (context, snapshot) {
                               String ratingText = "New";
                               String countText = "";
@@ -524,7 +647,8 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                                         fontSize: 13),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+                                  const Icon(Icons.chevron_right,
+                                      size: 16, color: Colors.grey),
                                 ],
                               );
                             },
@@ -533,8 +657,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
                       ),
                     ],
                   ),
-
-                  
                   const SizedBox(height: 24),
                   Container(
                     padding: const EdgeInsets.all(4),
@@ -566,7 +688,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
       ),
     );
   }
-
 
   Widget _buildDetailsContent() {
     final String description =

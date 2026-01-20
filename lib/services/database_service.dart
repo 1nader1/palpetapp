@@ -208,7 +208,6 @@ class DatabaseService {
 
   // --- Notifications ---
 
-  // [IMPORTANT] This was missing and caused the error in MainShell
   Stream<int> getUnreadNotificationsCount(String userId) {
     return _db
         .collection('notifications')
@@ -382,7 +381,26 @@ class DatabaseService {
     }
   }
 
-  Future<bool> hasUserReviewed(
+  // [NEW] Update Review Method
+  Future<void> updateReview({
+    required String reviewId,
+    required double rating,
+    required String comment,
+  }) async {
+    try {
+      await _db.collection('reviews').doc(reviewId).update({
+        'rating': rating,
+        'comment': comment,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Error updating review: $e");
+      throw Exception("Failed to update review.");
+    }
+  }
+
+  // [NEW] Get Specific Review (for editing)
+  Future<DocumentSnapshot?> getUserReview(
       String reviewerId, String targetUserId, String reviewType,
       {String? petId}) async {
     try {
@@ -398,9 +416,24 @@ class DatabaseService {
       }
 
       final snapshot = await query.limit(1).get();
-      return snapshot.docs.isNotEmpty;
+      if (snapshot.docs.isNotEmpty) {
+        return snapshot.docs.first;
+      }
+      return null;
     } catch (e) {
       print("Error checking review status: $e");
+      return null;
+    }
+  }
+
+  Future<bool> hasUserReviewed(
+      String reviewerId, String targetUserId, String reviewType,
+      {String? petId}) async {
+    try {
+      final doc = await getUserReview(reviewerId, targetUserId, reviewType,
+          petId: petId);
+      return doc != null;
+    } catch (e) {
       return false;
     }
   }

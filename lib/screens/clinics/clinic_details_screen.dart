@@ -63,7 +63,10 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
     }
   }
 
+  // [UPDATED] Shows Edit icon for your own reviews
   void _showReviewsModal() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -108,7 +111,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                         Navigator.pop(context);
                         _checkAndShowRatingDialog();
                       },
-                      icon: const Icon(Icons.edit, size: 18),
+                      icon: const Icon(Icons.add, size: 18),
                       label: const Text("Write a Review"),
                       style: TextButton.styleFrom(
                           foregroundColor: AppColors.primary),
@@ -121,8 +124,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                     stream: _dbService.getReviews(_clinic.id),
                     builder: (context, snapshot) {
                       if (snapshot.hasError)
-                        return const Center(
-                            child: Text("Something went wrong"));
+                        return const Center(child: Text("Something went wrong"));
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
@@ -145,13 +147,18 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                         controller: controller,
                         itemCount: docs.length,
                         itemBuilder: (context, index) {
+                          final doc = docs[index];
                           final data =
-                              docs[index].data() as Map<String, dynamic>;
+                              doc.data() as Map<String, dynamic>;
                           final double rating =
                               (data['rating'] ?? 0.0).toDouble();
                           final String comment = data['comment'] ?? '';
                           final String reviewerId = data['reviewerId'] ?? '';
                           final Timestamp? createdAt = data['createdAt'];
+
+                          // Check if it's my review
+                          final bool isMyReview = currentUser != null &&
+                              reviewerId == currentUser.uid;
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 16),
@@ -159,6 +166,9 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                             decoration: BoxDecoration(
                               color: Colors.grey[50],
                               borderRadius: BorderRadius.circular(12),
+                              border: isMyReview 
+                                ? Border.all(color: AppColors.primary.withOpacity(0.3)) 
+                                : null,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,7 +182,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                                           _dbService.getUserName(reviewerId),
                                       builder: (context, nameSnapshot) {
                                         return Text(
-                                          nameSnapshot.data ?? "Loading...",
+                                          isMyReview ? "You" : (nameSnapshot.data ?? "Loading..."),
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 14,
@@ -180,14 +190,33 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                                         );
                                       },
                                     ),
-                                    Text(
-                                      createdAt != null
-                                          ? DateFormat.yMMMd()
-                                              .format(createdAt.toDate())
-                                          : '',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[500]),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          createdAt != null
+                                              ? DateFormat.yMMMd()
+                                                  .format(createdAt.toDate())
+                                              : '',
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[500]),
+                                        ),
+                                        // Edit Button for my review
+                                        if (isMyReview)
+                                          IconButton(
+                                            icon: const Icon(Icons.edit,
+                                                size: 16,
+                                                color: AppColors.primary),
+                                            constraints: const BoxConstraints(),
+                                            padding:
+                                                const EdgeInsets.only(left: 8),
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              _showEditReviewDialog(
+                                                  doc.id, rating, comment);
+                                            },
+                                          ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -227,12 +256,14 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
     );
   }
 
+  // [NEW] Logic to check for existing review and trigger Edit
   Future<void> _checkAndShowRatingDialog() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
     if (currentUser.uid == _clinic.ownerId) return;
 
-    bool alreadyReviewed = await _dbService.hasUserReviewed(
+    // Fetch the specific review document
+    DocumentSnapshot? existingReview = await _dbService.getUserReview(
       currentUser.uid,
       _clinic.ownerId,
       'clinic',
@@ -241,15 +272,109 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
 
     if (!mounted) return;
 
-    if (alreadyReviewed) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("You have already reviewed this clinic."),
-        backgroundColor: Colors.orange,
-      ));
-      return;
+    if (existingReview != null) {
+      // If found, open Edit Dialog
+      final data = existingReview.data() as Map<String, dynamic>;
+      _showEditReviewDialog(
+        existingReview.id,
+        (data['rating'] ?? 0.0).toDouble(),
+        data['comment'] ?? '',
+      );
+    } else {
+      // If not found, open New Review Dialog
+      _showRatingDialog(currentUser.uid);
     }
+  }
 
-    _showRatingDialog(currentUser.uid);
+  // [NEW] Dialog for Editing Review
+  void _showEditReviewDialog(
+      String reviewId, double currentRating, String currentComment) {
+    double rating = currentRating;
+    TextEditingController commentController =
+        TextEditingController(text: currentComment);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Text("Edit Review"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("Update your rating"),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 32,
+                        ),
+                        onPressed: () {
+                          setStateDialog(() {
+                            rating = index + 1.0;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: commentController,
+                    decoration: InputDecoration(
+                      hintText: "Update comment (optional)",
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel",
+                      style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (rating > 0) {
+                      await _dbService.updateReview(
+                        reviewId: reviewId,
+                        rating: rating,
+                        comment: commentController.text,
+                      );
+                      if (mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                          content: Text("Review updated successfully!"),
+                          backgroundColor: Colors.green,
+                        ));
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text("Update"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showRatingDialog(String currentUserId) {

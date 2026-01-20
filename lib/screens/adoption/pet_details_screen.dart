@@ -50,6 +50,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
   }
 
   void _showReviewsModal() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -94,7 +96,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
                         Navigator.pop(context);
                         _checkAndShowRatingDialog();
                       },
-                      icon: const Icon(Icons.edit, size: 18),
+                      icon: const Icon(Icons.add, size: 18),
                       label: const Text("Write a Review"),
                       style: TextButton.styleFrom(
                           foregroundColor: AppColors.primary),
@@ -130,13 +132,16 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
                         controller: controller,
                         itemCount: docs.length,
                         itemBuilder: (context, index) {
-                          final data =
-                              docs[index].data() as Map<String, dynamic>;
+                          final doc = docs[index];
+                          final data = doc.data() as Map<String, dynamic>;
                           final double rating =
                               (data['rating'] ?? 0.0).toDouble();
                           final String comment = data['comment'] ?? '';
                           final String reviewerId = data['reviewerId'] ?? '';
                           final Timestamp? createdAt = data['createdAt'];
+
+                          final bool isMyReview = currentUser != null &&
+                              reviewerId == currentUser.uid;
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 16),
@@ -144,20 +149,25 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
                             decoration: BoxDecoration(
                               color: Colors.grey[50],
                               borderRadius: BorderRadius.circular(12),
+                              border: isMyReview
+                                  ? Border.all(
+                                      color: AppColors.primary.withOpacity(0.3))
+                                  : null,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     FutureBuilder<String>(
-                                      future:
-                                          _dbService.getUserName(reviewerId),
+                                      future: _dbService.getUserName(reviewerId),
                                       builder: (context, nameSnapshot) {
                                         return Text(
-                                          nameSnapshot.data ?? "Loading...",
+                                          isMyReview
+                                              ? "You"
+                                              : (nameSnapshot.data ??
+                                                  "Loading..."),
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 14,
@@ -165,14 +175,32 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
                                         );
                                       },
                                     ),
-                                    Text(
-                                      createdAt != null
-                                          ? DateFormat.yMMMd()
-                                              .format(createdAt.toDate())
-                                          : '',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[500]),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          createdAt != null
+                                              ? DateFormat.yMMMd()
+                                                  .format(createdAt.toDate())
+                                              : '',
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[500]),
+                                        ),
+                                        if (isMyReview)
+                                          IconButton(
+                                            icon: const Icon(Icons.edit,
+                                                size: 16,
+                                                color: AppColors.primary),
+                                            constraints: const BoxConstraints(),
+                                            padding:
+                                                const EdgeInsets.only(left: 8),
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              _showEditReviewDialog(
+                                                  doc.id, rating, comment);
+                                            },
+                                          ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -209,6 +237,96 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
           );
         },
       ),
+    );
+  }
+
+  void _showEditReviewDialog(
+      String reviewId, double currentRating, String currentComment) {
+    double rating = currentRating;
+    TextEditingController commentController =
+        TextEditingController(text: currentComment);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Text("Edit Review"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("Update your rating"),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 32,
+                        ),
+                        onPressed: () {
+                          setStateDialog(() {
+                            rating = index + 1.0;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: commentController,
+                    decoration: InputDecoration(
+                      hintText: "Update comment (optional)",
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel",
+                      style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (rating > 0) {
+                      await _dbService.updateReview(
+                        reviewId: reviewId,
+                        rating: rating,
+                        comment: commentController.text,
+                      );
+                      if (mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                          content: Text("Review updated successfully!"),
+                          backgroundColor: Colors.green,
+                        ));
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text("Update"),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -261,6 +379,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
     }
   }
 
+  // [UPDATED] Check for existing review and open edit dialog if found
   Future<void> _checkAndShowRatingDialog() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final String targetUserId = widget.pet.ownerId;
@@ -268,19 +387,24 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
     if (currentUser == null) return;
     if (currentUser.uid == targetUserId) return;
 
-    bool alreadyReviewed = await _dbService
-        .hasUserReviewed(currentUser.uid, targetUserId, 'adoption');
+    // Check if user already reviewed
+    DocumentSnapshot? existingReview = await _dbService.getUserReview(
+        currentUser.uid, targetUserId, 'adoption');
 
     if (!mounted) return;
 
-    if (alreadyReviewed) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("You have already reviewed this owner."),
-          backgroundColor: Colors.orange));
-      return;
+    if (existingReview != null) {
+      // If review exists, open Edit Dialog
+      final data = existingReview.data() as Map<String, dynamic>;
+      _showEditReviewDialog(
+        existingReview.id,
+        (data['rating'] ?? 0.0).toDouble(),
+        data['comment'] ?? '',
+      );
+    } else {
+      // Else open New Review Dialog
+      _showRatingDialog(currentUser.uid, targetUserId);
     }
-
-    _showRatingDialog(currentUser.uid, targetUserId);
   }
 
   void _showRatingDialog(String currentUserId, String targetUserId) {
@@ -553,7 +677,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
                     ],
                   ),
                   const SizedBox(height: 20),
-
                   const Text("About",
                       style: TextStyle(
                           fontSize: 18,
