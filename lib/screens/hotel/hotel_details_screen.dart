@@ -346,7 +346,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
     );
   }
 
-  // [UPDATED] Check for review and edit if exists
   Future<void> _checkAndShowRatingDialog() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final String? targetUserId = widget.data['ownerId'];
@@ -688,7 +687,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen>
       ),
     );
   }
-
   Widget _buildDetailsContent() {
     final String description =
         widget.data['description'] ?? "No description available.";

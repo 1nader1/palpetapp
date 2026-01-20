@@ -83,7 +83,6 @@ class _LostFoundDetailsScreenState extends State<LostFoundDetailsScreen> {
   Widget build(BuildContext context) {
     final pet = widget.pet;
     
-    // Format date if available
     String dateStr = "";
     if (pet.createdAt != null) {
         dateStr = DateFormat.yMMMd().format(pet.createdAt!);
@@ -127,7 +126,7 @@ class _LostFoundDetailsScreenState extends State<LostFoundDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image Section
+           
             SizedBox(
               height: 350,
               width: double.infinity,
@@ -141,7 +140,7 @@ class _LostFoundDetailsScreenState extends State<LostFoundDetailsScreen> {
               ),
             ),
             
-            // Details Section
+           
             Container(
               transform: Matrix4.translationValues(0.0, -30.0, 0.0),
               decoration: const BoxDecoration(
@@ -164,13 +163,12 @@ class _LostFoundDetailsScreenState extends State<LostFoundDetailsScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Title and Post Type Badge
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
-                          pet.type, // e.g. "Dog" or "Cat"
+                          pet.type, 
                           style: const TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
@@ -221,19 +219,17 @@ class _LostFoundDetailsScreenState extends State<LostFoundDetailsScreen> {
                   
                   const SizedBox(height: 24),
                   
-                  // Breed & Reward Row
                   Row(
                     children: [
                       Expanded(child: _buildInfoItem("Breed", pet.breed)),
-                      // If there is a reward (or other info), show it here
-                      // Assuming 'age' might be reused for something else or just blank in LostFound
+                     
                       Expanded(child: _buildInfoItem("Location Area", pet.location)),
                     ],
                   ),
 
                   const SizedBox(height: 24),
                   
-                  // Location Full Row
+                 
                   const Text("Exact Location",
                       style: TextStyle(
                           fontSize: 16,
@@ -254,10 +250,10 @@ class _LostFoundDetailsScreenState extends State<LostFoundDetailsScreen> {
                       ),
                     ],
                   ),
-                  
+              
                   const SizedBox(height: 30),
                   
-                  // Contact Button
+              
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(

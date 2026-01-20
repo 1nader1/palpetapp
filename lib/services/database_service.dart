@@ -8,8 +8,6 @@ class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // --- Users & Profile ---
-
   Future<void> updateUserProfile({
     required String uid,
     required String name,
@@ -63,8 +61,6 @@ class DatabaseService {
     }
     return 'Anonymous';
   }
-
-  // --- Pets (Posts) ---
 
   Future<int> getUserPostCount(String uid) async {
     try {
@@ -153,8 +149,6 @@ class DatabaseService {
     return null;
   }
 
-  // --- Clinics ---
-
   Future<void> addClinic(Clinic clinic) async {
     try {
       await _db.collection('clinics').add(clinic.toMap());
@@ -205,8 +199,6 @@ class DatabaseService {
               );
             }).toList());
   }
-
-  // --- Notifications ---
 
   Stream<int> getUnreadNotificationsCount(String userId) {
     return _db
@@ -285,8 +277,6 @@ class DatabaseService {
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
-
-  // --- Reviews & Favorites & Bookings ---
 
   Stream<QuerySnapshot> getReviews(String itemId) {
     return _db
@@ -381,7 +371,6 @@ class DatabaseService {
     }
   }
 
-  // [NEW] Update Review Method
   Future<void> updateReview({
     required String reviewId,
     required double rating,
@@ -399,7 +388,6 @@ class DatabaseService {
     }
   }
 
-  // [NEW] Get Specific Review (for editing)
   Future<DocumentSnapshot?> getUserReview(
       String reviewerId, String targetUserId, String reviewType,
       {String? petId}) async {

@@ -379,7 +379,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
     }
   }
 
-  // [UPDATED] Check for existing review and open edit dialog if found
   Future<void> _checkAndShowRatingDialog() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final String targetUserId = widget.pet.ownerId;
@@ -387,14 +386,12 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
     if (currentUser == null) return;
     if (currentUser.uid == targetUserId) return;
 
-    // Check if user already reviewed
     DocumentSnapshot? existingReview = await _dbService.getUserReview(
         currentUser.uid, targetUserId, 'adoption');
 
     if (!mounted) return;
 
     if (existingReview != null) {
-      // If review exists, open Edit Dialog
       final data = existingReview.data() as Map<String, dynamic>;
       _showEditReviewDialog(
         existingReview.id,
@@ -402,7 +399,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen>
         data['comment'] ?? '',
       );
     } else {
-      // Else open New Review Dialog
       _showRatingDialog(currentUser.uid, targetUserId);
     }
   }

@@ -63,7 +63,7 @@ class NotificationsScreen extends StatelessWidget {
           } else if (pet.postType == 'Lost' || pet.postType == 'Found') {
              Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => LostFoundDetailsScreen(pet: pet)), // <--- تم الإصلاح هنا
+              MaterialPageRoute(builder: (_) => LostFoundDetailsScreen(pet: pet)), 
             );
           } else {
              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("التفاصيل غير متاحة لهذا النوع")));

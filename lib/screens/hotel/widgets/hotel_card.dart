@@ -26,7 +26,6 @@ class HotelCard extends StatelessWidget {
     required this.onTap,
   });
 
-  // Helper to check if it's a default icon/placeholder
   bool get _isDefaultIcon {
     return imageUrl.contains('flaticon') ||
         imageUrl.contains('discordapp') ||
@@ -192,7 +191,6 @@ class HotelCard extends StatelessWidget {
                   ),
                 ),
                 
-                // [MOVED] Rating Widget (was "Hotel" label before)
                 FutureBuilder<Map<String, dynamic>>(
                   future: DatabaseService().getItemRatingStats(petId),
                   builder: (context, snapshot) {
@@ -201,7 +199,6 @@ class HotelCard extends StatelessWidget {
                     final double rating = snapshot.data!['average'] ?? 0.0;
                     final int count = snapshot.data!['count'] ?? 0;
 
-                    // Style for the rating badge
                     return Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 5),
@@ -231,7 +228,6 @@ class HotelCard extends StatelessWidget {
             ),
           ),
 
-          // [UPDATED] Stack only handles the image now
           Stack(
             children: [
               ClipRRect(
@@ -266,7 +262,6 @@ class HotelCard extends StatelessWidget {
               ),
             ],
           ),
-          // ---------------------------------------------------
 
           Padding(
             padding: const EdgeInsets.all(16.0),

@@ -43,7 +43,7 @@ class _MainShellState extends State<MainShell> {
       const LostFoundScreen(),
       const PetHotelsScreen(),
       const ClinicsScreen(),
-      // Duplicates preserved
+     
       HomeScreen(onNavigate: _onItemTapped),
       AddPostScreen(onNavigate: _onItemTapped),
       const ProfileScreen(),
