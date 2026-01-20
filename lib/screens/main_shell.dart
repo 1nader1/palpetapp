@@ -1,5 +1,9 @@
+import 'dart:async'; // [IMPORTANT] for StreamSubscription
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // [IMPORTANT] for SystemSound
+import 'package:firebase_auth/firebase_auth.dart';
 import '../core/constants/app_colors.dart';
+import '../services/database_service.dart';
 import 'home/home_screen.dart';
 import 'adoption/adoption_screen.dart';
 import 'lost_found/lost_found_screen.dart';
@@ -18,12 +22,19 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
+  
+  // [NEW] Variables for Notifications
+  int _unreadNotifications = 0;
+  StreamSubscription<int>? _notificationSubscription;
+  final String? _currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
   late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
+
+    _setupNotificationListener(); // Start listening for "Ring" events
 
     _screens = [
       HomeScreen(onNavigate: _onItemTapped),
@@ -33,6 +44,7 @@ class _MainShellState extends State<MainShell> {
       const LostFoundScreen(),
       const PetHotelsScreen(),
       const ClinicsScreen(),
+      // Duplicates preserved
       HomeScreen(onNavigate: _onItemTapped),
       AddPostScreen(onNavigate: _onItemTapped),
       const ProfileScreen(),
@@ -41,6 +53,34 @@ class _MainShellState extends State<MainShell> {
       const PetHotelsScreen(),
       const ClinicsScreen(),
     ];
+  }
+
+  // [NEW] Logic to handle Ring/Badge
+  void _setupNotificationListener() {
+    if (_currentUserId != null) {
+      _notificationSubscription = DatabaseService()
+          .getUnreadNotificationsCount(_currentUserId!)
+          .listen((newCount) {
+        
+        // If the new count is higher than before, play a sound ("Ring")
+        if (newCount > _unreadNotifications && _unreadNotifications != 0) {
+           // This plays the default system alert sound (Ping/Click)
+           SystemSound.play(SystemSoundType.alert);
+        }
+
+        if (mounted) {
+          setState(() {
+            _unreadNotifications = newCount;
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _notificationSubscription?.cancel();
+    super.dispose();
   }
 
   void _onItemTapped(int index) {
@@ -53,11 +93,8 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (bool didPop) {
-        if (didPop) {
-          return;
-        }
-
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         if (_selectedIndex != 0) {
           _onItemTapped(0);
         }
@@ -69,8 +106,8 @@ class _MainShellState extends State<MainShell> {
             child: Icon(Icons.pets, color: AppColors.primary, size: 32),
           ),
           actions: [
+            // [FIX] Notification Icon with Badge
             IconButton(
-              icon: const Icon(Icons.notifications_outlined),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -79,6 +116,15 @@ class _MainShellState extends State<MainShell> {
                   ),
                 );
               },
+              icon: Badge(
+                isLabelVisible: _unreadNotifications > 0,
+                label: Text(
+                  '$_unreadNotifications',
+                  style: const TextStyle(color: Colors.white),
+                ),
+                backgroundColor: Colors.red,
+                child: const Icon(Icons.notifications_outlined),
+              ),
             ),
             Builder(
               builder: (context) => IconButton(
