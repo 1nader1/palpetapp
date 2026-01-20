@@ -22,7 +22,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   final DatabaseService _dbService = DatabaseService();
 
   String _searchKeyword = "";
-  bool _showOpenOnly = false;
+
+  int _selectedFilterIndex = 0;
 
   final String _defaultClinicImage =
       'https://cdn.discordapp.com/attachments/1362894534291361873/1462913715597869098/veterinary.png?ex=696fec11&is=696e9a91&hm=a04762807434d0ed43a86d5ea677a4a6d44930118d90cffbd2102eea75c9bc77';
@@ -131,8 +132,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             child: Column(
               children: [
                 _buildIntroHeader(),
-                _buildSearchBar(),
-                _buildFilterSection(),
+                _buildFiltersAndSearch(),
               ],
             ),
           ),
@@ -167,7 +167,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                 final bool matchesSearch = nameLower.contains(searchLower) ||
                     addressLower.contains(searchLower);
 
-                if (_showOpenOnly) {
+                if (_selectedFilterIndex == 1) {
                   final bool isOpen = _isClinicOpen(clinic.workingHours);
                   return matchesSearch && isOpen;
                 }
@@ -210,7 +210,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                           ),
                           const SizedBox(height: 20),
                           Text(
-                            _showOpenOnly
+                            _selectedFilterIndex == 1
                                 ? "No Open Clinics"
                                 : "No Clinics Found",
                             style: const TextStyle(
@@ -221,7 +221,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            _showOpenOnly
+                            _selectedFilterIndex == 1
                                 ? "There are no clinics open right now."
                                 : "We couldn't find any clinics matching\nyour search.",
                             textAlign: TextAlign.center,
@@ -276,36 +276,67 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
     );
   }
 
-  // [جديد] ويدجت تصميم الفلتر
-  Widget _buildFilterSection() {
+  Widget _buildFiltersAndSearch() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            _buildFilterTab("All Clinics", !_showOpenOnly),
-            _buildFilterTab("Open Now", _showOpenOnly),
-          ],
-        ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: Row(
+              children: [
+                _buildTabItem("All Clinics", 0),
+                _buildTabItem("Open Now", 1, activeColor: Colors.green),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _searchController,
+            onChanged: (val) {
+              setState(() {
+                _searchKeyword = val;
+              });
+            },
+            decoration: InputDecoration(
+              hintText: "Search by name or location...",
+              hintStyle: const TextStyle(color: Colors.grey),
+              filled: true,
+              fillColor: Colors.white,
+              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.primary),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildFilterTab(String text, bool isSelected) {
+  Widget _buildTabItem(String label, int index,
+      {Color activeColor = AppColors.primary}) {
+    final bool isSelected = _selectedFilterIndex == index;
     return Expanded(
       child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _showOpenOnly = (text == "Open Now");
-          });
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+        onTap: () => setState(() => _selectedFilterIndex = index),
+        child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
             color: isSelected ? Colors.white : Colors.transparent,
@@ -317,24 +348,14 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                   ]
                 : [],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (text == "Open Now" && isSelected)
-                const Padding(
-                  padding: EdgeInsets.only(right: 6),
-                  child: Icon(Icons.circle, size: 8, color: Colors.green),
-                ),
-              Text(
-                text,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: isSelected ? AppColors.primary : Colors.grey[600],
-                ),
-              ),
-            ],
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: isSelected ? activeColor : Colors.grey,
+            ),
           ),
         ),
       ),
@@ -396,40 +417,6 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (val) {
-          setState(() {
-            _searchKeyword = val;
-          });
-        },
-        decoration: InputDecoration(
-          hintText: "Search by name or location...",
-          hintStyle: const TextStyle(color: Colors.grey),
-          prefixIcon: const Icon(Icons.search, color: Colors.grey),
-          filled: true,
-          fillColor: Colors.grey[50],
-          contentPadding: const EdgeInsets.symmetric(vertical: 16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: Colors.grey[200]!),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-          ),
-        ),
       ),
     );
   }
