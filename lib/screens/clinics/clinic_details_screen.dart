@@ -155,7 +155,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen>
                           final String reviewerId = data['reviewerId'] ?? '';
                           final Timestamp? createdAt = data['createdAt'];
 
-                          // Check if it's my review
                           final bool isMyReview = currentUser != null &&
                               reviewerId == currentUser.uid;
 

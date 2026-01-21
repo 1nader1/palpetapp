@@ -47,7 +47,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
   ];
   final List<String> _genderList = ['Male', 'Female'];
 
-  // UPDATED PATHS HERE: removed 'lib/' prefix
   final Map<String, String> _defaultSpeciesImages = {
     'Dog': 'assets/imgs/dog.png',
     'Cat': 'assets/imgs/cat.png',
@@ -58,7 +57,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
     'Other': 'https://cdn-icons-png.flaticon.com/512/12/12638.png',
   };
 
-  // UPDATED PATH HERE: removed 'lib/' prefix
   final String _defaultHotelImage = 'assets/imgs/dog-house.png';
 
   final List<String> _jordanAreas = [
@@ -768,7 +766,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
     ImageProvider? imageProvider;
     bool isDefault = false;
 
-    // Check if image is local asset
     bool isLocalAsset = false;
     if (_existingImageUrl != null) {
       if (_existingImageUrl!.startsWith('assets/') ||
@@ -797,7 +794,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
             _defaultSpeciesImages[species] ?? _defaultSpeciesImages['Other']!;
       }
 
-      // Check if placeholder is local or network
       if (placeholderUrl.startsWith('assets/')) {
         imageProvider = AssetImage(placeholderUrl);
       } else {
